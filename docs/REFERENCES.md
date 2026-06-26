@@ -6,7 +6,40 @@ endpoints) at build time — the ecosystem moves fast.
 
 ---
 
-## Foundation: ToolUniverse
+## Framework we extend: The Virtual Biotech
+
+- **What:** A multi-agent AI framework for therapeutic discovery that mirrors a human research org —
+  a **CSO agent** receives queries, delegates to **domain-specialist scientist-agent divisions**
+  (statistical genetics, functional genomics, pathways/interactions, chemoinformatics, disease
+  biology, clinical), and integrates their outputs via data-driven reasoning; human-in-the-loop
+  throughout.
+- **Showcased on:** clinical-trial genomic-feature analysis (out of scope for us), a **B7-H3 lung
+  cancer** target evaluation proposing an ADC strategy, and an **OSMRβ** terminated-trial failure
+  analysis.
+- **Key limitation we address:** its assessment is **absolute and per-hypothesis** — each candidate
+  gets a narrative evidence dossier weighed in isolation; **there is no head-to-head comparison or
+  reproducible ranking.** Our [prioritisation arena](ARENA.md) supplies exactly that.
+- **From:** Zhang, Eckmann, Miao, Mahon, Zou — Stanford (James Zou lab).
+- **Cite:** Zhang H.G., Eckmann P., Miao J., Mahon A.B., Zou J. "The Virtual Biotech: A Multi-Agent AI
+  Framework for Therapeutic Discovery and Development." bioRxiv 2026, doi:10.64898/2026.02.23.707551.
+  https://www.biorxiv.org/content/10.64898/2026.02.23.707551v1
+
+## Ranking precedents the arena builds on
+
+- **AI Co-Scientist (Google, 2025)** — multi-agent system whose **Ranking agent** runs an
+  **Elo tournament** of hypotheses via pairwise LLM "scientific debates"; the closest precedent for
+  our arena. Gottweis, Natarajan et al., arXiv:2502.18864. *(Confirm Elo constants from the PDF
+  before citing exact numbers.)*
+- **LMArena / Chatbot Arena** — Elo for live ranking, **Bradley–Terry** for the stable published
+  board with confidence intervals; the pattern we follow for the final leaderboard.
+  Chiang et al., arXiv:2403.04132.
+- **Multi-objective / VoI foundations** — Pareto optimality; Value of Information (Howard 1966);
+  Bayesian optimal experimental design (Chaloner & Verdinelli 1995; Rainforth et al. 2024). These
+  ground the multi-objective ranking and the compute-budgeted loop.
+
+---
+
+## Tool layer: ToolUniverse
 
 - **What:** An ecosystem for building AI scientist systems from any LLM. Standardises how an agent
   identifies and calls tools, integrating **580+** ML models, datasets, APIs, and scientific

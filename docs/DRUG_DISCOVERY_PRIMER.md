@@ -107,8 +107,10 @@ Two things to notice — they are the openings our project targets:
    *prediction* (ADMET-AI, Boltz-2 are ML models, not lab assays). The pipeline **predicts and
    stops**; it never tests a hypothesis and loops back.
 
-Our [DESIGN.md](DESIGN.md) addresses exactly these two gaps: a real **multi-axis prioritisation
-engine** (decision, not deferral) and a **closed loop** that feeds a readout back into re-ranking.
+Our project addresses exactly these gaps: a CSO + scientist-division architecture
+([DESIGN.md](DESIGN.md)) feeding a **prioritisation arena** ([ARENA.md](ARENA.md)) that makes
+competing hypotheses **compete head-to-head** and ranks them as a multi-objective optimisation —
+a quantified, reproducible decision instead of a narrative dossier or a deferral to a human.
 
 ---
 

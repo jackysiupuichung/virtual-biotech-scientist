@@ -22,102 +22,84 @@ own flagship case study leaves to a human and to a single open-loop pass, respec
 
 ---
 
-## 2. Architecture
+## 2. Architecture — CSO + scientist divisions (after Zhang et al. 2026)
 
-### 2.1 Agents
+We adopt the paper's org structure: a **Chief Scientific Officer (CSO) agent** that receives a
+query, decomposes it, delegates to **domain-specialist scientist-agent divisions**, and integrates
+their evidence — with a **Scientific Reviewer** that audits the result and can **re-route** to fill a
+gap. We then hand the integrated hypotheses to the **arena** for ranking (the paper stops at the
+CSO's narrative integration; see [ARENA.md](ARENA.md)).
 
-- **Target-ID agent** — turns a disease/biology question into a candidate target set, using
-  ToolUniverse retrieval tools (e.g. Open Targets associations). Output: a candidate list with
-  raw evidence handles.
-- **Prioritisation agent** — the core contribution. Consumes per-target evidence across multiple
-  axes and produces a **ranked, scored, and justified** ordering of the candidate set (not a
-  per-target dossier dump, and not a deferral to a human).
-- **Critic agent** — inspects the ranking for weak, missing, or conflicting evidence and emits
-  targeted *refinement requests* (which axis, which target, which tool to re-query).
-- **Experiment-design agent** — for the leading candidate(s), proposes the next decisive test and
-  routes it to a **readout source** (see §4). Downstream concerns (toxicity, tractability, binding
-  affinity, ADMET) live here.
-- **Orchestrator** — runs the loop, enforces stop conditions, and maintains a **traceable decision
-  log** (every claim → the tool call and evidence that supports it).
+### 2.1 Roles
 
-### 2.2 The loop
+- **CSO agent (orchestrator)** — turns a scientific query into a briefing, a decomposition, and a
+  routing plan; integrates division outputs via data-driven reasoning; states the final
+  recommendation. Maintains a **traceable decision log** (every claim → the tool/evidence behind it).
+- **Scientist divisions** — each a specialist that answers a sub-question using ToolUniverse tools:
+  - **Target ID** — genetic/causal support, disease-cell localisation (single-cell specificity,
+    malignant-vs-stroma), functional dependency.
+  - **Target Safety** — expression specificity, essentiality, known liabilities, off-target risk.
+  - **Modality** — druggability/tractability, structure, which modality (small molecule, antibody, ADC).
+  - **Disease biology / literature** — mechanism, novelty, competitive landscape.
+  - **Clinical** — prior trials, modality precedent.
+  > A hackathon build runs a **subset** of these (Target ID + Safety + Modality + Clinical is plenty).
+- **Scientific Reviewer** — audits the integrated evidence for gaps/conflicts and emits a **re-route**
+  request (which division, which axis, which tool) — the paper's audit loop, and our refinement
+  mechanism *before* a hypothesis enters the arena.
+
+### 2.2 The CSO loop, then the arena
 
 ```
-hypothesis
-   │
-   ▼
-Target-ID ──► Prioritisation ──► Critic
-   ▲               │               │
-   │               │          gap found?
-   │               ▼               │
-   │          Experiment-design ◄──┘ (re-query specific axis/target)
-   │               │
-   │            Readout (sim / Boltz / dataset)
-   │               │
-   └──── update thesis + re-rank ◄─┘
-                   │
-            stop? (budget / confidence / clear lead)
+query ──► CSO: briefing + decompose + route
+              │
+              ▼
+        scientist divisions  ──(ToolUniverse tools)──►  evidence per axis
+              │
+              ▼
+        CSO integrates ──► Scientific Reviewer audits
+              │                     │
+              │ gap? ◄──────────────┘  re-route to a division to fill it
+              ▼
+        framed hypotheses (cards) ──►  PRIORITISATION ARENA  (see ARENA.md)
+                                        head-to-head, multi-objective ranking
 ```
 
-The loop is **open at the bottom** in ToolUniverse's design (predict → stop); here it **closes**
-through the readout step that feeds back into re-ranking.
+Two differences from the paper, both deliberate:
+
+1. **The reviewer re-route loop** gives us refinement *within* assessment (gap → re-query), matching
+   the paper's audit step — not a single open-loop pass.
+2. **The arena replaces the paper's narrative "weigh the divisions" verdict** with a quantified,
+   reproducible, multi-objective ranking. This is the contribution; everything above it is adopted.
 
 ---
 
-## 3. Methods: multi-axis prioritisation
+## 3. Methods: prioritisation
 
-ToolUniverse's case study scores targets on essentially two axes — *tractability* and a *literature
-search* — and then asks a human to pick. We replace that with an explicit, auditable scorer.
+The divisions produce **evidence per axis** for each hypothesis; the arena turns that into a ranking.
+The full method — the competing objectives, the multi-objective (Pareto + tournament) ranking, the
+match format, and the compute-budgeted loop — lives in **[ARENA.md](ARENA.md)**. The short version:
 
-### 3.1 Evidence axes
+- Each hypothesis gets a **card**: score + confidence per axis (genetics, disease-cell localisation,
+  tractability, safety, novelty, clinical precedent), each traceable to the division/tool behind it.
+- Ranking is **multi-objective**, not a single collapsed score: **Pareto fronts** as the weight-free
+  primary view, a **pairwise tournament** (Elo → Bradley–Terry) for a comparative leaderboard.
+- A **compute-budgeted loop** spends the next match/evidence call where it most changes the rank
+  (Value of Information), instead of gathering everything up front.
 
-Each candidate target is scored on multiple axes, each backed by specific tool calls:
-
-| Axis | Question | Example evidence source |
-| --- | --- | --- |
-| **Genetic / causal** | Is there genetic support that this target drives the disease? | Open Targets associations, GWAS |
-| **Tractability** | Can it be drugged (pockets, modality, precedent)? | Open Targets tractability |
-| **Literature / novelty** | What is known; is this obvious or differentiated? | EuropePMC / PubMed search |
-| **Safety / on- vs off-target** | Expression specificity; likely tox liabilities? | expression atlases, ADMET-AI |
-| **Chemical matter** | Do tractable starting compounds exist? | ChEMBL similarity / known ligands |
-| **Competitive / IP** | Is the space crowded; is there freedom to operate? | patent / clinical-precedent tools |
-
-> The axis set is configurable per disease. The point is **comparability across the candidate
-> set**, not an exhaustive single-target dossier.
-
-### 3.2 Scoring and ranking
-
-- Each axis yields a normalised sub-score with an attached **confidence** (evidence strength).
-- A weighting scheme combines sub-scores into a target score; weights are explicit and tunable
-  (and can themselves be a judgement the agent defends).
-- Output is a **comparison matrix** (targets × axes) plus a ranked list with a written rationale
-  per target — so a human can audit *why* the ranking is what it is, rather than being asked to
-  make the call.
-
-### 3.3 Why a scorer, not "ask the human"
-
-Deferring to `expert_consult_human_expert` (as the reference case study does) hides the hardest
-step. An explicit scorer (a) makes the decision reproducible, (b) exposes *which* evidence moved
-the ranking, and (c) is what the refinement loop acts on. The human becomes a reviewer of a
-defended decision, not the decision-maker of last resort.
+This is the delta from both prior systems: the paper and ToolUniverse assess each hypothesis **in
+isolation** (and ToolUniverse defers the final pick to a human); the arena makes them **compete** and
+produces a reproducible, auditable ranking.
 
 ---
 
-## 4. Methods: closing the loop (pluggable readout)
+## 4. Closing the loop with experiments (future direction)
 
-A virtual biotech generates data. We don't need a wet lab for a working demo — we make the
-**readout source pluggable** behind one interface, so the loop is real even when the data is
-simulated:
-
-- **Simulated oracle** — a stochastic model returns an assay-like readout; fastest to demo, lets
-  us show the loop updating beliefs.
-- **In-silico prediction as readout** — treat a Boltz-2 binding-affinity or ADMET-AI prediction
-  *as* the experimental result that updates the ranking (this is the most ToolUniverse-native option).
-- **Projected dataset** — ingest the conclusions of a real dataset as the "experimental evidence"
-  for a target/compound, updating priors. (Carries over the dataset-projection idea from prior work.)
-
-Each readout updates the relevant axis sub-score and confidence, and the orchestrator re-runs
-prioritisation. The **critic** decides whether the new evidence resolved its earlier gap.
+The arena ranks on *available* evidence. The natural next step — and what makes a true virtual
+biotech — is to **generate new evidence and feed it back**: design the next decisive test for the
+leading hypotheses, obtain a readout, and re-rank. We don't need a wet lab to demonstrate this; the
+readout source can be **pluggable** (a simulated oracle, an in-silico prediction such as Boltz-2 /
+ADMET-AI used *as* a result, or a projected real dataset). This is scoped as a direction rather than
+core — see [DIRECTIONS.md](DIRECTIONS.md) — because the arena ranking is the event deliverable.
 
 ---
 

@@ -1,46 +1,50 @@
 # Potential directions
 
 Where this project can go beyond a weekend prototype. Ordered roughly from "buildable at the
-event" to "ambitious roadmap." Each is framed around the project's core thesis: a virtual biotech
-is a **closed loop** that prioritises under uncertainty and refines from data.
+event" to "ambitious roadmap." The core deliverable is the [arena](ARENA.md); these extend it.
 
 ## Near-term (event-buildable)
 
-1. **Demonstrate non-obvious prioritisation.** The reference case study lands on HMGCR (statins) —
-   the textbook answer, chosen by a human. A compelling demo shows our scorer ranking a candidate
-   set and surfacing a *defensible, less-obvious* lead, with the comparison matrix explaining why.
-2. **Show the loop changing its mind.** Run one refinement cycle live: critic flags a weak axis →
-   experiment-design requests a readout → the ranking visibly updates. The *update* is the demo.
-3. **Auditable decision log.** Every ranking claim links to the tool call and evidence behind it.
-   This is both a trust feature and a judge-legible artifact.
+1. **Demonstrate non-obvious ranking.** ToolUniverse's case study lands on HMGCR (statins) — the
+   textbook answer, chosen by a human. A compelling demo shows the arena ranking competing
+   hypotheses and surfacing a *defensible, less-obvious* lead, with the Pareto front + match
+   rationales explaining why.
+2. **Show the ranking change as evidence arrives.** Reveal an expensive axis (e.g. single-cell
+   specificity) for a boundary hypothesis and watch the leaderboard / Pareto front visibly re-sort.
+   The *update* is the demo.
+3. **Auditable provenance.** Every card value and every match verdict links to the tool/evidence
+   behind it — a trust feature and a judge-legible artifact.
 
 ## Medium-term
 
-4. **Portfolio decisions under budget.** Move from "rank N targets" to "given a fixed experiment
-   budget, which sequence of tests maximises information / de-risks the portfolio fastest?" — i.e.
-   the loop as a **resource-allocation** problem, not just a ranking.
-5. **Active learning over readouts.** Use the experiment-design agent to pick the *most informative*
-   next test (expected information gain), not just the next obvious one — turning the loop into a
-   proper experimental-design strategy.
-6. **Richer readout adapters.** Make the pluggable readout swap cleanly between simulated oracle,
-   Boltz-2/ADMET-AI predictions, and projected datasets, with calibrated confidence so the
-   re-ranking is principled rather than ad hoc.
+4. **The compute-budgeted VoI loop (ARENA §5).** Promote the stretch goal: boundary-focused match
+   selection + a marginal-information stopping rule, so the system spends compute like a scientist
+   rather than running a static round-robin.
+5. **Evolving hypotheses.** Don't just rank a fixed slate — *mutate* losing hypotheses (swap
+   modality, narrow the patient stratum) and re-enter them, keeping a **diverse** front
+   (quality-diversity / MAP-Elites style) rather than collapsing to one idea.
+6. **Close the loop with experiments.** Add the experiment-design + readout step from
+   [DESIGN.md §4](DESIGN.md#4-closing-the-loop-with-experiments-future-direction): design the next
+   decisive test for the leading hypotheses, obtain a readout (simulated oracle / Boltz-2 / ADMET-AI
+   / projected dataset), feed it back, and re-rank.
+7. **Portfolio decisions under budget.** Given a fixed experiment budget, which *sequence* of tests
+   de-risks the whole portfolio fastest — ranking as resource allocation, not a one-shot sort.
 
 ## Ambitious / roadmap
 
-7. **Close the loop with real assays.** Connect the readout interface to real experimental data —
+8. **Close the loop with real assays.** Connect the readout interface to real experimental data —
    public assay results, collaborators' datasets, or lab-automation/CRO APIs — so the agent's
    hypotheses are tested against reality, not only in silico.
-8. **Multi-disease / multi-modality.** Generalise the axis set and modality assumptions (small
-   molecule, biologic, etc.) so the same loop runs across indications.
-9. **Self-improving tool use.** Lean on ToolUniverse's tool-composition / spec-optimisation to let
-   the agent build or refine tools it lacks for a given axis, rather than being limited to the
-   pre-wired set.
+9. **Multi-disease / multi-modality.** Generalise the axis set and modality assumptions (small
+   molecule, biologic, etc.) so the same arena runs across indications.
+10. **Self-improving tool use.** Lean on ToolUniverse's tool-composition / spec-optimisation to let
+    the agent build or refine tools it lacks for a given axis, rather than being limited to the
+    pre-wired set.
 
 ## Open questions to pressure-test
 
-- How do we keep the scorer's weights honest (and defensible to a domain expert) rather than
-  arbitrary?
+- In a multi-objective ranking, when do we report the **Pareto set** vs. commit to a single winner —
+  and how are scalarisation weights kept honest (and defensible to a domain expert)?
 - When should the loop **stop** — confidence threshold, budget exhaustion, or a clear lead — and how
   do we avoid premature convergence on an obvious answer?
 - How do we calibrate in-silico predictions used *as* readouts so the loop doesn't over-trust them?

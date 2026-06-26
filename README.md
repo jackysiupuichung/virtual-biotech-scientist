@@ -1,49 +1,70 @@
 # Virtual Biotech Scientist
 
-> A closed-loop, multi-agent AI scientist for drug-target discovery — built on top of
-> [ToolUniverse](https://github.com/mims-harvard/ToolUniverse) and reasoned by Claude.
+> A multi-agent AI scientist for drug-target discovery that **ranks competing therapeutic
+> hypotheses in an arena** — built on the *Virtual Biotech* framework (Zhang et al. 2026),
+> with [ToolUniverse](https://github.com/mims-harvard/ToolUniverse) as the tool layer and
+> Claude as the reasoning engine.
 
-Most "AI scientist" pipelines today are **open-loop**: they retrieve knowledge, run an
-in-silico prediction, narrate a summary, and stop. A real biotech doesn't stop there. It
-forms a hypothesis, *chooses* between many candidate targets under uncertainty, designs an
-experiment, reads out a result, and **revises its thesis**. This project builds that loop.
+This project stands on two pieces of prior work and adds one thing they lack:
+
+- **[The Virtual Biotech](https://www.biorxiv.org/content/10.64898/2026.02.23.707551v1)**
+  (Zhang, Eckmann, Miao, Mahon, Zou — Stanford, 2026) — a **CSO agent** orchestrating
+  domain-specialist **scientist-agent divisions** that mirror a real therapeutics org. We adopt
+  this org structure. Its assessment, however, is **absolute and per-hypothesis**: each candidate
+  gets a narrative evidence dossier weighed in isolation — *there is no head-to-head comparison.*
+- **[ToolUniverse](https://github.com/mims-harvard/ToolUniverse)** — the standardised tool layer
+  (databases + in-silico models via MCP) the scientist agents call.
+
+**What we add: the prioritisation arena.** We convert the paper's qualitative "weigh the divisions"
+step into a **quantified, reproducible ranking** — competing **(target × disease × modality)
+hypotheses** are pitted head-to-head, judged by a panel of division agents, and ranked as a
+**multi-objective optimisation** (no single score: Pareto fronts across efficacy, safety,
+tractability, novelty). A compute-budgeted loop spends evidence-gathering where it most changes the
+ranking. See [docs/ARENA.md](docs/ARENA.md).
 
 ```
-        ┌──────────────────── HYPOTHESIS REFINEMENT LOOP ────────────────────┐
-        │                                                                     │
-   Target ID  ──►  Prioritisation  ──►  Experiment design  ──►  Readout       │
-   (evidence       (multi-axis            (downstream:           (pluggable:   │
-    gathering)      scoring + rank)        tox, tractability,     sim / Boltz /│
-        ▲                                  binding, ADMET)        dataset)     │
-        │                                                            │        │
-        └──────────────── refine: critic finds a gap ───────────────┘        │
-        └─────────────────────────────────────────────────────────────────────┘
-                                     │
-                    ToolUniverse MCP (evidence + prediction layer)
-            OpenTargets · ChEMBL · EuropePMC · ADMET-AI · Boltz-2 · …
+   query: "best target for lung cancer?"
+        │
+        ▼
+   ┌─────────┐   delegates      ┌──────────────────────────────────────────┐
+   │   CSO    │ ───────────────► │  SCIENTIST-AGENT DIVISIONS                │
+   │  agent   │                  │   Target ID · Target Safety · Modality ·  │
+   │          │ ◄─────────────── │   Disease biology · Clinical              │
+   └────┬─────┘   evidence       └───────────────────┬──────────────────────┘
+        │                                            │ tools
+        │         ┌──────────────────┐               ▼
+        │         │ Scientific       │      ToolUniverse MCP
+        │ ◄─────► │ Reviewer (audit, │   OpenTargets · ChEMBL · EuropePMC ·
+        │  gap →  │  re-route gap)   │   ADMET-AI · Boltz-2 · single-cell · …
+        │  re-run └──────────────────┘
+        ▼
+   ┌────────────────────── PRIORITISATION ARENA ──────────────────────┐  ← our contribution
+   │  competing (target × disease × modality) hypotheses              │
+   │  pitted head-to-head → panel of division judges → ranked as a    │
+   │  MULTI-OBJECTIVE optimisation (Pareto fronts, not one score)     │
+   │  compute-budgeted: spend matches/evidence where rank is decided  │
+   └──────────────────────────────────────────────────────────────────┘
 ```
 
 ## What we build on, and what we add
 
-[ToolUniverse](https://aiscientist.tools) is an excellent **foundation**: a standardised
-MCP-based protocol over 580+ biomedical tools (databases, APIs, and pretrained ML models),
-usable from any LLM. We use it as our **evidence and prediction layer** rather than
-reinventing data access.
-
-On top of it, we add the parts a virtual biotech needs that a tool-access layer doesn't
-provide on its own:
-
-| Layer | Foundation (ToolUniverse) | What this project adds |
+| Layer | Foundation | What this project adds |
 | --- | --- | --- |
-| **Evidence** | 580+ retrieval + prediction tools via MCP | consume directly |
-| **Prioritisation** | per-target dossiers; final pick left to a human expert | a **multi-axis scoring + ranking engine** that compares the candidate set and *makes* a defensible decision |
-| **Loop** | linear, single-pass (predict → stop) | a **hypothesis-refinement loop**: a critic finds weak/conflicting evidence and triggers re-query + re-rank |
-| **Data** | retrieval + in-silico prediction only | a **pluggable experimental readout** that closes the loop (simulated oracle, Boltz-2 affinity, or a projected real dataset) |
+| **Org / agents** | Virtual Biotech (Zhang 2026): CSO → scientist divisions → reviewer loop | adopt directly (lighter, fewer divisions for a hackathon) |
+| **Tools** | ToolUniverse: standardised MCP layer over 580+ databases + in-silico models | consume as the evidence layer |
+| **Prioritisation** | both systems assess each hypothesis **in isolation** (narrative dossier; no comparison) | a **head-to-head arena** that produces a quantified, reproducible ranking |
+| **Ranking method** | single weighed verdict / human pick | **multi-objective optimisation** — Pareto fronts across efficacy/safety/tractability/novelty, not one collapsed score |
+| **Compute** | static, single-pass | **budgeted information-maximisation loop** — spend the next match/evidence call where it most changes the rank (VoI) |
+
+> The unit ranked is a **therapeutic hypothesis** — *target × disease × modality × mechanism ×
+> patient stratum* (e.g. "B7-H3, via an ADC, in LUAD, exploiting stromal overexpression") — exactly
+> what the paper *outputs* and what an arena can compare. Not a bare gene.
 
 **New to drug discovery?** Start with [docs/DRUG_DISCOVERY_PRIMER.md](docs/DRUG_DISCOVERY_PRIMER.md)
 — a plain-English orientation for non-scientists (pipeline, target ID, prioritisation, worked example).
 
-See [docs/DESIGN.md](docs/DESIGN.md) for the architecture and methods,
+See [docs/DESIGN.md](docs/DESIGN.md) for the CSO/division architecture,
+[docs/ARENA.md](docs/ARENA.md) for the prioritisation arena (the core build),
 [docs/REFERENCES.md](docs/REFERENCES.md) for tools and citations, and
 [docs/DIRECTIONS.md](docs/DIRECTIONS.md) for potential directions.
 
@@ -59,11 +80,13 @@ virtual-biotech-scientist/
 ├── README.md                 # this file
 ├── docs/
 │   ├── DRUG_DISCOVERY_PRIMER.md  # plain-English domain context for non-scientists
-│   ├── DESIGN.md             # architecture, workflow, methods
+│   ├── DESIGN.md             # CSO + scientist-division architecture
+│   ├── ARENA.md              # the prioritisation arena (core build)
 │   ├── REFERENCES.md         # tools, models, citations
 │   └── DIRECTIONS.md         # potential directions / roadmap
-├── agents/                   # (planned) target-id, prioritisation, critic, experiment-design
-├── loop/                     # (planned) refinement-loop orchestrator
-├── tools/                    # (planned) ToolUniverse MCP client + readout adapters
-└── eval/                     # (planned) case studies, e.g. hypercholesterolemia
+├── cso/                      # (planned) CSO orchestrator + reviewer re-route loop
+├── divisions/               # (planned) scientist agents: target-id, safety, modality, clinical
+├── arena/                    # (planned) match scheduler, panel judge, Pareto ranker
+├── tools/                    # (planned) ToolUniverse MCP client
+└── eval/                     # (planned) case studies (B7-H3 lung cancer)
 ```
