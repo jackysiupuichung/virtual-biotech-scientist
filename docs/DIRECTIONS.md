@@ -20,9 +20,10 @@ event" to "ambitious roadmap." The core deliverable is the [arena](ARENA.md); th
 4. **The compute-budgeted VoI loop (ARENA §5).** Promote the stretch goal: boundary-focused match
    selection + a marginal-information stopping rule, so the system spends compute like a scientist
    rather than running a static round-robin.
-5. **Evolving hypotheses.** Don't just rank a fixed slate — *mutate* losing hypotheses (swap
-   modality, narrow the patient stratum) and re-enter them, keeping a **diverse** front
-   (quality-diversity / MAP-Elites style) rather than collapsing to one idea.
+5. **Evolving hypotheses** ([self-improving level B](SELF_IMPROVING.md#level-b--self-improving-hypotheses-the-strongest-new-angle-build-a-slice)).
+   Don't just rank a fixed slate — *mutate* losing hypotheses (swap modality, narrow the patient
+   stratum) and re-enter them, keeping a **diverse** front (quality-diversity / MAP-Elites style)
+   rather than collapsing to one idea.
 6. **Close the loop with experiments.** Add the experiment-design + readout step from
    [DESIGN.md §4](DESIGN.md#4-closing-the-loop-with-experiments-future-direction): design the next
    decisive test for the leading hypotheses, obtain a readout (simulated oracle / Boltz-2 / ADMET-AI
@@ -37,9 +38,12 @@ event" to "ambitious roadmap." The core deliverable is the [arena](ARENA.md); th
    hypotheses are tested against reality, not only in silico.
 9. **Multi-disease / multi-modality.** Generalise the axis set and modality assumptions (small
    molecule, biologic, etc.) so the same arena runs across indications.
-10. **Self-improving tool use.** Lean on ToolUniverse's tool-composition / spec-optimisation to let
-    the agent build or refine tools it lacks for a given axis, rather than being limited to the
-    pre-wired set.
+10. **Self-improving tool use** ([self-improving level C](SELF_IMPROVING.md#level-c--self-improving-toolkit-one-scripted-instance)).
+    Lean on ToolUniverse's tool-composition / spec-optimisation to let the agent build or refine tools
+    it lacks for a given axis, rather than being limited to the pre-wired set.
+11. **Self-improving judgement** ([self-improving level D](SELF_IMPROVING.md#level-d--self-improving-judgement-honest-roadmap-do-not-claim)).
+    Calibrate the arena's axis weights and judge against real clinical-trial-success outcomes — the
+    one form of self-improvement that needs ground truth we don't have at the event.
 
 ## Open questions to pressure-test
 

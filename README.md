@@ -63,8 +63,17 @@ ranking. See [docs/ARENA.md](docs/ARENA.md).
 **New to drug discovery?** Start with [docs/DRUG_DISCOVERY_PRIMER.md](docs/DRUG_DISCOVERY_PRIMER.md)
 — a plain-English orientation for non-scientists (pipeline, target ID, prioritisation, worked example).
 
+**What sets this apart:** see [docs/DIFFERENTIATION.md](docs/DIFFERENTIATION.md) — the loop closes onto
+**real computation** via an MCP `run_experiment` interface (Boltz-2 live; single-cell + DNA/RNA-LM
+pluggable), driven by a Value-of-Information selector. We rank → act → re-rank, closing the loop the
+paper leaves open.
+
 See [docs/DESIGN.md](docs/DESIGN.md) for the CSO/division architecture,
 [docs/ARENA.md](docs/ARENA.md) for the prioritisation arena (the core build),
+[docs/INFORMATION_MAXIMISATION.md](docs/INFORMATION_MAXIMISATION.md) for where Value-of-Information
+lives (rank continuously, collect only what could change the rank),
+[docs/SELF_IMPROVING.md](docs/SELF_IMPROVING.md) for the self-improving-scientist angles (improve the
+answer, the hypotheses, and the toolkit),
 [docs/REFERENCES.md](docs/REFERENCES.md) for tools and citations, and
 [docs/DIRECTIONS.md](docs/DIRECTIONS.md) for potential directions.
 

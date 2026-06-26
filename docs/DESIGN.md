@@ -94,12 +94,13 @@ produces a reproducible, auditable ranking.
 
 ## 4. Closing the loop with experiments (future direction)
 
-The arena ranks on *available* evidence. The natural next step — and what makes a true virtual
-biotech — is to **generate new evidence and feed it back**: design the next decisive test for the
-leading hypotheses, obtain a readout, and re-rank. We don't need a wet lab to demonstrate this; the
-readout source can be **pluggable** (a simulated oracle, an in-silico prediction such as Boltz-2 /
-ADMET-AI used *as* a result, or a projected real dataset). This is scoped as a direction rather than
-core — see [DIRECTIONS.md](DIRECTIONS.md) — because the arena ranking is the event deliverable.
+The arena ranks on *available* evidence. The differentiating step is to **generate new evidence and
+feed it back**: when the Value-of-Information selector ([ARENA.md §5](ARENA.md#5-compute-budgeted-loop-the-ai-scientist-part))
+picks an axis that needs new computation, it dispatches a `run_experiment(hypothesis, axis)` call
+through the **MCP experiment interface**, whose backend is pluggable — **Boltz-2** (live), single-cell
+on a real atlas, or a DNA/RNA language model. A frontier-model computation on real data *is* the
+experiment; its result updates the card and re-ranks. This is the project's headline — see
+[DIFFERENTIATION.md](DIFFERENTIATION.md).
 
 ---
 

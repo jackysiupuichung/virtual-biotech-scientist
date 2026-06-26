@@ -84,12 +84,37 @@ while budget > 0:
     execute(a*); budget -= cost(a*); update ratings
 ```
 
-Concretely: compute an expensive axis (e.g. single-cell specificity) for a hypothesis **only if its
-score CI overlaps a rival's** (could flip the rank); run the next **match** on the pair nearest the
-decision boundary, not at random; **stop** when the top-k fronts/ratings separate. This is the
-deliberate version of Co-Scientist's "Elo plateau," and it's what turns a static tournament into an
-adaptive scientist. (Full technique survey lives in the prior repo's
-`agentic-hypothesis-optimization.md`.)
+Concretely: compute an expensive axis for a hypothesis **only if its score CI overlaps a rival's**
+(could flip the rank); run the next **match** on the pair nearest the decision boundary, not at random;
+**stop** when the top-k fronts/ratings separate. This is the deliberate version of Co-Scientist's "Elo
+plateau," and it's what turns a static tournament into an adaptive scientist. (Full technique survey
+lives in the prior repo's `agentic-hypothesis-optimization.md`.)
+
+### 5.1 The most-informative action may be an *experiment*
+
+When the action the VoI selector picks is "resolve axis X for hypothesis H," and that axis requires
+**new computation** rather than a cached lookup, it is dispatched through the **MCP experiment
+interface** — a single `run_experiment(hypothesis, axis)` call with a **pluggable backend**:
+
+```
+VoI: most-informative = resolve(specificity? affinity?) for H
+        │
+        ▼  MCP: run_experiment(H, axis)
+  ┌──────────────┬──────────────────────┬─────────────────────┐
+  ▼              ▼                       ▼                     ▼
+Boltz-2       single-cell            DNA/RNA LM            (cache /
+binding       on real atlas         (Evo / Nucleotide      simulated
+affinity      (CELLxGENE)           Transformer)           oracle)
+(LIVE)        (stub)                (stub)
+        │  real result → update H's card → re-rank
+        ▼
+```
+
+This is the project's headline differentiator (see [DIFFERENTIATION.md](DIFFERENTIATION.md)): the loop
+doesn't just rank on existing evidence, it **runs a frontier-model computation on real data as the
+"experiment"** and re-ranks on the result. Backends are interchangeable behind one interface; for the
+demo **Boltz-2 is live** (with pre-computed/cached results as a stage-safe fallback), single-cell and
+DNA/RNA-LM are registered stubs.
 
 ## 6. Build scope for the event
 
