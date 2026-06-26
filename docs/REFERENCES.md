@@ -94,8 +94,8 @@ which is precisely the surface this project extends.
 
 ## Reasoning engine
 
-- **Claude (Anthropic)** — the LLM driving all agents (target-ID, prioritisation, critic,
-  experiment-design). ToolUniverse supports Claude natively via MCP. Anthropic is a hackathon
+- **Claude (Anthropic)** — the LLM driving all agents (CSO, scientist divisions, Scientific Reviewer,
+  arena judges). ToolUniverse supports Claude natively via MCP. Anthropic is a hackathon
   co-host/sponsor. Use the latest, most capable Claude models for the reasoning layer.
 
 ---
@@ -105,4 +105,4 @@ which is precisely the surface this project extends.
 None of the foundation tools generate **wet-lab** data; they retrieve knowledge or run in-silico
 predictions. Our closed loop therefore treats a **readout source** as pluggable — a simulated
 oracle, an in-silico prediction (Boltz-2 / ADMET-AI) used *as* a result, or a projected real
-dataset. See [DESIGN.md §4](DESIGN.md#4-methods-closing-the-loop-pluggable-readout).
+dataset. See [DESIGN.md §4](DESIGN.md#4-closing-the-loop-with-experiments).

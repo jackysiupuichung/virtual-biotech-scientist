@@ -31,44 +31,57 @@ Every field that does sequential decisions solved this identically. The columns 
 The information-maximisation is never "in collection" *or* "in ranking" — it is a **policy that uses
 the ranking's uncertainty to choose the next collection action.**
 
-## The real decision: at what granularity does VoI act?
+## The actions span a cost spectrum (not separate stages)
 
-Three levels — and *this* is the actual choice:
+VoI chooses among action types that differ in cost and in which decision they move:
 
-1. **Within one hypothesis (evidence level)** — "for B7-H3→ADC→LUAD, which axis to resolve next?"
-   This is the *target–disease-pair evidence-gathering* framing.
-2. **Across hypotheses (ranking level)** — "which match, or which hypothesis's missing axis, most
-   sharpens *the leaderboard*?"
-3. **Generative (which hypothesis to create at all)** — Bayesian-optimisation territory; ties to
+1. **Cheap retrieval** — "for B7-H3→ADC→LUAD, which lookup axis to resolve next?" (Open Targets,
+   literature). Mostly sharpens the *ranking*.
+2. **Expensive functional experiment** — "run Boltz-2 / single-cell on *which* candidate?" Mostly
+   resolves a *commit-or-kill* (go/no-go) on a strong hypothesis.
+3. **Generative** — "create or mutate a hypothesis?" ties to
    [self-improving level B](SELF_IMPROVING.md#level-b--self-improving-hypotheses-the-strongest-new-angle-build-a-slice).
 
-## Recommendation: operate at level 2; level 1 falls out for free
+## These are one loop, not separate stages
 
-Make **ranking** the objective; evidence-collection becomes the *mechanism*, not a separate place:
+A tempting design is to split this into tiers — cheap "ranking VoI" vs. expensive "validation VoI".
+**Don't.** They are the *same* policy. The field already has the unifying object: **Expected Value of
+(Partial) Perfect Information** — EVPPI — which simultaneously answers *which parameter (target/axis)
+most contributes to decision uncertainty* (that **is** prioritisation) and *whether resolving it beats
+its cost* (that **is** the experiment-selection). Prioritisation isn't *served by* VoI; **prioritisation
+is VoI.**
+
+The decision the policy optimises is **not** "who ranks #3 vs #4" — that has no payoff. It is **one
+global decision: the best allocation of the remaining budget across the whole portfolio**, formalised
+as a budget-constrained **sequential experimental design** (a POMDP whose state is the portfolio's
+beliefs, whose actions are the experiments, whose utility is information-per-cost). There is no fixed
+top-k cutoff; the **budget constraint** plays that role.
 
 ```
-objective:  reduce uncertainty about WHO WINS (the ranking)
-                    │
-   VoI scores every candidate action by EIG / cost:
-   ┌──────────────────┬──────────────────────┬─────────────────────┐
- "collect axis X       "run match (Hi, Hj)"    "create / mutate
-  for hypothesis H"                              a hypothesis"
-   └──────────────────┴──────────────────────┴─────────────────────┘
-        pick argmax  →  act (maybe run_experiment)  →  re-rank  →  repeat
+ONE policy.  state = portfolio beliefs.  pick argmax  NET EVPI  =  (info value − cost):
+
+cheap ──────────────────────────────────────────────► expensive
+Open Targets   literature    single-cell        Boltz-2 functional
+lookup         search        specificity        validation
+│                                                │
+mostly moves the RANKING        mostly resolves a COMMIT/KILL
+        act → re-rank → repeat until budget spent or net EVPI < 0
 ```
 
-Evidence-collection and matchmaking are just **action types in one VoI argmax**, judged by the same
-yardstick: *does this change the ranking?* You compute B7-H3's expensive specificity score **only if
-its score-interval overlaps a rival's** (could reorder the board); if it's clearly #1 or clearly last,
-you skip it and spend the call elsewhere.
+**The tiers dissolve into the cost term.** A Boltz-2 run on a mid-pack hypothesis has low EVPI (it
+won't change the allocation) minus high cost → **negative net EVPI → never selected.** Expensive
+functional experiments fire *only* on candidates where they'd change the budget decision — selectivity
+**emerges from the math**, not a hand-coded rule.
 
-**Why level 2:**
-- It's the only framing that prevents waste — selectivity is the whole point.
+**Why this framing:**
+- It prevents waste — net EVPI is the gate; nothing is computed that can't change the decision.
 - It's demo-legible — "the system decides B7-H3's specificity is the one experiment worth running,
-  runs it, leaderboard re-sorts" is one clean story.
+  runs it, the board re-sorts" is one clean story.
 - It matches the Genentech quote exactly: *"each experimental cycle is maximally informative…
-  prioritising the synthesis and testing of molecules that offer the highest learning gain."* Their
-  "learning gain" is defined relative to a downstream decision — same as ranking here.
+  prioritising the synthesis and testing of molecules that offer the highest learning gain."*
+- It respects the field's **prioritisation-vs-validation distinction** (see
+  [DRUG_DISCOVERY_PRIMER.md](DRUG_DISCOVERY_PRIMER.md#prioritisation-vs-validation)) — different cost,
+  evidence type, and decision stakes — while unifying the *mechanism*.
 
 ## One-liner
 

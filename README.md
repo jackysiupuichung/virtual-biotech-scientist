@@ -68,6 +68,12 @@ ranking. See [docs/ARENA.md](docs/ARENA.md).
 pluggable), driven by a Value-of-Information selector. We rank → act → re-rank, closing the loop the
 paper leaves open.
 
+**Suggested reading order:** [DRUG_DISCOVERY_PRIMER.md](docs/DRUG_DISCOVERY_PRIMER.md) (domain context)
+→ [DESIGN.md](docs/DESIGN.md) → [ARENA.md](docs/ARENA.md) →
+[INFORMATION_MAXIMISATION.md](docs/INFORMATION_MAXIMISATION.md) → [SELF_IMPROVING.md](docs/SELF_IMPROVING.md);
+read [DIFFERENTIATION.md](docs/DIFFERENTIATION.md) before pitching, and treat
+[REFERENCES.md](docs/REFERENCES.md) / [DIRECTIONS.md](docs/DIRECTIONS.md) as lookups.
+
 See [docs/DESIGN.md](docs/DESIGN.md) for the CSO/division architecture,
 [docs/ARENA.md](docs/ARENA.md) for the prioritisation arena (the core build),
 [docs/INFORMATION_MAXIMISATION.md](docs/INFORMATION_MAXIMISATION.md) for where Value-of-Information

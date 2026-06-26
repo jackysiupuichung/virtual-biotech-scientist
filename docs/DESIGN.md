@@ -92,10 +92,10 @@ produces a reproducible, auditable ranking.
 
 ---
 
-## 4. Closing the loop with experiments (future direction)
+## 4. Closing the loop with experiments
 
-The arena ranks on *available* evidence. The differentiating step is to **generate new evidence and
-feed it back**: when the Value-of-Information selector ([ARENA.md §5](ARENA.md#5-compute-budgeted-loop-the-ai-scientist-part))
+The arena ranks on *available* evidence. The differentiating step — and the project's headline — is to
+**generate new evidence and feed it back**: when the Value-of-Information selector ([ARENA.md §5](ARENA.md#5-compute-budgeted-loop-the-ai-scientist-part))
 picks an axis that needs new computation, it dispatches a `run_experiment(hypothesis, axis)` call
 through the **MCP experiment interface**, whose backend is pluggable — **Boltz-2** (live), single-cell
 on a real atlas, or a DNA/RNA language model. A frontier-model computation on real data *is* the

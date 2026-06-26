@@ -75,17 +75,25 @@ final, CI-bearing board). This mirrors how AI Co-Scientist and LMArena converged
 Don't gather all evidence or run all matches up front. Spend the next unit of compute where it most
 changes the ranking — **Value of Information**:
 
+The decision the policy optimises is **one global thing — the best allocation of the remaining budget
+across the portfolio** (a budget-constrained sequential experimental design / POMDP), not any single
+pairwise rank. Actions are scored by **net Expected Value of Perfect Information** — `info value − cost`
+— so cheap lookups and expensive functional experiments compete on one yardstick. See
+[INFORMATION_MAXIMISATION.md](INFORMATION_MAXIMISATION.md) for why prioritisation *is* VoI.
+
 ```
 budget = B
-init each hypothesis's rating from cheap retrieved axes only
+init each hypothesis from cheap retrieved axes only
 while budget > 0:
-    a* = argmax_a  ExpectedInfoGain(a) / cost(a)     # a ∈ {compute an axis, run a match, refine a hypothesis}
-    if EIG(a*)/cost(a*) < τ: break                   # marginal info not worth it → STOP
-    execute(a*); budget -= cost(a*); update ratings
+    a* = argmax_a  netEVPI(a)            # a ∈ {compute an axis, run a match, run_experiment, mutate a hypothesis}
+                                         #   netEVPI = expected info value toward the budget decision − cost(a)
+    if netEVPI(a*) < 0: break            # nothing left worth its cost → STOP
+    execute(a*); budget -= cost(a*); re-rank
 ```
 
-Concretely: compute an expensive axis for a hypothesis **only if its score CI overlaps a rival's**
-(could flip the rank); run the next **match** on the pair nearest the decision boundary, not at random;
+Concretely: an expensive experiment fires **only when its result could change the budget allocation**
+(it won't, for a hypothesis that's clearly a leader or clearly out — so it's skipped, and the cost term
+makes that automatic); run the next **match** on the pair nearest the decision boundary, not at random;
 **stop** when the top-k fronts/ratings separate. This is the deliberate version of Co-Scientist's "Elo
 plateau," and it's what turns a static tournament into an adaptive scientist. (Full technique survey
 lives in the prior repo's `agentic-hypothesis-optimization.md`.)

@@ -80,7 +80,25 @@ Good prioritisation is **comparative and multi-axis**: you score every candidate
 (genetics, tractability, safety, novelty, chemical matter, competition/IP), then rank them — ideally
 with a written rationale a domain expert can audit.
 
-> This is exactly the step our project focuses on. See [DESIGN.md §3](DESIGN.md#3-methods-multi-axis-prioritisation).
+> This is exactly the step our project focuses on. See [DESIGN.md §3](DESIGN.md#3-methods-prioritisation).
+
+### Prioritisation vs. validation
+
+These are distinct but interlocking steps, and our system's value-of-information loop unifies the
+*mechanism* behind both:
+
+- **Prioritisation is the filter.** Hundreds of candidate genes/markers come out of sequencing; you
+  rank them to decide *which deserve time and budget*. Cheap, mostly computational/retrieval evidence.
+- **Validation is the go/no-go.** The top-ranked candidates undergo rigorous **functional** experiments
+  (chemical or genetic modulation, in vitro/in vivo) to confirm the target is real and druggable —
+  a *commit-or-kill* decision. Expensive, experimental.
+- **They inform each other.** Targets with strong functional validation rank higher; and the
+  prioritisation step is what flags *which* target is missing the key piece of evidence that would be
+  worth validating next.
+
+Our project treats both as one **value-of-information** process — spend the next (cheap or expensive)
+action where it most changes the decision — while respecting that the two differ in cost, evidence
+type, and stakes. See [INFORMATION_MAXIMISATION.md](INFORMATION_MAXIMISATION.md).
 
 ---
 
