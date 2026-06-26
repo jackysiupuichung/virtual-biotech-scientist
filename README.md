@@ -65,7 +65,7 @@ ranking. See [docs/ARENA.md](docs/ARENA.md).
 
 **What sets this apart:** see [docs/DIFFERENTIATION.md](docs/DIFFERENTIATION.md) — the loop closes onto
 **real computation** via an MCP `run_experiment` interface (Boltz-2 live; single-cell + DNA/RNA-LM
-pluggable), driven by a Value-of-Information selector. We rank → act → re-rank, closing the loop the
+registered stubs behind the same interface), driven by a Value-of-Information selector. We rank → act → re-rank, closing the loop the
 paper leaves open.
 
 **Suggested reading order:** [DRUG_DISCOVERY_PRIMER.md](docs/DRUG_DISCOVERY_PRIMER.md) (domain context)

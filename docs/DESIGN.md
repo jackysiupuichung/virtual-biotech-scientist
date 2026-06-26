@@ -35,7 +35,8 @@ CSO's narrative integration; see [ARENA.md](ARENA.md)).
 - **CSO agent (orchestrator)** — turns a scientific query into a briefing, a decomposition, and a
   routing plan; integrates division outputs via data-driven reasoning; states the final
   recommendation. Maintains a **traceable decision log** (every claim → the tool/evidence behind it).
-- **Scientist divisions** — each a specialist that answers a sub-question using ToolUniverse tools:
+- **Scientist divisions** — each a specialist that answers a sub-question using ToolUniverse tools.
+  Divisions are *evidence producers*: they populate the 5R axes (§3.1), they are not the axes themselves.
   - **Target ID** — genetic/causal support, disease-cell localisation (single-cell specificity,
     malignant-vs-stroma), functional dependency.
   - **Target Safety** — expression specificity, essentiality, known liabilities, off-target risk.
@@ -79,8 +80,8 @@ The divisions produce **evidence per axis** for each hypothesis; the arena turns
 The full method — the competing objectives, the multi-objective (Pareto + tournament) ranking, the
 match format, and the compute-budgeted loop — lives in **[ARENA.md](ARENA.md)**. The short version:
 
-- Each hypothesis gets a **card**: score + confidence per axis (genetics, disease-cell localisation,
-  tractability, safety, novelty, clinical precedent), each traceable to the division/tool behind it.
+- Each hypothesis gets a **card**: score + confidence per axis (the AZ 5R axes — Target, Tissue, Safety,
+  Patient, Commercial — plus cross-cutting Tractability; see §3.1), each traceable to the skill behind it.
 - Ranking is **multi-objective**, not a single collapsed score: **Pareto fronts** as the weight-free
   primary view, a **pairwise tournament** (Elo → Bradley–Terry) for a comparative leaderboard.
 - A **compute-budgeted loop** spends the next match/evidence call where it most changes the rank
@@ -89,6 +90,53 @@ match format, and the compute-budgeted loop — lives in **[ARENA.md](ARENA.md)*
 This is the delta from both prior systems: the paper and ToolUniverse assess each hypothesis **in
 isolation** (and ToolUniverse defers the final pick to a human); the arena makes them **compete** and
 produces a reproducible, auditable ranking.
+
+### 3.1 The axes — grounded in AZ 5R × Open Targets
+
+The card columns are not invented. They are the intersection of two validated frameworks:
+
+- **AstraZeneca 5R** supplies the *decision axes* — the dimensions a go/no-go must answer. The 5R
+  framework (right **Target**, **Tissue**, **Safety**, **Patient**, **Commercial**) took AZ from ~4% to
+  ~23% Phase-III success, so these are the criteria that demonstrably matter.
+- **Open Targets** supplies the *evidence structure* under those axes — its Precedence / Tractability /
+  Doability / Safety sections with concrete scored factors (genetic constraint LOEUF, mouse-KO severity,
+  DepMap essentiality, tractability per modality).
+
+So 5R names the columns; Open Targets (and our other skills) fill them:
+
+| Axis (5R) | Go/no-go question | Skills that populate it |
+| --- | --- | --- |
+| **Right Target** | Does modulating it cause the disease effect? | OT association, genetic constraint (LOEUF), TCGA somatic, GWAS |
+| **Right Tissue** | Is it where the disease is, and *not* elsewhere? | single-cell specificity (tau), malignant-vs-stroma, expression atlas |
+| **Right Safety** | Will hitting it harm normal biology? | DepMap essentiality, mouse-KO severity, OT safety liabilities, openFDA/FAERS |
+| **Right Patient** | Is there a stratum + biomarker where it works? | clinical-trial-finder, patient-stratum, biomarker evidence |
+| **Right Commercial** *(light)* | Crowded or whitespace? | literature / competitive landscape, clinical precedent |
+| **Tractability** *(cross-cutting, modality-gated)* | *Can* it be drugged with this modality? | OT tractability (SM/AB/PROTAC), structure |
+
+### 3.2 The card contract — every skill emits the same shape, with a cost tag
+
+This is the **keystone**: the arena and the VoI loop only work if every skill — cheap retrieval *and*
+expensive experiment — returns the same record so they are comparable. The contract:
+
+```
+{ value, axis, confidence, cost }     # emitted by EVERY skill, lookup or experiment
+```
+
+**Cost is a discrete tier**, not seconds or dollars — VoI's `argmax(netEVPI)` needs only the
+order-of-magnitude gap between a lookup and a Boltz-2 run, so finer precision is false precision (and
+wall-clock is noisy; tokens don't map onto GPU compute). Tiers, defined operationally:
+
+| Tier | Cost | What qualifies | Examples |
+| --- | --- | --- | --- |
+| **1** | ~1 | single API/DB call, sub-second, ~free | OT association/factors, TCGA, openFDA, clinical-trials |
+| **2** | ~10 | multi-call / LLM synthesis / data download | lit-synthesizer, cellxgene-fetch |
+| **3** | ~100 | real computation on real data (`run_experiment`) | single-cell tau, malignant-localisation, **Boltz-2** |
+
+The 1/10/100 spacing reflects genuine order-of-magnitude jumps in resource use, so it is principled, not
+hand-waved. Tier 3 can later split (Boltz-2 ≫ single-cell) *only if* it would change a VoI choice. This
+shared contract is what lets cheap and expensive skills compete on one yardstick (see
+[ARENA.md §5](ARENA.md#5-compute-budgeted-loop-the-ai-scientist-part)) — and it is the first thing the
+team should lock, before building any skill.
 
 ---
 

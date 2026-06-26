@@ -29,19 +29,14 @@ traceable to the division/tool that produced it.
 
 ## 2. The axes (objectives)
 
-Hypotheses are scored on multiple, **competing** objectives — these come from the scientist
-divisions (see [DESIGN.md](DESIGN.md)). No single number; that's the point of multi-objective.
+Hypotheses are scored on multiple, **competing** objectives — the **AZ 5R axes (Target, Tissue, Safety,
+Patient, Commercial) plus cross-cutting Tractability**. The taxonomy, the skills that populate each axis,
+and the per-skill cost tags are defined once in
+**[DESIGN.md §3.1–3.2](DESIGN.md#31-the-axes--grounded-in-az-5r--open-targets)** (the single source of
+truth — don't re-list them here). No single collapsed number; competing objectives are the whole point
+of the multi-objective ranking below.
 
-| Objective | Question | Division / evidence |
-| --- | --- | --- |
-| **Genetic / causal support** | Does genetics implicate the target? | Target ID (Open Targets associations) |
-| **Disease-cell localisation** | Is the antigen on the disease/malignant cells (not just stroma)? | Target ID (single-cell / specificity) |
-| **Tractability** | Can it be drugged with the chosen modality? | Modality (Open Targets tractability, structure) |
-| **Safety / off-target** | Expression specificity, essentiality, known liabilities? | Target Safety (OT factors, ADMET) |
-| **Novelty / differentiation** | Crowded space or whitespace? | Disease biology / literature |
-| **Clinical precedent** | Prior trials, modality precedent? | Clinical |
-
-> Axes are configurable per disease. Some are cheap (one API call); some are expensive (compute a
+> Some axes are cheap (one API call, cost tier 1); some are expensive (compute a
 > single-cell specificity score). This cost asymmetry drives the compute loop (§5).
 
 ## 3. Multi-objective ranking — a few options

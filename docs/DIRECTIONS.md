@@ -24,10 +24,10 @@ event" to "ambitious roadmap." The core deliverable is the [arena](ARENA.md); th
    Don't just rank a fixed slate — *mutate* losing hypotheses (swap modality, narrow the patient
    stratum) and re-enter them, keeping a **diverse** front (quality-diversity / MAP-Elites style)
    rather than collapsing to one idea.
-6. **Close the loop with experiments.** Add the experiment-design + readout step from
-   [DESIGN.md §4](DESIGN.md#4-closing-the-loop-with-experiments-future-direction): design the next
-   decisive test for the leading hypotheses, obtain a readout (simulated oracle / Boltz-2 / ADMET-AI
-   / projected dataset), feed it back, and re-rank.
+6. **Richer experiment design.** The core loop ([DESIGN.md §4](DESIGN.md#4-closing-the-loop-with-experiments))
+   already runs experiments and re-ranks. Extend it with active-learning experiment *design* — more
+   backends (ADMET-AI, projected datasets, a simulated oracle), and a Reviewer that drafts the *most
+   decisive* test (expected-information-gain) rather than the next obvious one.
 7. **Portfolio decisions under budget.** Given a fixed experiment budget, which *sequence* of tests
    de-risks the whole portfolio fastest — ranking as resource allocation, not a one-shot sort.
 
