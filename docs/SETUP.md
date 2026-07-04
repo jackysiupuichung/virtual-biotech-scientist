@@ -1,19 +1,23 @@
 # Setup — install & run from the get-go
 
 Two layers to stand up: **ToolUniverse** (the evidence/tool layer, pip + MCP) and
-**Claude Science** (the desktop workbench you run the agents inside). Neither is
-needed for the offline arena demo — but both are wired so a new contributor can go
-live immediately.
+**Claude Science** (the desktop workbench you run the agents inside). Both are wired
+so a new contributor can go live as soon as the application code lands.
+
+> **Repo status:** docs + scaffolding today — no application code (`arena/`,
+> `skills/`) has landed yet. This page sets up the environment so you can start
+> building; the runnable demos below arrive with the code.
 
 ## 0. Fast path (no keys)
 
 ```bash
 bash scripts/setup.sh            # venv + package + uv (for uvx); add --tools for ToolUniverse SDK
 . .venv/bin/activate
-python -m arena.run --demo                       # arena: Pareto fronts + Elo board
-python skills/virtual-biotech-cso/cso.py --demo  # spine: offline CSO loop
-python -m pytest arena/tests -q                  # 9 arena tests
+python -c "import scanpy, anndata, numpy, pandas; print('deps OK')"   # verify the env
 ```
+
+Once the code lands, the offline demos (arena Pareto/Elo board, CSO spine) and their
+tests run here with **no keys**.
 
 ## 1. ToolUniverse (evidence/tool layer)
 
@@ -52,8 +56,9 @@ disabled when unset (`NCBI_API_KEY`, `NVIDIA_API_KEY` for hosted Boltz-2,
 `ONCOKB_API_TOKEN`) — see [`.env.example`](../.env.example).
 
 **Boltz-2 for the arena:** ToolUniverse's Boltz-2 tool is the intended live backend
-behind `arena/experiment.py`'s `run_experiment` (registered but **stubbed** today).
-Wiring it is workstream **WS-E** — see [CLAUDE_SCIENCE_PACKAGING.md](CLAUDE_SCIENCE_PACKAGING.md).
+behind the arena's `run_experiment` interface (see
+[ARENA.md §5.1](ARENA.md#51-the-most-informative-action-may-be-an-experiment)). Wiring
+it is a planned workstream once the arena code lands.
 
 ## 2. Claude Science (the workbench)
 
@@ -70,31 +75,24 @@ configure Skills/Connectors in it.
 3. Download the app from <https://claude.com/product/claude-science> and sign in with
    your claude.ai account.
 
-**How this repo maps onto it** (packaging detail in
-[CLAUDE_SCIENCE_PACKAGING.md](CLAUDE_SCIENCE_PACKAGING.md)):
-- each `skills/*/SKILL.md` → a Claude Science **Skill** (near drop-in);
+**How this repo will map onto it** (once the code lands):
+- each planned `skills/*/SKILL.md` → a Claude Science **Skill** (near drop-in);
 - external databases → **Connectors** (Anthropic-curated *featured connectors*, plus
   local connectors that run on each member's machine — ToolUniverse's MCP server is one);
 - Boltz-2 / Evo 2 / OpenFold3 → **BioNeMo** models on **Modal** GPU;
 - the Scientific Reviewer → the built-in **reviewer agent**;
-- the arena's `RankResult` + decision cards → reproducible **artifacts**.
+- the arena's ranking result + decision cards → reproducible **artifacts**.
 
 **Funding:** the **AI for Science grant** (up to $30k credits + $2k Modal, deadline
-**2026-07-15**) is the way to get compute for the live Boltz-2 path — see
-[GRANT_APPLICATION.md](GRANT_APPLICATION.md).
+**2026-07-15**) is the intended way to get compute for the live Boltz-2 path.
 
 ## 3. What needs keys, at a glance
 
 | To run | Keys |
 | --- | --- |
-| `arena --demo`, `cso.py --demo`, arena tests | none |
+| Offline demos (arena, CSO spine) + tests, once code lands | none |
 | ToolUniverse public databases (OT, CELLxGENE, TCGA, openFDA, trials) | none |
 | Spine `--live` (LLM agents + arena judge) | one of `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `GEMINI_API_KEY` (or Claude Code CLI) |
 | Hosted Boltz-2 via ToolUniverse | `NVIDIA_API_KEY` (optional) |
 | Claude Science workbench | a paid claude.ai plan (app sign-in) |
 
-> **Removed sponsors:** the Tavily (literature search) and Prometheux (Vadalog
-> reasoning) integrations were removed — those sponsors are no longer part of the
-> activity. Some `--live` code paths in `harness.py` / `frontend/server.py` that called
-> them are intentionally left dangling for now; the offline demos and the arena are
-> unaffected.

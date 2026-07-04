@@ -1,12 +1,16 @@
 #!/usr/bin/env bash
 # setup.sh — one-shot get-go setup for Virtual Biotech Scientist.
 #
-# Installs the Python package + agent deps, installs `uv` (for the ToolUniverse
+# Installs the Python package + dev deps, installs `uv` (for the ToolUniverse
 # MCP server via `uvx`), and prints how to finish wiring ToolUniverse into Claude
 # Code and how to enable Claude Science. Safe to re-run.
 #
+# NOTE: this repo is currently docs + scaffolding — no application code has landed
+# yet. This installs the dependency set so you can start building. Runnable demos
+# (arena, CSO spine) arrive with the code.
+#
 # Usage:
-#   bash scripts/setup.sh            # core install (arena + spine + agents)
+#   bash scripts/setup.sh            # core install (deps + tooling)
 #   bash scripts/setup.sh --tools    # also pip-install ToolUniverse into the venv
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -23,9 +27,9 @@ fi
 . .venv/bin/activate
 python -m pip -q install --upgrade pip
 
-# 2. package + agent/dev extras (arena needs none of this; spine --live does)
-echo "==> installing virtual-biotech-scientist (.[agents,dev])"
-pip -q install -e '.[agents,dev]'
+# 2. package + dev extras (metadata-only wheel today; installs the dep set)
+echo "==> installing virtual-biotech-scientist (.[dev])"
+pip -q install -e '.[dev]'
 
 # 3. uv / uvx — used to launch the ToolUniverse MCP server (uvx tooluniverse)
 if ! command -v uvx >/dev/null 2>&1; then
@@ -46,11 +50,12 @@ cat <<'EOF'
 
 ==> Core setup complete.
 
-Verify (no keys needed):
+Verify the environment (no keys needed):
   . .venv/bin/activate
-  python -m arena.run --demo                       # arena: Pareto + Elo
-  python skills/virtual-biotech-cso/cso.py --demo  # spine: offline CSO loop
-  python -m pytest arena/tests -q                  # arena tests
+  python -c "import scanpy, anndata, numpy, pandas; print('deps OK')"
+
+  # Runnable demos (arena, CSO spine) and their tests arrive with the code —
+  # this repo is docs + scaffolding today.
 
 Wire ToolUniverse into Claude Code (the evidence layer):
   claude plugin marketplace add mims-harvard/ToolUniverse
