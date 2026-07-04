@@ -48,16 +48,16 @@ them all blows the context window. Expose a subset with compact mode / tool filt
 tooluniverse-smcp --compact-mode
 tooluniverse-smcp --include-tools OpenTargets_get_associated_diseases,Boltz2_predict_binding_affinity
 ```
-This matches the design's guidance in [DESIGN.md §5](DESIGN.md) — expose a handful of
+This matches the design's guidance in [DESIGN.md §5](../design/DESIGN.md) — expose a handful of
 discovery tools, not the full 580+/1000+ catalogue.
 
 **Keys:** none required for the public databases. A few tools are key-gated and stay
 disabled when unset (`NCBI_API_KEY`, `NVIDIA_API_KEY` for hosted Boltz-2,
-`ONCOKB_API_TOKEN`) — see [`.env.example`](../.env.example).
+`ONCOKB_API_TOKEN`) — see [`.env.example`](../../.env.example).
 
 **Boltz-2 for the arena:** ToolUniverse's Boltz-2 tool is the intended live backend
 behind the arena's `run_experiment` interface (see
-[ARENA.md §5.1](ARENA.md#51-the-most-informative-action-may-be-an-experiment)). Wiring
+[ARENA.md §5.1](../design/ARENA.md#51-the-most-informative-action-may-be-an-experiment)). Wiring
 it is a planned workstream once the arena code lands.
 
 ## 2. Claude Science (the workbench)

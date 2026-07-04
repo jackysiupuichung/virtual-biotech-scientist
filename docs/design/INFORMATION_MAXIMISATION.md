@@ -80,7 +80,7 @@ functional experiments fire *only* on candidates where they'd change the budget 
 - It matches the Genentech quote exactly: *"each experimental cycle is maximally informative…
   prioritising the synthesis and testing of molecules that offer the highest learning gain."*
 - It respects the field's **prioritisation-vs-validation distinction** (see
-  [DRUG_DISCOVERY_PRIMER.md](DRUG_DISCOVERY_PRIMER.md#prioritisation-vs-validation)) — different cost,
+  [DRUG_DISCOVERY_PRIMER.md](../background/DRUG_DISCOVERY_PRIMER.md#prioritisation-vs-validation)) — different cost,
   evidence type, and decision stakes — while unifying the *mechanism*.
 
 ## One-liner

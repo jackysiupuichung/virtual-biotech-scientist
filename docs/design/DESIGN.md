@@ -1,7 +1,7 @@
 # Design: Virtual Biotech Scientist
 
 This document describes the architecture, the agentic workflow, and the methods. It assumes
-the framing in the [README](../README.md): we build a **closed-loop** AI scientist on top of
+the framing in the [README](../../README.md): we build a **closed-loop** AI scientist on top of
 [ToolUniverse](https://github.com/mims-harvard/ToolUniverse) as the evidence/prediction layer.
 
 ---
@@ -148,7 +148,7 @@ picks an axis that needs new computation, it dispatches a `run_experiment(hypoth
 through the **MCP experiment interface**, whose backend is pluggable — **Boltz-2** (live), single-cell
 on a real atlas, or a DNA/RNA language model. A frontier-model computation on real data *is* the
 experiment; its result updates the card and re-ranks. This is the project's headline — see
-[DIFFERENTIATION.md](DIFFERENTIATION.md).
+[DIFFERENTIATION.md](../background/DIFFERENTIATION.md).
 
 ---
 
@@ -161,5 +161,5 @@ experiment; its result updates the card and re-ranks. This is the project's head
 - We treat ToolUniverse purely as the **evidence/prediction layer** — our agents, scorer, loop,
   and readout adapters are the new surface area.
 
-See [REFERENCES.md](REFERENCES.md) for each tool/model and its citation, and
-[DIRECTIONS.md](DIRECTIONS.md) for where this can go.
+See [REFERENCES.md](../background/REFERENCES.md) for each tool/model and its citation, and
+[DIRECTIONS.md](../background/DIRECTIONS.md) for where this can go.
