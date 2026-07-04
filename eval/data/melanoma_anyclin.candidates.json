@@ -1,0 +1,550 @@
+{
+  "meta": {
+    "disease_name": "melanoma_anyclin",
+    "efo_id": "MONDO_0005012",
+    "candidate_pool_size": 89,
+    "candidate_filter": "hasHighQualityChemicalProbes",
+    "association_size_scanned": 500,
+    "ground_truth": "OpenTargets drugAndClinicalCandidates (drug-in-clinic -> MoA target)",
+    "positive_threshold_phase": "PRECLINICAL",
+    "n_positives": 16,
+    "positive_rate": 0.1798,
+    "note": "Snapshot; retrospective clinical-phase ground truth. Not future prediction. Candidate filter mirrors Adaszewski & Schindler; GT source differs (OT, not curated list)."
+  },
+  "candidates": [
+    {
+      "ensembl_id": "ENSG00000157764",
+      "symbol": "BRAF",
+      "ot_score": 0.700695,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000169032",
+      "symbol": "MAP2K1",
+      "ot_score": 0.68289,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000126934",
+      "symbol": "MAP2K2",
+      "ot_score": 0.65814,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000149311",
+      "symbol": "ATM",
+      "ot_score": 0.617275,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000135446",
+      "symbol": "CDK4",
+      "ot_score": 0.610742,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000128052",
+      "symbol": "KDR",
+      "ot_score": 0.573645,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000105976",
+      "symbol": "MET",
+      "ot_score": 0.566958,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000142208",
+      "symbol": "AKT1",
+      "ot_score": 0.565695,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000141736",
+      "symbol": "ERBB2",
+      "ot_score": 0.561683,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000164362",
+      "symbol": "TERT",
+      "ot_score": 0.555196,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000181555",
+      "symbol": "SETD2",
+      "ot_score": 0.55404,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000198793",
+      "symbol": "MTOR",
+      "ot_score": 0.550372,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000105810",
+      "symbol": "CDK6",
+      "ot_score": 0.548934,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000127616",
+      "symbol": "SMARCA4",
+      "ot_score": 0.547397,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000113721",
+      "symbol": "PDGFRB",
+      "ot_score": 0.546214,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000198400",
+      "symbol": "NTRK1",
+      "ot_score": 0.546126,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000066468",
+      "symbol": "FGFR2",
+      "ot_score": 0.545428,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000183454",
+      "symbol": "GRIN2A",
+      "ot_score": 0.545295,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000175054",
+      "symbol": "ATR",
+      "ot_score": 0.544202,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000077782",
+      "symbol": "FGFR1",
+      "ot_score": 0.544118,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000083168",
+      "symbol": "KAT6A",
+      "ot_score": 0.542922,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000100393",
+      "symbol": "EP300",
+      "ot_score": 0.542675,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000120217",
+      "symbol": "CD274",
+      "ot_score": 0.542368,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000169083",
+      "symbol": "AR",
+      "ot_score": 0.542185,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000160867",
+      "symbol": "FGFR4",
+      "ot_score": 0.540905,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000105221",
+      "symbol": "AKT2",
+      "ot_score": 0.538894,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000165025",
+      "symbol": "SYK",
+      "ot_score": 0.538149,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000148053",
+      "symbol": "NTRK2",
+      "ot_score": 0.533944,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000104365",
+      "symbol": "IKBKB",
+      "ot_score": 0.531451,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000179295",
+      "symbol": "PTPN11",
+      "ot_score": 0.53064,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000135679",
+      "symbol": "MDM2",
+      "ot_score": 0.530111,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000167258",
+      "symbol": "CDK12",
+      "ot_score": 0.530089,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000051341",
+      "symbol": "POLQ",
+      "ot_score": 0.529254,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000091831",
+      "symbol": "ESR1",
+      "ot_score": 0.522839,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000162733",
+      "symbol": "DDR2",
+      "ot_score": 0.518505,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000140538",
+      "symbol": "NTRK3",
+      "ot_score": 0.508487,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000182866",
+      "symbol": "LCK",
+      "ot_score": 0.507181,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000005339",
+      "symbol": "CREBBP",
+      "ot_score": 0.506709,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000135503",
+      "symbol": "ACVR1B",
+      "ot_score": 0.504323,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000163939",
+      "symbol": "PBRM1",
+      "ot_score": 0.503609,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000156650",
+      "symbol": "KAT6B",
+      "ot_score": 0.499523,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000065559",
+      "symbol": "MAP2K4",
+      "ot_score": 0.499523,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000183765",
+      "symbol": "CHEK2",
+      "ot_score": 0.496645,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000128602",
+      "symbol": "SMO",
+      "ot_score": 0.496572,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000138413",
+      "symbol": "IDH1",
+      "ot_score": 0.495538,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000141027",
+      "symbol": "NCOR1",
+      "ot_score": 0.49439,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000169925",
+      "symbol": "BRD3",
+      "ot_score": 0.489539,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000165392",
+      "symbol": "WRN",
+      "ot_score": 0.486998,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000121879",
+      "symbol": "PIK3CA",
+      "ot_score": 0.483208,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000010671",
+      "symbol": "BTK",
+      "ot_score": 0.478349,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000026103",
+      "symbol": "FAS",
+      "ot_score": 0.472056,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000141867",
+      "symbol": "BRD4",
+      "ot_score": 0.471189,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000162434",
+      "symbol": "JAK1",
+      "ot_score": 0.458225,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000096968",
+      "symbol": "JAK2",
+      "ot_score": 0.457129,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000146648",
+      "symbol": "EGFR",
+      "ot_score": 0.438806,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000122025",
+      "symbol": "FLT3",
+      "ot_score": 0.434087,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000165731",
+      "symbol": "RET",
+      "ot_score": 0.433795,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000097007",
+      "symbol": "ABL1",
+      "ot_score": 0.429041,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000171094",
+      "symbol": "ALK",
+      "ot_score": 0.427876,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000101213",
+      "symbol": "PTK6",
+      "ot_score": 0.427204,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000106462",
+      "symbol": "EZH2",
+      "ot_score": 0.420215,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000168610",
+      "symbol": "STAT3",
+      "ot_score": 0.419453,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000105639",
+      "symbol": "JAK3",
+      "ot_score": 0.416368,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000133703",
+      "symbol": "KRAS",
+      "ot_score": 0.416105,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000163131",
+      "symbol": "CTSS",
+      "ot_score": 0.416045,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000143799",
+      "symbol": "PARP1",
+      "ot_score": 0.412569,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000051382",
+      "symbol": "PIK3CB",
+      "ot_score": 0.411916,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000147050",
+      "symbol": "KDM6A",
+      "ot_score": 0.408606,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000079999",
+      "symbol": "KEAP1",
+      "ot_score": 0.407631,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000109685",
+      "symbol": "NSD2",
+      "ot_score": 0.407128,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000068078",
+      "symbol": "FGFR3",
+      "ot_score": 0.406887,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000182054",
+      "symbol": "IDH2",
+      "ot_score": 0.406771,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000113916",
+      "symbol": "BCL6",
+      "ot_score": 0.40506,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000117020",
+      "symbol": "AKT3",
+      "ot_score": 0.404148,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000132170",
+      "symbol": "PPARG",
+      "ot_score": 0.403058,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000115904",
+      "symbol": "SOS1",
+      "ot_score": 0.402365,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000100030",
+      "symbol": "MAPK1",
+      "ot_score": 0.401701,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000134086",
+      "symbol": "VHL",
+      "ot_score": 0.394603,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000147548",
+      "symbol": "NSD3",
+      "ot_score": 0.394603,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000122779",
+      "symbol": "TRIM24",
+      "ot_score": 0.394603,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000170836",
+      "symbol": "PPM1D",
+      "ot_score": 0.393911,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000115170",
+      "symbol": "ACVR1",
+      "ot_score": 0.385954,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000172175",
+      "symbol": "MALT1",
+      "ot_score": 0.378434,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000168959",
+      "symbol": "GRM5",
+      "ot_score": 0.376789,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000197122",
+      "symbol": "SRC",
+      "ot_score": 0.372817,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000171791",
+      "symbol": "BCL2",
+      "ot_score": 0.371309,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000116016",
+      "symbol": "EPAS1",
+      "ot_score": 0.368094,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000137193",
+      "symbol": "PIM1",
+      "ot_score": 0.356573,
+      "high_quality_probe": true
+    },
+    {
+      "ensembl_id": "ENSG00000186350",
+      "symbol": "RXRA",
+      "ot_score": 0.34611,
+      "high_quality_probe": true
+    }
+  ]
+}
