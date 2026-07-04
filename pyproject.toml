@@ -21,6 +21,25 @@ dependencies = [
 tools = [
     "tooluniverse>=1.0",
 ]
+# Live multi-agent loop: LLM backends for the CSO/reviewer/judge roles (vbs/runners.py).
+# Optional so the arena, VoI selector, and offline --demo stay dependency-free.
+agents = [
+    "anthropic>=0.40",
+    "openai>=1.40",
+]
+# Optional hosted span UI for the harness trace (vbs/tracing.py). The in-tree
+# trace.jsonl needs nothing; this only enables the Langfuse mirror (SDK v4).
+tracing = [
+    "langfuse>=4.0",
+]
+# Local stdio MCP client to the ToolUniverse server (vbs/tooluniverse/client.py).
+mcp = [
+    "mcp>=1.2",
+]
+# Streamlit leaderboard (ui/leaderboard.py): Elo animation + Pareto view + provenance.
+ui = [
+    "streamlit>=1.36",
+]
 dev = [
     "pytest>=8.0",
     "ruff>=0.6",
@@ -30,11 +49,10 @@ dev = [
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-# No importable packages yet — skills are handled by ToolUniverse / Claude Science,
-# and the arena is being rebuilt. Ship a metadata-only wheel so `pip install -e .`
-# still installs the dependency set. Re-add `packages = [...]` when code lands.
+# The framework spine now lives in the `vbs` package; the migrated single-cell
+# skill stays under `skills/`. ToolUniverse remains the external tool layer.
 [tool.hatch.build.targets.wheel]
-bypass-selection = true
+packages = ["vbs"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["tests", "skills"]

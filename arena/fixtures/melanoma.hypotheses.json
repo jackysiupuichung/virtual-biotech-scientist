@@ -1,0 +1,2225 @@
+{
+  "meta": {
+    "disease": "cutaneous melanoma",
+    "efo_id": "MONDO_0005012",
+    "n_hypotheses": 15,
+    "n_positive": 3,
+    "positive_ratio": 0.2,
+    "axes": [
+      "right_target",
+      "right_tissue",
+      "right_safety",
+      "right_patient",
+      "right_commercial",
+      "tractability"
+    ],
+    "card_contract": "per-axis {value[0,1], confidence, cost, direction, strength, data_origin, finding, interpretation, source}",
+    "data_origin_legend": {
+      "opentargets": "real OT field",
+      "hybrid": "real OT + synthesised judgment",
+      "synthetic": "not available in OT; placeholder prior (flag for VoI/run_experiment)"
+    },
+    "note": "Descriptive report-style cards resembling a Virtual-Biotech division dossier. Real where OT reaches; synthetic axes explicitly flagged. No matches faked \u2014 the arena produces matches from these cards."
+  },
+  "hypotheses": [
+    {
+      "id": "H1",
+      "target": {
+        "symbol": "BRAF",
+        "ensembl_id": "ENSG00000157764"
+      },
+      "disease": {
+        "name": "cutaneous melanoma",
+        "efo_id": "MONDO_0005012"
+      },
+      "modality": "small_molecule",
+      "narrative": {
+        "target_overview": "BRAF \u2014 B-Raf proto-oncogene, serine/threonine kinase. Protein kinase involved in the transduction of mitogenic signals from the cell membrane to the nucleus (Probable). Phosphorylates MAP2K1, and thereby activates the MAP kinase signal transduction pathway (PubMed:21441910,",
+        "pathways": [
+          "Gain-of-function MRAS complexes activate RAF signaling",
+          "Signalling to p38 via RIT and RIN",
+          "Negative feedback regulation of MAPK pathway",
+          "Frs2-mediated activation",
+          "SHOC2 M1731 mutant abolishes MRAS complex function"
+        ],
+        "liabilities": [
+          "1 curated safety liability(ies) (heart disease) and 77 distinct mouse-knockout phenotypes on record. Representative mouse-KO phenotypes: abnormal parietal bone morphology, decreased white adipose tissue amount, abnormal vascular endothelial cell morphology."
+        ],
+        "evidence_gaps": [
+          "Single-cell tissue specificity (tau) and malignant-vs-stromal fraction are NOT available from Open Targets. Value shown is a designed prior (moderately specific): mutant-BRAF melanoma is the definitional driver context."
+        ],
+        "proposed_experiments": [
+          {
+            "experiment": "single-cell tau + malignant-fraction profiling",
+            "axis": "right_tissue",
+            "cost_tier": 3,
+            "rationale": "resolves the only unmeasured axis; likely the highest-VoI action"
+          }
+        ]
+      },
+      "axes": {
+        "right_target": {
+          "value": 0.701,
+          "confidence": 0.9,
+          "cost": 1,
+          "direction": "supports",
+          "strength": "strong",
+          "data_origin": "opentargets",
+          "finding": "Open Targets overall disease association with melanoma = 0.701 (aggregating genetic, somatic, literature and known-drug evidence). Loss-of-function constraint LOEUF (o/e)=0.15, in the constrained tail \u2014 the gene is intolerant to LoF, which raises both a mechanistic causality prior and an on-target-toxicity flag.",
+          "interpretation": "Strong, multi-modal causal support: BRAF is a well-credentialled melanoma target and the association is unlikely to be literature-only noise. Sits on Gain-of-function MRAS complexes activate RAF signaling, Signalling to p38 via RIT and RIN.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "associationScore",
+              "geneticConstraint",
+              "pathways"
+            ]
+          }
+        },
+        "right_tissue": {
+          "value": 0.72,
+          "confidence": 0.4,
+          "cost": 3,
+          "direction": "supports",
+          "strength": "moderate",
+          "data_origin": "synthetic",
+          "finding": "Single-cell tissue specificity (tau) and malignant-vs-stromal fraction are NOT available from Open Targets. Value shown is a designed prior (moderately specific): mutant-BRAF melanoma is the definitional driver context.",
+          "interpretation": "UNMEASURED axis \u2014 this is the highest-value action for the VoI loop to resolve via a tier-3 run_experiment (single-cell profiling). The prior says BRAF is moderately specific; if it holds, tissue specificity is neutral \u2014 unlikely to decide the ranking alone. Until measured, treat this value as a hypothesis, not evidence.",
+          "source": {
+            "db": null,
+            "synthetic_parts": [
+              "tau_specificity",
+              "malignant_fraction"
+            ],
+            "designed_tradeoff": true
+          }
+        },
+        "right_safety": {
+          "value": 0.512,
+          "confidence": 0.6,
+          "cost": 1,
+          "direction": "neutral",
+          "strength": "moderate",
+          "data_origin": "opentargets",
+          "finding": "1 curated safety liability(ies) (heart disease) and 77 distinct mouse-knockout phenotypes on record. Representative mouse-KO phenotypes: abnormal parietal bone morphology, decreased white adipose tissue amount, abnormal vascular endothelial cell morphology.",
+          "interpretation": "Safety is a headwind: the breadth of knockout phenotypes (77) and the curated liability signal point to a broad developmental/essential role, so systemic inhibition risks on-target toxicity in normal tissue \u2014 the therapeutic window is narrow and must be bought back with tumour-selective delivery or dosing.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "safetyLiabilities",
+              "mousePhenotypes"
+            ]
+          }
+        },
+        "right_patient": {
+          "value": 0.85,
+          "confidence": 0.7,
+          "cost": 1,
+          "direction": "supports",
+          "strength": "strong",
+          "data_origin": "hybrid",
+          "finding": "Real clinical precedent: a drug against BRAF has reached PHASE_3 in melanoma (from Open Targets drugAndClinicalCandidates), so a treatable patient population is already defined. The specific biomarker stratum is a synthetic placeholder.",
+          "interpretation": "Patient axis is a strength: an existing PHASE_3 programme means the stratification and endpoint risk is largely retired \u2014 the open question is only which biomarker sub-population to enrich, not whether one exists.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "drugAndClinicalCandidates"
+            ],
+            "synthetic_parts": [
+              "biomarker_stratum"
+            ]
+          }
+        },
+        "right_commercial": {
+          "value": 0.3,
+          "confidence": 0.5,
+          "cost": 1,
+          "direction": "neutral",
+          "strength": "weak",
+          "data_origin": "hybrid",
+          "finding": "Competitive intensity is approximated from BRAF's prominence as a melanoma target (high-association targets tend to be crowded); the explicit competitor count and whitespace read are synthesised.",
+          "interpretation": "Crowded field: BRAF is a well-trodden target, so commercial differentiation must come from a novel modality, payload, or indication niche rather than the target itself.",
+          "source": {
+            "db": "OpenTargets",
+            "synthetic_parts": [
+              "competitor_count",
+              "whitespace"
+            ]
+          }
+        },
+        "tractability": {
+          "value": 0.9,
+          "confidence": 0.9,
+          "cost": 1,
+          "direction": "supports",
+          "strength": "strong",
+          "data_origin": "opentargets",
+          "finding": "Open Targets SM-modality tractability buckets satisfied: Approved Drug, Structure with Ligand, High-Quality Ligand, High-Quality Pocket, Druggable Family.",
+          "interpretation": "De-risked modality: BRAF already has an approved small_molecule drug, so chemistry/biologics feasibility is proven and the programme starts from precedent rather than discovery risk.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "tractability"
+            ]
+          }
+        }
+      },
+      "label": {
+        "positive": true,
+        "max_clinical_phase": "PHASE_3"
+      }
+    },
+    {
+      "id": "H2",
+      "target": {
+        "symbol": "MAP2K1",
+        "ensembl_id": "ENSG00000169032"
+      },
+      "disease": {
+        "name": "cutaneous melanoma",
+        "efo_id": "MONDO_0005012"
+      },
+      "modality": "small_molecule",
+      "narrative": {
+        "target_overview": "MAP2K1 \u2014 mitogen-activated protein kinase kinase 1. Dual specificity protein kinase which acts as an essential component of the MAP kinase signal transduction pathway. Binding of extracellular ligands such as growth factors, cytokines and hormones to their cell-surface re",
+        "pathways": [
+          "Signaling by MAP2K mutants",
+          "Negative feedback regulation of MAPK pathway",
+          "Frs2-mediated activation",
+          "MAPK3 (ERK1) activation",
+          "Signaling by BRAF and RAF1 fusions"
+        ],
+        "liabilities": [
+          "0 curated safety liability(ies) and 24 distinct mouse-knockout phenotypes on record. Representative mouse-KO phenotypes: abnormal trophoblast layer morphology, increased cranium length, increased astrocyte number."
+        ],
+        "evidence_gaps": [
+          "Single-cell tissue specificity (tau) and malignant-vs-stromal fraction are NOT available from Open Targets. Value shown is a designed prior (moderately specific): downstream of BRAF; specificity inherited from pathway context."
+        ],
+        "proposed_experiments": [
+          {
+            "experiment": "single-cell tau + malignant-fraction profiling",
+            "axis": "right_tissue",
+            "cost_tier": 3,
+            "rationale": "resolves the only unmeasured axis; likely the highest-VoI action"
+          }
+        ]
+      },
+      "axes": {
+        "right_target": {
+          "value": 0.683,
+          "confidence": 0.9,
+          "cost": 1,
+          "direction": "supports",
+          "strength": "strong",
+          "data_origin": "opentargets",
+          "finding": "Open Targets overall disease association with melanoma = 0.683 (aggregating genetic, somatic, literature and known-drug evidence). Loss-of-function constraint LOEUF (o/e)=0.32, in the constrained tail \u2014 the gene is intolerant to LoF, which raises both a mechanistic causality prior and an on-target-toxicity flag.",
+          "interpretation": "Strong, multi-modal causal support: MAP2K1 is a well-credentialled melanoma target and the association is unlikely to be literature-only noise. Sits on Signaling by MAP2K mutants, Negative feedback regulation of MAPK pathway.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "associationScore",
+              "geneticConstraint",
+              "pathways"
+            ]
+          }
+        },
+        "right_tissue": {
+          "value": 0.6,
+          "confidence": 0.4,
+          "cost": 3,
+          "direction": "supports",
+          "strength": "moderate",
+          "data_origin": "synthetic",
+          "finding": "Single-cell tissue specificity (tau) and malignant-vs-stromal fraction are NOT available from Open Targets. Value shown is a designed prior (moderately specific): downstream of BRAF; specificity inherited from pathway context.",
+          "interpretation": "UNMEASURED axis \u2014 this is the highest-value action for the VoI loop to resolve via a tier-3 run_experiment (single-cell profiling). The prior says MAP2K1 is moderately specific; if it holds, tissue specificity is neutral \u2014 unlikely to decide the ranking alone. Until measured, treat this value as a hypothesis, not evidence.",
+          "source": {
+            "db": null,
+            "synthetic_parts": [
+              "tau_specificity",
+              "malignant_fraction"
+            ],
+            "designed_tradeoff": true
+          }
+        },
+        "right_safety": {
+          "value": 0.9,
+          "confidence": 0.6,
+          "cost": 1,
+          "direction": "neutral",
+          "strength": "moderate",
+          "data_origin": "opentargets",
+          "finding": "0 curated safety liability(ies) and 24 distinct mouse-knockout phenotypes on record. Representative mouse-KO phenotypes: abnormal trophoblast layer morphology, increased cranium length, increased astrocyte number.",
+          "interpretation": "No dominant safety liability surfaced and the knockout footprint is modest, so the safety window is plausibly open \u2014 this axis is a relative strength for MAP2K1.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "safetyLiabilities",
+              "mousePhenotypes"
+            ]
+          }
+        },
+        "right_patient": {
+          "value": 0.85,
+          "confidence": 0.7,
+          "cost": 1,
+          "direction": "supports",
+          "strength": "strong",
+          "data_origin": "hybrid",
+          "finding": "Real clinical precedent: a drug against MAP2K1 has reached PHASE_3 in melanoma (from Open Targets drugAndClinicalCandidates), so a treatable patient population is already defined. The specific biomarker stratum is a synthetic placeholder.",
+          "interpretation": "Patient axis is a strength: an existing PHASE_3 programme means the stratification and endpoint risk is largely retired \u2014 the open question is only which biomarker sub-population to enrich, not whether one exists.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "drugAndClinicalCandidates"
+            ],
+            "synthetic_parts": [
+              "biomarker_stratum"
+            ]
+          }
+        },
+        "right_commercial": {
+          "value": 0.3,
+          "confidence": 0.5,
+          "cost": 1,
+          "direction": "neutral",
+          "strength": "weak",
+          "data_origin": "hybrid",
+          "finding": "Competitive intensity is approximated from MAP2K1's prominence as a melanoma target (high-association targets tend to be crowded); the explicit competitor count and whitespace read are synthesised.",
+          "interpretation": "Crowded field: MAP2K1 is a well-trodden target, so commercial differentiation must come from a novel modality, payload, or indication niche rather than the target itself.",
+          "source": {
+            "db": "OpenTargets",
+            "synthetic_parts": [
+              "competitor_count",
+              "whitespace"
+            ]
+          }
+        },
+        "tractability": {
+          "value": 0.9,
+          "confidence": 0.9,
+          "cost": 1,
+          "direction": "supports",
+          "strength": "strong",
+          "data_origin": "opentargets",
+          "finding": "Open Targets SM-modality tractability buckets satisfied: Approved Drug, Structure with Ligand, High-Quality Ligand, High-Quality Pocket, Druggable Family.",
+          "interpretation": "De-risked modality: MAP2K1 already has an approved small_molecule drug, so chemistry/biologics feasibility is proven and the programme starts from precedent rather than discovery risk.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "tractability"
+            ]
+          }
+        }
+      },
+      "label": {
+        "positive": true,
+        "max_clinical_phase": "PHASE_3"
+      }
+    },
+    {
+      "id": "H3",
+      "target": {
+        "symbol": "MAP2K2",
+        "ensembl_id": "ENSG00000126934"
+      },
+      "disease": {
+        "name": "cutaneous melanoma",
+        "efo_id": "MONDO_0005012"
+      },
+      "modality": "small_molecule",
+      "narrative": {
+        "target_overview": "MAP2K2 \u2014 mitogen-activated protein kinase kinase 2. Catalyzes the concomitant phosphorylation of a threonine and a tyrosine residue in a Thr-Glu-Tyr sequence located in MAP kinases. Activates the ERK1 and ERK2 MAP kinases (By similarity). Activates BRAF in a KSR1 or KSR2-",
+        "pathways": [
+          "Signaling by MAP2K mutants",
+          "Negative feedback regulation of MAPK pathway",
+          "Frs2-mediated activation",
+          "Signaling by BRAF and RAF1 fusions",
+          "Signaling by RAF1 mutants"
+        ],
+        "liabilities": [
+          "0 curated safety liability(ies) and 4 distinct mouse-knockout phenotypes on record. Representative mouse-KO phenotypes: no abnormal phenotype detected, abnormal gait, increased mean corpuscular volume."
+        ],
+        "evidence_gaps": [
+          "Single-cell tissue specificity (tau) and malignant-vs-stromal fraction are NOT available from Open Targets. Value shown is a designed prior (moderately specific): MEK2 \u2014 pathway-contextual specificity."
+        ],
+        "proposed_experiments": [
+          {
+            "experiment": "single-cell tau + malignant-fraction profiling",
+            "axis": "right_tissue",
+            "cost_tier": 3,
+            "rationale": "resolves the only unmeasured axis; likely the highest-VoI action"
+          }
+        ]
+      },
+      "axes": {
+        "right_target": {
+          "value": 0.658,
+          "confidence": 0.9,
+          "cost": 1,
+          "direction": "supports",
+          "strength": "strong",
+          "data_origin": "opentargets",
+          "finding": "Open Targets overall disease association with melanoma = 0.658 (aggregating genetic, somatic, literature and known-drug evidence). Loss-of-function constraint LOEUF (o/e)=0.61, in the tolerant range \u2014 LoF is well tolerated in population data, weakly arguing against essential-gene toxicity.",
+          "interpretation": "Strong, multi-modal causal support: MAP2K2 is a well-credentialled melanoma target and the association is unlikely to be literature-only noise. Sits on Signaling by MAP2K mutants, Negative feedback regulation of MAPK pathway.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "associationScore",
+              "geneticConstraint",
+              "pathways"
+            ]
+          }
+        },
+        "right_tissue": {
+          "value": 0.58,
+          "confidence": 0.4,
+          "cost": 3,
+          "direction": "neutral",
+          "strength": "moderate",
+          "data_origin": "synthetic",
+          "finding": "Single-cell tissue specificity (tau) and malignant-vs-stromal fraction are NOT available from Open Targets. Value shown is a designed prior (moderately specific): MEK2 \u2014 pathway-contextual specificity.",
+          "interpretation": "UNMEASURED axis \u2014 this is the highest-value action for the VoI loop to resolve via a tier-3 run_experiment (single-cell profiling). The prior says MAP2K2 is moderately specific; if it holds, tissue specificity is neutral \u2014 unlikely to decide the ranking alone. Until measured, treat this value as a hypothesis, not evidence.",
+          "source": {
+            "db": null,
+            "synthetic_parts": [
+              "tau_specificity",
+              "malignant_fraction"
+            ],
+            "designed_tradeoff": true
+          }
+        },
+        "right_safety": {
+          "value": 0.983,
+          "confidence": 0.6,
+          "cost": 1,
+          "direction": "neutral",
+          "strength": "moderate",
+          "data_origin": "opentargets",
+          "finding": "0 curated safety liability(ies) and 4 distinct mouse-knockout phenotypes on record. Representative mouse-KO phenotypes: no abnormal phenotype detected, abnormal gait, increased mean corpuscular volume.",
+          "interpretation": "No dominant safety liability surfaced and the knockout footprint is modest, so the safety window is plausibly open \u2014 this axis is a relative strength for MAP2K2.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "safetyLiabilities",
+              "mousePhenotypes"
+            ]
+          }
+        },
+        "right_patient": {
+          "value": 0.85,
+          "confidence": 0.7,
+          "cost": 1,
+          "direction": "supports",
+          "strength": "strong",
+          "data_origin": "hybrid",
+          "finding": "Real clinical precedent: a drug against MAP2K2 has reached PHASE_3 in melanoma (from Open Targets drugAndClinicalCandidates), so a treatable patient population is already defined. The specific biomarker stratum is a synthetic placeholder.",
+          "interpretation": "Patient axis is a strength: an existing PHASE_3 programme means the stratification and endpoint risk is largely retired \u2014 the open question is only which biomarker sub-population to enrich, not whether one exists.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "drugAndClinicalCandidates"
+            ],
+            "synthetic_parts": [
+              "biomarker_stratum"
+            ]
+          }
+        },
+        "right_commercial": {
+          "value": 0.3,
+          "confidence": 0.5,
+          "cost": 1,
+          "direction": "neutral",
+          "strength": "weak",
+          "data_origin": "hybrid",
+          "finding": "Competitive intensity is approximated from MAP2K2's prominence as a melanoma target (high-association targets tend to be crowded); the explicit competitor count and whitespace read are synthesised.",
+          "interpretation": "Crowded field: MAP2K2 is a well-trodden target, so commercial differentiation must come from a novel modality, payload, or indication niche rather than the target itself.",
+          "source": {
+            "db": "OpenTargets",
+            "synthetic_parts": [
+              "competitor_count",
+              "whitespace"
+            ]
+          }
+        },
+        "tractability": {
+          "value": 0.9,
+          "confidence": 0.9,
+          "cost": 1,
+          "direction": "supports",
+          "strength": "strong",
+          "data_origin": "opentargets",
+          "finding": "Open Targets SM-modality tractability buckets satisfied: Approved Drug, Structure with Ligand, High-Quality Ligand, High-Quality Pocket, Druggable Family.",
+          "interpretation": "De-risked modality: MAP2K2 already has an approved small_molecule drug, so chemistry/biologics feasibility is proven and the programme starts from precedent rather than discovery risk.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "tractability"
+            ]
+          }
+        }
+      },
+      "label": {
+        "positive": true,
+        "max_clinical_phase": "PHASE_3"
+      }
+    },
+    {
+      "id": "H4",
+      "target": {
+        "symbol": "ATM",
+        "ensembl_id": "ENSG00000149311"
+      },
+      "disease": {
+        "name": "cutaneous melanoma",
+        "efo_id": "MONDO_0005012"
+      },
+      "modality": "small_molecule",
+      "narrative": {
+        "target_overview": "ATM \u2014 ATM serine/threonine kinase. Serine/threonine protein kinase which activates checkpoint signaling upon double strand breaks (DSBs), apoptosis and genotoxic stresses such as ionizing ultraviolet A light (UVA), thereby acting as a DNA damage sensor (P",
+        "pathways": [
+          "DNA Damage/Telomere Stress Induced Senescence",
+          "Presynaptic phase of homologous DNA pairing and strand exchange",
+          "Regulation of TP53 Activity through Phosphorylation",
+          "Pexophagy",
+          "Autodegradation of the E3 ubiquitin ligase COP1"
+        ],
+        "liabilities": [
+          "10 curated safety liability(ies) (diabetes, vomiting, growth retardation) and 132 distinct mouse-knockout phenotypes on record. Representative mouse-KO phenotypes: abnormal cerebellar molecular layer, decreased IgG level, female infertility."
+        ],
+        "evidence_gaps": [
+          "Single-cell tissue specificity (tau) and malignant-vs-stromal fraction are NOT available from Open Targets. Value shown is a designed prior (broadly expressed / non-specific): housekeeping DNA-damage sensor; expressed everywhere."
+        ],
+        "proposed_experiments": [
+          {
+            "experiment": "single-cell tau + malignant-fraction profiling",
+            "axis": "right_tissue",
+            "cost_tier": 3,
+            "rationale": "resolves the only unmeasured axis; likely the highest-VoI action"
+          }
+        ]
+      },
+      "axes": {
+        "right_target": {
+          "value": 0.617,
+          "confidence": 0.9,
+          "cost": 1,
+          "direction": "supports",
+          "strength": "strong",
+          "data_origin": "opentargets",
+          "finding": "Open Targets overall disease association with melanoma = 0.617 (aggregating genetic, somatic, literature and known-drug evidence). Loss-of-function constraint LOEUF (o/e)=0.77, in the tolerant range \u2014 LoF is well tolerated in population data, weakly arguing against essential-gene toxicity.",
+          "interpretation": "Strong, multi-modal causal support: ATM is a well-credentialled melanoma target and the association is unlikely to be literature-only noise. Sits on DNA Damage/Telomere Stress Induced Senescence, Presynaptic phase of homologous DNA pairing and strand exchange.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "associationScore",
+              "geneticConstraint",
+              "pathways"
+            ]
+          }
+        },
+        "right_tissue": {
+          "value": 0.28,
+          "confidence": 0.4,
+          "cost": 3,
+          "direction": "refutes",
+          "strength": "weak",
+          "data_origin": "synthetic",
+          "finding": "Single-cell tissue specificity (tau) and malignant-vs-stromal fraction are NOT available from Open Targets. Value shown is a designed prior (broadly expressed / non-specific): housekeeping DNA-damage sensor; expressed everywhere.",
+          "interpretation": "UNMEASURED axis \u2014 this is the highest-value action for the VoI loop to resolve via a tier-3 run_experiment (single-cell profiling). The prior says ATM is broadly expressed / non-specific; if it holds, tissue specificity is a liability that a tumour-selective modality would have to compensate for. Until measured, treat this value as a hypothesis, not evidence.",
+          "source": {
+            "db": null,
+            "synthetic_parts": [
+              "tau_specificity",
+              "malignant_fraction"
+            ],
+            "designed_tradeoff": true
+          }
+        },
+        "right_safety": {
+          "value": 0.0,
+          "confidence": 0.6,
+          "cost": 1,
+          "direction": "refutes",
+          "strength": "moderate",
+          "data_origin": "opentargets",
+          "finding": "10 curated safety liability(ies) (diabetes, vomiting, growth retardation) and 132 distinct mouse-knockout phenotypes on record. Representative mouse-KO phenotypes: abnormal cerebellar molecular layer, decreased IgG level, female infertility.",
+          "interpretation": "Safety is a headwind: the breadth of knockout phenotypes (132) and the curated liability signal point to a broad developmental/essential role, so systemic inhibition risks on-target toxicity in normal tissue \u2014 the therapeutic window is narrow and must be bought back with tumour-selective delivery or dosing.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "safetyLiabilities",
+              "mousePhenotypes"
+            ]
+          }
+        },
+        "right_patient": {
+          "value": 0.35,
+          "confidence": 0.4,
+          "cost": 1,
+          "direction": "neutral",
+          "strength": "weak",
+          "data_origin": "hybrid",
+          "finding": "No melanoma clinical precedent for ATM in Open Targets, so both the patient population and its enrichment biomarker would have to be established de novo (synthetic).",
+          "interpretation": "Patient axis is unproven: with no clinical footprint, ATM carries first-in-class stratification risk, and the arena should discount confidence here accordingly.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "drugAndClinicalCandidates"
+            ],
+            "synthetic_parts": [
+              "biomarker_stratum"
+            ]
+          }
+        },
+        "right_commercial": {
+          "value": 0.3,
+          "confidence": 0.5,
+          "cost": 1,
+          "direction": "neutral",
+          "strength": "weak",
+          "data_origin": "hybrid",
+          "finding": "Competitive intensity is approximated from ATM's prominence as a melanoma target (high-association targets tend to be crowded); the explicit competitor count and whitespace read are synthesised.",
+          "interpretation": "Crowded field: ATM is a well-trodden target, so commercial differentiation must come from a novel modality, payload, or indication niche rather than the target itself.",
+          "source": {
+            "db": "OpenTargets",
+            "synthetic_parts": [
+              "competitor_count",
+              "whitespace"
+            ]
+          }
+        },
+        "tractability": {
+          "value": 0.6,
+          "confidence": 0.9,
+          "cost": 1,
+          "direction": "supports",
+          "strength": "moderate",
+          "data_origin": "opentargets",
+          "finding": "Open Targets SM-modality tractability buckets satisfied: Structure with Ligand, High-Quality Ligand, Druggable Family.",
+          "interpretation": "Tractable by small_molecule: a druggable pocket / structural handle is present, so the modality is credible though not yet clinically validated for this target.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "tractability"
+            ]
+          }
+        }
+      },
+      "label": {
+        "positive": false,
+        "max_clinical_phase": null
+      }
+    },
+    {
+      "id": "H5",
+      "target": {
+        "symbol": "AKT1",
+        "ensembl_id": "ENSG00000142208"
+      },
+      "disease": {
+        "name": "cutaneous melanoma",
+        "efo_id": "MONDO_0005012"
+      },
+      "modality": "small_molecule",
+      "narrative": {
+        "target_overview": "AKT1 \u2014 AKT serine/threonine kinase 1. AKT1 is one of 3 closely related serine/threonine-protein kinases (AKT1, AKT2 and AKT3) called the AKT kinase, and which regulate many processes including metabolism, proliferation, cell survival, growth and angiogenesis",
+        "pathways": [
+          "Extra-nuclear estrogen signaling",
+          "PI5P, PP2A and IER3 Regulate PI3K/AKT Signaling",
+          "FLT3 Signaling",
+          "PTK6 Regulates RTKs and Their Effectors AKT1 and DOK1",
+          "TP53 Regulates Metabolic Genes"
+        ],
+        "liabilities": [
+          "4 curated safety liability(ies) (heart disease, apoptototic cell death in cancer cells, hyperglycemia) and 60 distinct mouse-knockout phenotypes on record. Representative mouse-KO phenotypes: abnormal thymus morphology, pallor, abnormal maternal decidual layer morphology."
+        ],
+        "evidence_gaps": [
+          "Single-cell tissue specificity (tau) and malignant-vs-stromal fraction are NOT available from Open Targets. Value shown is a designed prior (broadly expressed / non-specific): broadly expressed node; specificity relies entirely on context."
+        ],
+        "proposed_experiments": [
+          {
+            "experiment": "single-cell tau + malignant-fraction profiling",
+            "axis": "right_tissue",
+            "cost_tier": 3,
+            "rationale": "resolves the only unmeasured axis; likely the highest-VoI action"
+          }
+        ]
+      },
+      "axes": {
+        "right_target": {
+          "value": 0.566,
+          "confidence": 0.9,
+          "cost": 1,
+          "direction": "supports",
+          "strength": "strong",
+          "data_origin": "opentargets",
+          "finding": "Open Targets overall disease association with melanoma = 0.566 (aggregating genetic, somatic, literature and known-drug evidence). Loss-of-function constraint LOEUF (o/e)=0.33, in the constrained tail \u2014 the gene is intolerant to LoF, which raises both a mechanistic causality prior and an on-target-toxicity flag.",
+          "interpretation": "Strong, multi-modal causal support: AKT1 is a well-credentialled melanoma target and the association is unlikely to be literature-only noise. Sits on Extra-nuclear estrogen signaling, PI5P, PP2A and IER3 Regulate PI3K/AKT Signaling.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "associationScore",
+              "geneticConstraint",
+              "pathways"
+            ]
+          }
+        },
+        "right_tissue": {
+          "value": 0.25,
+          "confidence": 0.4,
+          "cost": 3,
+          "direction": "refutes",
+          "strength": "weak",
+          "data_origin": "synthetic",
+          "finding": "Single-cell tissue specificity (tau) and malignant-vs-stromal fraction are NOT available from Open Targets. Value shown is a designed prior (broadly expressed / non-specific): broadly expressed node; specificity relies entirely on context.",
+          "interpretation": "UNMEASURED axis \u2014 this is the highest-value action for the VoI loop to resolve via a tier-3 run_experiment (single-cell profiling). The prior says AKT1 is broadly expressed / non-specific; if it holds, tissue specificity is a liability that a tumour-selective modality would have to compensate for. Until measured, treat this value as a hypothesis, not evidence.",
+          "source": {
+            "db": null,
+            "synthetic_parts": [
+              "tau_specificity",
+              "malignant_fraction"
+            ],
+            "designed_tradeoff": true
+          }
+        },
+        "right_safety": {
+          "value": 0.25,
+          "confidence": 0.6,
+          "cost": 1,
+          "direction": "refutes",
+          "strength": "moderate",
+          "data_origin": "opentargets",
+          "finding": "4 curated safety liability(ies) (heart disease, apoptototic cell death in cancer cells, hyperglycemia) and 60 distinct mouse-knockout phenotypes on record. Representative mouse-KO phenotypes: abnormal thymus morphology, pallor, abnormal maternal decidual layer morphology.",
+          "interpretation": "Safety is a headwind: the breadth of knockout phenotypes (60) and the curated liability signal point to a broad developmental/essential role, so systemic inhibition risks on-target toxicity in normal tissue \u2014 the therapeutic window is narrow and must be bought back with tumour-selective delivery or dosing.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "safetyLiabilities",
+              "mousePhenotypes"
+            ]
+          }
+        },
+        "right_patient": {
+          "value": 0.35,
+          "confidence": 0.4,
+          "cost": 1,
+          "direction": "neutral",
+          "strength": "weak",
+          "data_origin": "hybrid",
+          "finding": "No melanoma clinical precedent for AKT1 in Open Targets, so both the patient population and its enrichment biomarker would have to be established de novo (synthetic).",
+          "interpretation": "Patient axis is unproven: with no clinical footprint, AKT1 carries first-in-class stratification risk, and the arena should discount confidence here accordingly.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "drugAndClinicalCandidates"
+            ],
+            "synthetic_parts": [
+              "biomarker_stratum"
+            ]
+          }
+        },
+        "right_commercial": {
+          "value": 0.323,
+          "confidence": 0.5,
+          "cost": 1,
+          "direction": "neutral",
+          "strength": "weak",
+          "data_origin": "hybrid",
+          "finding": "Competitive intensity is approximated from AKT1's prominence as a melanoma target (high-association targets tend to be crowded); the explicit competitor count and whitespace read are synthesised.",
+          "interpretation": "Crowded field: AKT1 is a well-trodden target, so commercial differentiation must come from a novel modality, payload, or indication niche rather than the target itself.",
+          "source": {
+            "db": "OpenTargets",
+            "synthetic_parts": [
+              "competitor_count",
+              "whitespace"
+            ]
+          }
+        },
+        "tractability": {
+          "value": 0.6,
+          "confidence": 0.9,
+          "cost": 1,
+          "direction": "supports",
+          "strength": "moderate",
+          "data_origin": "opentargets",
+          "finding": "Open Targets SM-modality tractability buckets satisfied: Advanced Clinical, Structure with Ligand, High-Quality Ligand, High-Quality Pocket, Druggable Family.",
+          "interpretation": "Tractable by small_molecule: a druggable pocket / structural handle is present, so the modality is credible though not yet clinically validated for this target.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "tractability"
+            ]
+          }
+        }
+      },
+      "label": {
+        "positive": false,
+        "max_clinical_phase": null
+      }
+    },
+    {
+      "id": "H6",
+      "target": {
+        "symbol": "ERBB2",
+        "ensembl_id": "ENSG00000141736"
+      },
+      "disease": {
+        "name": "cutaneous melanoma",
+        "efo_id": "MONDO_0005012"
+      },
+      "modality": "ADC",
+      "narrative": {
+        "target_overview": "ERBB2 \u2014 erb-b2 receptor tyrosine kinase 2. Protein tyrosine kinase that is part of several cell surface receptor complexes, but that apparently needs a coreceptor for ligand binding. Essential component of a neuregulin-receptor complex, although neuregulins do no",
+        "pathways": [
+          "PI5P, PP2A and IER3 Regulate PI3K/AKT Signaling",
+          "Resistance of ERBB2 KD mutants to trastuzumab",
+          "ERBB2 Activates PTK6 Signaling",
+          "Drug resistance in ERBB2 TMD/JMD mutants",
+          "Drug-mediated inhibition of ERBB2 signaling"
+        ],
+        "liabilities": [
+          "3 curated safety liability(ies) (heart disease, cardiotoxicity, more sensitive to trastuzamab) and 52 distinct mouse-knockout phenotypes on record. Representative mouse-KO phenotypes: abnormal phrenic nerve morphology, decreased Schwann cell precursor number, embryonic lethality, complete penetrance."
+        ],
+        "evidence_gaps": [
+          "Single-cell tissue specificity (tau) and malignant-vs-stromal fraction are NOT available from Open Targets. Value shown is a designed prior (sharply tumour-restricted): HER2-high sub-population is sharply demarcated \u2014 a clean ADC window."
+        ],
+        "proposed_experiments": [
+          {
+            "experiment": "single-cell tau + malignant-fraction profiling",
+            "axis": "right_tissue",
+            "cost_tier": 3,
+            "rationale": "resolves the only unmeasured axis; likely the highest-VoI action"
+          }
+        ]
+      },
+      "axes": {
+        "right_target": {
+          "value": 0.562,
+          "confidence": 0.9,
+          "cost": 1,
+          "direction": "supports",
+          "strength": "strong",
+          "data_origin": "opentargets",
+          "finding": "Open Targets overall disease association with melanoma = 0.562 (aggregating genetic, somatic, literature and known-drug evidence). Loss-of-function constraint LOEUF (o/e)=0.42, in the tolerant range \u2014 LoF is well tolerated in population data, weakly arguing against essential-gene toxicity.",
+          "interpretation": "Strong, multi-modal causal support: ERBB2 is a well-credentialled melanoma target and the association is unlikely to be literature-only noise. Sits on PI5P, PP2A and IER3 Regulate PI3K/AKT Signaling, Resistance of ERBB2 KD mutants to trastuzumab.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "associationScore",
+              "geneticConstraint",
+              "pathways"
+            ]
+          }
+        },
+        "right_tissue": {
+          "value": 0.8,
+          "confidence": 0.4,
+          "cost": 3,
+          "direction": "supports",
+          "strength": "strong",
+          "data_origin": "synthetic",
+          "finding": "Single-cell tissue specificity (tau) and malignant-vs-stromal fraction are NOT available from Open Targets. Value shown is a designed prior (sharply tumour-restricted): HER2-high sub-population is sharply demarcated \u2014 a clean ADC window.",
+          "interpretation": "UNMEASURED axis \u2014 this is the highest-value action for the VoI loop to resolve via a tier-3 run_experiment (single-cell profiling). The prior says ERBB2 is sharply tumour-restricted; if it holds, tissue specificity is a decisive strength that can offset a weaker tractability or safety axis. Until measured, treat this value as a hypothesis, not evidence.",
+          "source": {
+            "db": null,
+            "synthetic_parts": [
+              "tau_specificity",
+              "malignant_fraction"
+            ],
+            "designed_tradeoff": true
+          }
+        },
+        "right_safety": {
+          "value": 0.283,
+          "confidence": 0.6,
+          "cost": 1,
+          "direction": "refutes",
+          "strength": "moderate",
+          "data_origin": "opentargets",
+          "finding": "3 curated safety liability(ies) (heart disease, cardiotoxicity, more sensitive to trastuzamab) and 52 distinct mouse-knockout phenotypes on record. Representative mouse-KO phenotypes: abnormal phrenic nerve morphology, decreased Schwann cell precursor number, embryonic lethality, complete penetrance.",
+          "interpretation": "Safety is a headwind: the breadth of knockout phenotypes (52) and the curated liability signal point to a broad developmental/essential role, so systemic inhibition risks on-target toxicity in normal tissue \u2014 the therapeutic window is narrow and must be bought back with tumour-selective delivery or dosing.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "safetyLiabilities",
+              "mousePhenotypes"
+            ]
+          }
+        },
+        "right_patient": {
+          "value": 0.35,
+          "confidence": 0.4,
+          "cost": 1,
+          "direction": "neutral",
+          "strength": "weak",
+          "data_origin": "hybrid",
+          "finding": "No melanoma clinical precedent for ERBB2 in Open Targets, so both the patient population and its enrichment biomarker would have to be established de novo (synthetic).",
+          "interpretation": "Patient axis is unproven: with no clinical footprint, ERBB2 carries first-in-class stratification risk, and the arena should discount confidence here accordingly.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "drugAndClinicalCandidates"
+            ],
+            "synthetic_parts": [
+              "biomarker_stratum"
+            ]
+          }
+        },
+        "right_commercial": {
+          "value": 0.326,
+          "confidence": 0.5,
+          "cost": 1,
+          "direction": "neutral",
+          "strength": "weak",
+          "data_origin": "hybrid",
+          "finding": "Competitive intensity is approximated from ERBB2's prominence as a melanoma target (high-association targets tend to be crowded); the explicit competitor count and whitespace read are synthesised.",
+          "interpretation": "Crowded field: ERBB2 is a well-trodden target, so commercial differentiation must come from a novel modality, payload, or indication niche rather than the target itself.",
+          "source": {
+            "db": "OpenTargets",
+            "synthetic_parts": [
+              "competitor_count",
+              "whitespace"
+            ]
+          }
+        },
+        "tractability": {
+          "value": 0.9,
+          "confidence": 0.9,
+          "cost": 1,
+          "direction": "supports",
+          "strength": "strong",
+          "data_origin": "opentargets",
+          "finding": "Open Targets AB-modality tractability buckets satisfied: Approved Drug, UniProt loc high conf, GO CC high conf, UniProt SigP or TMHMM, Human Protein Atlas loc.",
+          "interpretation": "De-risked modality: ERBB2 already has an approved ADC drug, so chemistry/biologics feasibility is proven and the programme starts from precedent rather than discovery risk.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "tractability"
+            ]
+          }
+        }
+      },
+      "label": {
+        "positive": false,
+        "max_clinical_phase": null
+      }
+    },
+    {
+      "id": "H7",
+      "target": {
+        "symbol": "TERT",
+        "ensembl_id": "ENSG00000164362"
+      },
+      "disease": {
+        "name": "cutaneous melanoma",
+        "efo_id": "MONDO_0005012"
+      },
+      "modality": "small_molecule",
+      "narrative": {
+        "target_overview": "TERT \u2014 telomerase reverse transcriptase. Telomerase is a ribonucleoprotein enzyme essential for the replication of chromosome termini in most eukaryotes. Active in progenitor and cancer cells. Inactive, or very low activity, in normal somatic cells. Catalytic c",
+        "pathways": [
+          "Telomere Extension By Telomerase",
+          "Regulation of MITF-M-dependent genes involved in DNA replication, damage repair and senescence",
+          "Formation of the beta-catenin:TCF transactivating complex"
+        ],
+        "liabilities": [
+          "0 curated safety liability(ies) and 33 distinct mouse-knockout phenotypes on record. Representative mouse-KO phenotypes: decreased litter size, decreased incidence of tumors by chemical induction, decreased testis weight."
+        ],
+        "evidence_gaps": [
+          "Single-cell tissue specificity (tau) and malignant-vs-stromal fraction are NOT available from Open Targets. Value shown is a designed prior (moderately specific): no designed prior; weak association-derived placeholder."
+        ],
+        "proposed_experiments": [
+          {
+            "experiment": "single-cell tau + malignant-fraction profiling",
+            "axis": "right_tissue",
+            "cost_tier": 3,
+            "rationale": "resolves the only unmeasured axis; likely the highest-VoI action"
+          }
+        ]
+      },
+      "axes": {
+        "right_target": {
+          "value": 0.555,
+          "confidence": 0.9,
+          "cost": 1,
+          "direction": "supports",
+          "strength": "strong",
+          "data_origin": "opentargets",
+          "finding": "Open Targets overall disease association with melanoma = 0.555 (aggregating genetic, somatic, literature and known-drug evidence). Loss-of-function constraint LOEUF (o/e)=0.46, in the tolerant range \u2014 LoF is well tolerated in population data, weakly arguing against essential-gene toxicity.",
+          "interpretation": "Strong, multi-modal causal support: TERT is a well-credentialled melanoma target and the association is unlikely to be literature-only noise. Sits on Telomere Extension By Telomerase, Regulation of MITF-M-dependent genes involved in DNA replication, damage repair and senescence.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "associationScore",
+              "geneticConstraint",
+              "pathways"
+            ]
+          }
+        },
+        "right_tissue": {
+          "value": 0.638,
+          "confidence": 0.4,
+          "cost": 3,
+          "direction": "supports",
+          "strength": "moderate",
+          "data_origin": "synthetic",
+          "finding": "Single-cell tissue specificity (tau) and malignant-vs-stromal fraction are NOT available from Open Targets. Value shown is a designed prior (moderately specific): no designed prior; weak association-derived placeholder.",
+          "interpretation": "UNMEASURED axis \u2014 this is the highest-value action for the VoI loop to resolve via a tier-3 run_experiment (single-cell profiling). The prior says TERT is moderately specific; if it holds, tissue specificity is neutral \u2014 unlikely to decide the ranking alone. Until measured, treat this value as a hypothesis, not evidence.",
+          "source": {
+            "db": null,
+            "synthetic_parts": [
+              "tau_specificity",
+              "malignant_fraction"
+            ],
+            "designed_tradeoff": false
+          }
+        },
+        "right_safety": {
+          "value": 0.863,
+          "confidence": 0.6,
+          "cost": 1,
+          "direction": "neutral",
+          "strength": "moderate",
+          "data_origin": "opentargets",
+          "finding": "0 curated safety liability(ies) and 33 distinct mouse-knockout phenotypes on record. Representative mouse-KO phenotypes: decreased litter size, decreased incidence of tumors by chemical induction, decreased testis weight.",
+          "interpretation": "No dominant safety liability surfaced and the knockout footprint is modest, so the safety window is plausibly open \u2014 this axis is a relative strength for TERT.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "safetyLiabilities",
+              "mousePhenotypes"
+            ]
+          }
+        },
+        "right_patient": {
+          "value": 0.35,
+          "confidence": 0.4,
+          "cost": 1,
+          "direction": "neutral",
+          "strength": "weak",
+          "data_origin": "hybrid",
+          "finding": "No melanoma clinical precedent for TERT in Open Targets, so both the patient population and its enrichment biomarker would have to be established de novo (synthetic).",
+          "interpretation": "Patient axis is unproven: with no clinical footprint, TERT carries first-in-class stratification risk, and the arena should discount confidence here accordingly.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "drugAndClinicalCandidates"
+            ],
+            "synthetic_parts": [
+              "biomarker_stratum"
+            ]
+          }
+        },
+        "right_commercial": {
+          "value": 0.33,
+          "confidence": 0.5,
+          "cost": 1,
+          "direction": "neutral",
+          "strength": "weak",
+          "data_origin": "hybrid",
+          "finding": "Competitive intensity is approximated from TERT's prominence as a melanoma target (high-association targets tend to be crowded); the explicit competitor count and whitespace read are synthesised.",
+          "interpretation": "Crowded field: TERT is a well-trodden target, so commercial differentiation must come from a novel modality, payload, or indication niche rather than the target itself.",
+          "source": {
+            "db": "OpenTargets",
+            "synthetic_parts": [
+              "competitor_count",
+              "whitespace"
+            ]
+          }
+        },
+        "tractability": {
+          "value": 0.6,
+          "confidence": 0.9,
+          "cost": 1,
+          "direction": "supports",
+          "strength": "moderate",
+          "data_origin": "opentargets",
+          "finding": "Open Targets SM-modality tractability buckets satisfied: High-Quality Ligand, Druggable Family.",
+          "interpretation": "Tractable by small_molecule: a druggable pocket / structural handle is present, so the modality is credible though not yet clinically validated for this target.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "tractability"
+            ]
+          }
+        }
+      },
+      "label": {
+        "positive": false,
+        "max_clinical_phase": null
+      }
+    },
+    {
+      "id": "H8",
+      "target": {
+        "symbol": "SETD2",
+        "ensembl_id": "ENSG00000181555"
+      },
+      "disease": {
+        "name": "cutaneous melanoma",
+        "efo_id": "MONDO_0005012"
+      },
+      "modality": "small_molecule",
+      "narrative": {
+        "target_overview": "SETD2 \u2014 SET domain containing 2, histone lysine methyltransferase. Histone methyltransferase that specifically trimethylates 'Lys-36' of histone H3 (H3K36me3) using dimethylated 'Lys-36' (H3K36me2) as substrate (PubMed:16118227, PubMed:19141475, PubMed:21526191, PubMed:21792193, PubMed:",
+        "pathways": [
+          "PKMTs methylate histone lysines"
+        ],
+        "liabilities": [
+          "0 curated safety liability(ies) and 22 distinct mouse-knockout phenotypes on record. Representative mouse-KO phenotypes: open neural tube, short tibia, decreased prepulse inhibition."
+        ],
+        "evidence_gaps": [
+          "Single-cell tissue specificity (tau) and malignant-vs-stromal fraction are NOT available from Open Targets. Value shown is a designed prior (moderately specific): no designed prior; weak association-derived placeholder."
+        ],
+        "proposed_experiments": [
+          {
+            "experiment": "single-cell tau + malignant-fraction profiling",
+            "axis": "right_tissue",
+            "cost_tier": 3,
+            "rationale": "resolves the only unmeasured axis; likely the highest-VoI action"
+          }
+        ]
+      },
+      "axes": {
+        "right_target": {
+          "value": 0.554,
+          "confidence": 0.9,
+          "cost": 1,
+          "direction": "supports",
+          "strength": "strong",
+          "data_origin": "opentargets",
+          "finding": "Open Targets overall disease association with melanoma = 0.554 (aggregating genetic, somatic, literature and known-drug evidence). Loss-of-function constraint LOEUF (o/e)=0.13, in the constrained tail \u2014 the gene is intolerant to LoF, which raises both a mechanistic causality prior and an on-target-toxicity flag.",
+          "interpretation": "Strong, multi-modal causal support: SETD2 is a well-credentialled melanoma target and the association is unlikely to be literature-only noise. Sits on PKMTs methylate histone lysines.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "associationScore",
+              "geneticConstraint",
+              "pathways"
+            ]
+          }
+        },
+        "right_tissue": {
+          "value": 0.637,
+          "confidence": 0.4,
+          "cost": 3,
+          "direction": "supports",
+          "strength": "moderate",
+          "data_origin": "synthetic",
+          "finding": "Single-cell tissue specificity (tau) and malignant-vs-stromal fraction are NOT available from Open Targets. Value shown is a designed prior (moderately specific): no designed prior; weak association-derived placeholder.",
+          "interpretation": "UNMEASURED axis \u2014 this is the highest-value action for the VoI loop to resolve via a tier-3 run_experiment (single-cell profiling). The prior says SETD2 is moderately specific; if it holds, tissue specificity is neutral \u2014 unlikely to decide the ranking alone. Until measured, treat this value as a hypothesis, not evidence.",
+          "source": {
+            "db": null,
+            "synthetic_parts": [
+              "tau_specificity",
+              "malignant_fraction"
+            ],
+            "designed_tradeoff": false
+          }
+        },
+        "right_safety": {
+          "value": 0.908,
+          "confidence": 0.6,
+          "cost": 1,
+          "direction": "neutral",
+          "strength": "moderate",
+          "data_origin": "opentargets",
+          "finding": "0 curated safety liability(ies) and 22 distinct mouse-knockout phenotypes on record. Representative mouse-KO phenotypes: open neural tube, short tibia, decreased prepulse inhibition.",
+          "interpretation": "No dominant safety liability surfaced and the knockout footprint is modest, so the safety window is plausibly open \u2014 this axis is a relative strength for SETD2.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "safetyLiabilities",
+              "mousePhenotypes"
+            ]
+          }
+        },
+        "right_patient": {
+          "value": 0.35,
+          "confidence": 0.4,
+          "cost": 1,
+          "direction": "neutral",
+          "strength": "weak",
+          "data_origin": "hybrid",
+          "finding": "No melanoma clinical precedent for SETD2 in Open Targets, so both the patient population and its enrichment biomarker would have to be established de novo (synthetic).",
+          "interpretation": "Patient axis is unproven: with no clinical footprint, SETD2 carries first-in-class stratification risk, and the arena should discount confidence here accordingly.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "drugAndClinicalCandidates"
+            ],
+            "synthetic_parts": [
+              "biomarker_stratum"
+            ]
+          }
+        },
+        "right_commercial": {
+          "value": 0.331,
+          "confidence": 0.5,
+          "cost": 1,
+          "direction": "neutral",
+          "strength": "weak",
+          "data_origin": "hybrid",
+          "finding": "Competitive intensity is approximated from SETD2's prominence as a melanoma target (high-association targets tend to be crowded); the explicit competitor count and whitespace read are synthesised.",
+          "interpretation": "Crowded field: SETD2 is a well-trodden target, so commercial differentiation must come from a novel modality, payload, or indication niche rather than the target itself.",
+          "source": {
+            "db": "OpenTargets",
+            "synthetic_parts": [
+              "competitor_count",
+              "whitespace"
+            ]
+          }
+        },
+        "tractability": {
+          "value": 0.6,
+          "confidence": 0.9,
+          "cost": 1,
+          "direction": "supports",
+          "strength": "moderate",
+          "data_origin": "opentargets",
+          "finding": "Open Targets SM-modality tractability buckets satisfied: Structure with Ligand, High-Quality Ligand.",
+          "interpretation": "Tractable by small_molecule: a druggable pocket / structural handle is present, so the modality is credible though not yet clinically validated for this target.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "tractability"
+            ]
+          }
+        }
+      },
+      "label": {
+        "positive": false,
+        "max_clinical_phase": null
+      }
+    },
+    {
+      "id": "H9",
+      "target": {
+        "symbol": "MTOR",
+        "ensembl_id": "ENSG00000198793"
+      },
+      "disease": {
+        "name": "cutaneous melanoma",
+        "efo_id": "MONDO_0005012"
+      },
+      "modality": "small_molecule",
+      "narrative": {
+        "target_overview": "MTOR \u2014 mechanistic target of rapamycin kinase. Serine/threonine protein kinase which is a central regulator of cellular metabolism, growth and survival in response to hormones, growth factors, nutrients, energy and stress signals (PubMed:12087098, PubMed:12150925, Pu",
+        "pathways": [
+          "Macroautophagy",
+          "TP53 Regulates Metabolic Genes",
+          "MTOR signalling",
+          "CD28 dependent PI3K/Akt signaling",
+          "Energy dependent regulation of mTOR by LKB1-AMPK"
+        ],
+        "liabilities": [
+          "1 curated safety liability(ies) (heart disease) and 60 distinct mouse-knockout phenotypes on record. Representative mouse-KO phenotypes: abnormal embryonic tissue morphology, decreased circulating insulin-like growth factor I level, absent inner cell mass proliferation."
+        ],
+        "evidence_gaps": [
+          "Single-cell tissue specificity (tau) and malignant-vs-stromal fraction are NOT available from Open Targets. Value shown is a designed prior (broadly expressed / non-specific): ubiquitous essential kinase \u2014 poor tumour specificity, on-target-everywhere risk."
+        ],
+        "proposed_experiments": [
+          {
+            "experiment": "single-cell tau + malignant-fraction profiling",
+            "axis": "right_tissue",
+            "cost_tier": 3,
+            "rationale": "resolves the only unmeasured axis; likely the highest-VoI action"
+          }
+        ]
+      },
+      "axes": {
+        "right_target": {
+          "value": 0.55,
+          "confidence": 0.9,
+          "cost": 1,
+          "direction": "supports",
+          "strength": "strong",
+          "data_origin": "opentargets",
+          "finding": "Open Targets overall disease association with melanoma = 0.550 (aggregating genetic, somatic, literature and known-drug evidence). Loss-of-function constraint LOEUF (o/e)=0.22, in the constrained tail \u2014 the gene is intolerant to LoF, which raises both a mechanistic causality prior and an on-target-toxicity flag.",
+          "interpretation": "Strong, multi-modal causal support: MTOR is a well-credentialled melanoma target and the association is unlikely to be literature-only noise. Sits on Macroautophagy, TP53 Regulates Metabolic Genes.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "associationScore",
+              "geneticConstraint",
+              "pathways"
+            ]
+          }
+        },
+        "right_tissue": {
+          "value": 0.2,
+          "confidence": 0.4,
+          "cost": 3,
+          "direction": "refutes",
+          "strength": "weak",
+          "data_origin": "synthetic",
+          "finding": "Single-cell tissue specificity (tau) and malignant-vs-stromal fraction are NOT available from Open Targets. Value shown is a designed prior (broadly expressed / non-specific): ubiquitous essential kinase \u2014 poor tumour specificity, on-target-everywhere risk.",
+          "interpretation": "UNMEASURED axis \u2014 this is the highest-value action for the VoI loop to resolve via a tier-3 run_experiment (single-cell profiling). The prior says MTOR is broadly expressed / non-specific; if it holds, tissue specificity is a liability that a tumour-selective modality would have to compensate for. Until measured, treat this value as a hypothesis, not evidence.",
+          "source": {
+            "db": null,
+            "synthetic_parts": [
+              "tau_specificity",
+              "malignant_fraction"
+            ],
+            "designed_tradeoff": true
+          }
+        },
+        "right_safety": {
+          "value": 0.583,
+          "confidence": 0.6,
+          "cost": 1,
+          "direction": "neutral",
+          "strength": "moderate",
+          "data_origin": "opentargets",
+          "finding": "1 curated safety liability(ies) (heart disease) and 60 distinct mouse-knockout phenotypes on record. Representative mouse-KO phenotypes: abnormal embryonic tissue morphology, decreased circulating insulin-like growth factor I level, absent inner cell mass proliferation.",
+          "interpretation": "No dominant safety liability surfaced and the knockout footprint is modest, so the safety window is plausibly open \u2014 this axis is a relative strength for MTOR.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "safetyLiabilities",
+              "mousePhenotypes"
+            ]
+          }
+        },
+        "right_patient": {
+          "value": 0.35,
+          "confidence": 0.4,
+          "cost": 1,
+          "direction": "neutral",
+          "strength": "weak",
+          "data_origin": "hybrid",
+          "finding": "No melanoma clinical precedent for MTOR in Open Targets, so both the patient population and its enrichment biomarker would have to be established de novo (synthetic).",
+          "interpretation": "Patient axis is unproven: with no clinical footprint, MTOR carries first-in-class stratification risk, and the arena should discount confidence here accordingly.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "drugAndClinicalCandidates"
+            ],
+            "synthetic_parts": [
+              "biomarker_stratum"
+            ]
+          }
+        },
+        "right_commercial": {
+          "value": 0.333,
+          "confidence": 0.5,
+          "cost": 1,
+          "direction": "neutral",
+          "strength": "weak",
+          "data_origin": "hybrid",
+          "finding": "Competitive intensity is approximated from MTOR's prominence as a melanoma target (high-association targets tend to be crowded); the explicit competitor count and whitespace read are synthesised.",
+          "interpretation": "Crowded field: MTOR is a well-trodden target, so commercial differentiation must come from a novel modality, payload, or indication niche rather than the target itself.",
+          "source": {
+            "db": "OpenTargets",
+            "synthetic_parts": [
+              "competitor_count",
+              "whitespace"
+            ]
+          }
+        },
+        "tractability": {
+          "value": 0.9,
+          "confidence": 0.9,
+          "cost": 1,
+          "direction": "supports",
+          "strength": "strong",
+          "data_origin": "opentargets",
+          "finding": "Open Targets SM-modality tractability buckets satisfied: Approved Drug, Structure with Ligand, High-Quality Ligand, Druggable Family.",
+          "interpretation": "De-risked modality: MTOR already has an approved small_molecule drug, so chemistry/biologics feasibility is proven and the programme starts from precedent rather than discovery risk.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "tractability"
+            ]
+          }
+        }
+      },
+      "label": {
+        "positive": false,
+        "max_clinical_phase": null
+      }
+    },
+    {
+      "id": "H10",
+      "target": {
+        "symbol": "SMARCA4",
+        "ensembl_id": "ENSG00000127616"
+      },
+      "disease": {
+        "name": "cutaneous melanoma",
+        "efo_id": "MONDO_0005012"
+      },
+      "modality": "small_molecule",
+      "narrative": {
+        "target_overview": "SMARCA4 \u2014 SWI/SNF related BAF chromatin remodeling complex subunit ATPase 4. ATPase involved in transcriptional activation and repression of select genes by chromatin remodeling (alteration of DNA-nucleosome topology). Component of SWI/SNF chromatin remodeling complexes that carry out key enzymat",
+        "pathways": [
+          "Formation of neuronal progenitor and neuronal BAF (npBAF and nBAF)",
+          "Formation of the embryonic stem cell BAF (esBAF) complex",
+          "Interleukin-7 signaling",
+          "Differentiation of naive CD4+ T cells to T helper 2 cells (Th2 cells)",
+          "Formation of the polybromo-BAF (pBAF) complex"
+        ],
+        "liabilities": [
+          "0 curated safety liability(ies) and 26 distinct mouse-knockout phenotypes on record. Representative mouse-KO phenotypes: microcephaly, exencephaly, ventricular septal defect."
+        ],
+        "evidence_gaps": [
+          "Single-cell tissue specificity (tau) and malignant-vs-stromal fraction are NOT available from Open Targets. Value shown is a designed prior (moderately specific): no designed prior; weak association-derived placeholder."
+        ],
+        "proposed_experiments": [
+          {
+            "experiment": "single-cell tau + malignant-fraction profiling",
+            "axis": "right_tissue",
+            "cost_tier": 3,
+            "rationale": "resolves the only unmeasured axis; likely the highest-VoI action"
+          }
+        ]
+      },
+      "axes": {
+        "right_target": {
+          "value": 0.547,
+          "confidence": 0.9,
+          "cost": 1,
+          "direction": "supports",
+          "strength": "strong",
+          "data_origin": "opentargets",
+          "finding": "Open Targets overall disease association with melanoma = 0.547 (aggregating genetic, somatic, literature and known-drug evidence). Loss-of-function constraint LOEUF (o/e)=0.17, in the constrained tail \u2014 the gene is intolerant to LoF, which raises both a mechanistic causality prior and an on-target-toxicity flag.",
+          "interpretation": "Strong, multi-modal causal support: SMARCA4 is a well-credentialled melanoma target and the association is unlikely to be literature-only noise. Sits on Formation of neuronal progenitor and neuronal BAF (npBAF and nBAF), Formation of the embryonic stem cell BAF (esBAF) complex.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "associationScore",
+              "geneticConstraint",
+              "pathways"
+            ]
+          }
+        },
+        "right_tissue": {
+          "value": 0.635,
+          "confidence": 0.4,
+          "cost": 3,
+          "direction": "supports",
+          "strength": "moderate",
+          "data_origin": "synthetic",
+          "finding": "Single-cell tissue specificity (tau) and malignant-vs-stromal fraction are NOT available from Open Targets. Value shown is a designed prior (moderately specific): no designed prior; weak association-derived placeholder.",
+          "interpretation": "UNMEASURED axis \u2014 this is the highest-value action for the VoI loop to resolve via a tier-3 run_experiment (single-cell profiling). The prior says SMARCA4 is moderately specific; if it holds, tissue specificity is neutral \u2014 unlikely to decide the ranking alone. Until measured, treat this value as a hypothesis, not evidence.",
+          "source": {
+            "db": null,
+            "synthetic_parts": [
+              "tau_specificity",
+              "malignant_fraction"
+            ],
+            "designed_tradeoff": false
+          }
+        },
+        "right_safety": {
+          "value": 0.892,
+          "confidence": 0.6,
+          "cost": 1,
+          "direction": "neutral",
+          "strength": "moderate",
+          "data_origin": "opentargets",
+          "finding": "0 curated safety liability(ies) and 26 distinct mouse-knockout phenotypes on record. Representative mouse-KO phenotypes: microcephaly, exencephaly, ventricular septal defect.",
+          "interpretation": "No dominant safety liability surfaced and the knockout footprint is modest, so the safety window is plausibly open \u2014 this axis is a relative strength for SMARCA4.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "safetyLiabilities",
+              "mousePhenotypes"
+            ]
+          }
+        },
+        "right_patient": {
+          "value": 0.35,
+          "confidence": 0.4,
+          "cost": 1,
+          "direction": "neutral",
+          "strength": "weak",
+          "data_origin": "hybrid",
+          "finding": "No melanoma clinical precedent for SMARCA4 in Open Targets, so both the patient population and its enrichment biomarker would have to be established de novo (synthetic).",
+          "interpretation": "Patient axis is unproven: with no clinical footprint, SMARCA4 carries first-in-class stratification risk, and the arena should discount confidence here accordingly.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "drugAndClinicalCandidates"
+            ],
+            "synthetic_parts": [
+              "biomarker_stratum"
+            ]
+          }
+        },
+        "right_commercial": {
+          "value": 0.335,
+          "confidence": 0.5,
+          "cost": 1,
+          "direction": "neutral",
+          "strength": "weak",
+          "data_origin": "hybrid",
+          "finding": "Competitive intensity is approximated from SMARCA4's prominence as a melanoma target (high-association targets tend to be crowded); the explicit competitor count and whitespace read are synthesised.",
+          "interpretation": "Crowded field: SMARCA4 is a well-trodden target, so commercial differentiation must come from a novel modality, payload, or indication niche rather than the target itself.",
+          "source": {
+            "db": "OpenTargets",
+            "synthetic_parts": [
+              "competitor_count",
+              "whitespace"
+            ]
+          }
+        },
+        "tractability": {
+          "value": 0.6,
+          "confidence": 0.9,
+          "cost": 1,
+          "direction": "supports",
+          "strength": "moderate",
+          "data_origin": "opentargets",
+          "finding": "Open Targets SM-modality tractability buckets satisfied: Structure with Ligand, High-Quality Ligand, Med-Quality Pocket.",
+          "interpretation": "Tractable by small_molecule: a druggable pocket / structural handle is present, so the modality is credible though not yet clinically validated for this target.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "tractability"
+            ]
+          }
+        }
+      },
+      "label": {
+        "positive": false,
+        "max_clinical_phase": null
+      }
+    },
+    {
+      "id": "H11",
+      "target": {
+        "symbol": "NTRK1",
+        "ensembl_id": "ENSG00000198400"
+      },
+      "disease": {
+        "name": "cutaneous melanoma",
+        "efo_id": "MONDO_0005012"
+      },
+      "modality": "antibody",
+      "narrative": {
+        "target_overview": "NTRK1 \u2014 neurotrophic receptor tyrosine kinase 1. Receptor tyrosine kinase involved in the development and the maturation of the central and peripheral nervous systems through regulation of proliferation, differentiation and survival of sympathetic and nervous neurons. ",
+        "pathways": [
+          "Signalling to p38 via RIT and RIN",
+          "Signalling to RAS",
+          "ARMS-mediated activation",
+          "Frs2-mediated activation",
+          "NGF-independant TRKA activation"
+        ],
+        "liabilities": [
+          "15 curated safety liability(ies) (grey matter heterotopia, weight gain, seizures) and 48 distinct mouse-knockout phenotypes on record. Representative mouse-KO phenotypes: decreased body size, no abnormal phenotype detected, anhidrosis."
+        ],
+        "evidence_gaps": [
+          "Single-cell tissue specificity (tau) and malignant-vs-stromal fraction are NOT available from Open Targets. Value shown is a designed prior (sharply tumour-restricted): highly lineage-restricted expression (strong specificity prior); but antibody-only tractability caps the modality options."
+        ],
+        "proposed_experiments": [
+          {
+            "experiment": "single-cell tau + malignant-fraction profiling",
+            "axis": "right_tissue",
+            "cost_tier": 3,
+            "rationale": "resolves the only unmeasured axis; likely the highest-VoI action"
+          }
+        ]
+      },
+      "axes": {
+        "right_target": {
+          "value": 0.546,
+          "confidence": 0.9,
+          "cost": 1,
+          "direction": "supports",
+          "strength": "strong",
+          "data_origin": "opentargets",
+          "finding": "Open Targets overall disease association with melanoma = 0.546 (aggregating genetic, somatic, literature and known-drug evidence). Loss-of-function constraint LOEUF (o/e)=0.77, in the tolerant range \u2014 LoF is well tolerated in population data, weakly arguing against essential-gene toxicity.",
+          "interpretation": "Strong, multi-modal causal support: NTRK1 is a well-credentialled melanoma target and the association is unlikely to be literature-only noise. Sits on Signalling to p38 via RIT and RIN, Signalling to RAS.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "associationScore",
+              "geneticConstraint",
+              "pathways"
+            ]
+          }
+        },
+        "right_tissue": {
+          "value": 0.88,
+          "confidence": 0.4,
+          "cost": 3,
+          "direction": "supports",
+          "strength": "strong",
+          "data_origin": "synthetic",
+          "finding": "Single-cell tissue specificity (tau) and malignant-vs-stromal fraction are NOT available from Open Targets. Value shown is a designed prior (sharply tumour-restricted): highly lineage-restricted expression (strong specificity prior); but antibody-only tractability caps the modality options.",
+          "interpretation": "UNMEASURED axis \u2014 this is the highest-value action for the VoI loop to resolve via a tier-3 run_experiment (single-cell profiling). The prior says NTRK1 is sharply tumour-restricted; if it holds, tissue specificity is a decisive strength that can offset a weaker tractability or safety axis. Until measured, treat this value as a hypothesis, not evidence.",
+          "source": {
+            "db": null,
+            "synthetic_parts": [
+              "tau_specificity",
+              "malignant_fraction"
+            ],
+            "designed_tradeoff": true
+          }
+        },
+        "right_safety": {
+          "value": 0.3,
+          "confidence": 0.6,
+          "cost": 1,
+          "direction": "refutes",
+          "strength": "moderate",
+          "data_origin": "opentargets",
+          "finding": "15 curated safety liability(ies) (grey matter heterotopia, weight gain, seizures) and 48 distinct mouse-knockout phenotypes on record. Representative mouse-KO phenotypes: decreased body size, no abnormal phenotype detected, anhidrosis.",
+          "interpretation": "Safety is a headwind: the breadth of knockout phenotypes (48) and the curated liability signal point to a broad developmental/essential role, so systemic inhibition risks on-target toxicity in normal tissue \u2014 the therapeutic window is narrow and must be bought back with tumour-selective delivery or dosing.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "safetyLiabilities",
+              "mousePhenotypes"
+            ]
+          }
+        },
+        "right_patient": {
+          "value": 0.35,
+          "confidence": 0.4,
+          "cost": 1,
+          "direction": "neutral",
+          "strength": "weak",
+          "data_origin": "hybrid",
+          "finding": "No melanoma clinical precedent for NTRK1 in Open Targets, so both the patient population and its enrichment biomarker would have to be established de novo (synthetic).",
+          "interpretation": "Patient axis is unproven: with no clinical footprint, NTRK1 carries first-in-class stratification risk, and the arena should discount confidence here accordingly.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "drugAndClinicalCandidates"
+            ],
+            "synthetic_parts": [
+              "biomarker_stratum"
+            ]
+          }
+        },
+        "right_commercial": {
+          "value": 0.336,
+          "confidence": 0.5,
+          "cost": 1,
+          "direction": "neutral",
+          "strength": "weak",
+          "data_origin": "hybrid",
+          "finding": "Competitive intensity is approximated from NTRK1's prominence as a melanoma target (high-association targets tend to be crowded); the explicit competitor count and whitespace read are synthesised.",
+          "interpretation": "Crowded field: NTRK1 is a well-trodden target, so commercial differentiation must come from a novel modality, payload, or indication niche rather than the target itself.",
+          "source": {
+            "db": "OpenTargets",
+            "synthetic_parts": [
+              "competitor_count",
+              "whitespace"
+            ]
+          }
+        },
+        "tractability": {
+          "value": 0.6,
+          "confidence": 0.9,
+          "cost": 1,
+          "direction": "supports",
+          "strength": "moderate",
+          "data_origin": "opentargets",
+          "finding": "Open Targets AB-modality tractability buckets satisfied: UniProt loc high conf, GO CC high conf, UniProt SigP or TMHMM.",
+          "interpretation": "Tractable by antibody: a druggable pocket / structural handle is present, so the modality is credible though not yet clinically validated for this target.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "tractability"
+            ]
+          }
+        }
+      },
+      "label": {
+        "positive": false,
+        "max_clinical_phase": null
+      }
+    },
+    {
+      "id": "H12",
+      "target": {
+        "symbol": "FGFR2",
+        "ensembl_id": "ENSG00000066468"
+      },
+      "disease": {
+        "name": "cutaneous melanoma",
+        "efo_id": "MONDO_0005012"
+      },
+      "modality": "ADC",
+      "narrative": {
+        "target_overview": "FGFR2 \u2014 fibroblast growth factor receptor 2. Tyrosine-protein kinase that acts as a cell-surface receptor for fibroblast growth factors and plays an essential role in the regulation of cell proliferation, differentiation, migration and apoptosis, and in the regulat",
+        "pathways": [
+          "PI5P, PP2A and IER3 Regulate PI3K/AKT Signaling",
+          "Activated point mutants of FGFR2",
+          "Constitutive Signaling by Aberrant PI3K in Cancer",
+          "FGFR2c ligand binding and activation",
+          "PI3K Cascade"
+        ],
+        "liabilities": [
+          "0 curated safety liability(ies) and 280 distinct mouse-knockout phenotypes on record. Representative mouse-KO phenotypes: abnormal membranous labyrinth morphology, abnormal frontal bone morphology, absent lungs."
+        ],
+        "evidence_gaps": [
+          "Single-cell tissue specificity (tau) and malignant-vs-stromal fraction are NOT available from Open Targets. Value shown is a designed prior (sharply tumour-restricted): focal amplification pattern implies tumour-cell-restricted expression."
+        ],
+        "proposed_experiments": [
+          {
+            "experiment": "single-cell tau + malignant-fraction profiling",
+            "axis": "right_tissue",
+            "cost_tier": 3,
+            "rationale": "resolves the only unmeasured axis; likely the highest-VoI action"
+          }
+        ]
+      },
+      "axes": {
+        "right_target": {
+          "value": 0.545,
+          "confidence": 0.9,
+          "cost": 1,
+          "direction": "supports",
+          "strength": "strong",
+          "data_origin": "opentargets",
+          "finding": "Open Targets overall disease association with melanoma = 0.545 (aggregating genetic, somatic, literature and known-drug evidence). Loss-of-function constraint LOEUF (o/e)=0.19, in the constrained tail \u2014 the gene is intolerant to LoF, which raises both a mechanistic causality prior and an on-target-toxicity flag.",
+          "interpretation": "Strong, multi-modal causal support: FGFR2 is a well-credentialled melanoma target and the association is unlikely to be literature-only noise. Sits on PI5P, PP2A and IER3 Regulate PI3K/AKT Signaling, Activated point mutants of FGFR2.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "associationScore",
+              "geneticConstraint",
+              "pathways"
+            ]
+          }
+        },
+        "right_tissue": {
+          "value": 0.82,
+          "confidence": 0.4,
+          "cost": 3,
+          "direction": "supports",
+          "strength": "strong",
+          "data_origin": "synthetic",
+          "finding": "Single-cell tissue specificity (tau) and malignant-vs-stromal fraction are NOT available from Open Targets. Value shown is a designed prior (sharply tumour-restricted): focal amplification pattern implies tumour-cell-restricted expression.",
+          "interpretation": "UNMEASURED axis \u2014 this is the highest-value action for the VoI loop to resolve via a tier-3 run_experiment (single-cell profiling). The prior says FGFR2 is sharply tumour-restricted; if it holds, tissue specificity is a decisive strength that can offset a weaker tractability or safety axis. Until measured, treat this value as a hypothesis, not evidence.",
+          "source": {
+            "db": null,
+            "synthetic_parts": [
+              "tau_specificity",
+              "malignant_fraction"
+            ],
+            "designed_tradeoff": true
+          }
+        },
+        "right_safety": {
+          "value": 0.5,
+          "confidence": 0.6,
+          "cost": 1,
+          "direction": "neutral",
+          "strength": "moderate",
+          "data_origin": "opentargets",
+          "finding": "0 curated safety liability(ies) and 280 distinct mouse-knockout phenotypes on record. Representative mouse-KO phenotypes: abnormal membranous labyrinth morphology, abnormal frontal bone morphology, absent lungs.",
+          "interpretation": "Safety is a headwind: the breadth of knockout phenotypes (280) and the curated liability signal point to a broad developmental/essential role, so systemic inhibition risks on-target toxicity in normal tissue \u2014 the therapeutic window is narrow and must be bought back with tumour-selective delivery or dosing.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "safetyLiabilities",
+              "mousePhenotypes"
+            ]
+          }
+        },
+        "right_patient": {
+          "value": 0.35,
+          "confidence": 0.4,
+          "cost": 1,
+          "direction": "neutral",
+          "strength": "weak",
+          "data_origin": "hybrid",
+          "finding": "No melanoma clinical precedent for FGFR2 in Open Targets, so both the patient population and its enrichment biomarker would have to be established de novo (synthetic).",
+          "interpretation": "Patient axis is unproven: with no clinical footprint, FGFR2 carries first-in-class stratification risk, and the arena should discount confidence here accordingly.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "drugAndClinicalCandidates"
+            ],
+            "synthetic_parts": [
+              "biomarker_stratum"
+            ]
+          }
+        },
+        "right_commercial": {
+          "value": 0.336,
+          "confidence": 0.5,
+          "cost": 1,
+          "direction": "neutral",
+          "strength": "weak",
+          "data_origin": "hybrid",
+          "finding": "Competitive intensity is approximated from FGFR2's prominence as a melanoma target (high-association targets tend to be crowded); the explicit competitor count and whitespace read are synthesised.",
+          "interpretation": "Crowded field: FGFR2 is a well-trodden target, so commercial differentiation must come from a novel modality, payload, or indication niche rather than the target itself.",
+          "source": {
+            "db": "OpenTargets",
+            "synthetic_parts": [
+              "competitor_count",
+              "whitespace"
+            ]
+          }
+        },
+        "tractability": {
+          "value": 0.6,
+          "confidence": 0.9,
+          "cost": 1,
+          "direction": "supports",
+          "strength": "moderate",
+          "data_origin": "opentargets",
+          "finding": "Open Targets AB-modality tractability buckets satisfied: Advanced Clinical, GO CC high conf, UniProt loc med conf, UniProt SigP or TMHMM.",
+          "interpretation": "Tractable by ADC: a druggable pocket / structural handle is present, so the modality is credible though not yet clinically validated for this target.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "tractability"
+            ]
+          }
+        }
+      },
+      "label": {
+        "positive": false,
+        "max_clinical_phase": null
+      }
+    },
+    {
+      "id": "H13",
+      "target": {
+        "symbol": "GRIN2A",
+        "ensembl_id": "ENSG00000183454"
+      },
+      "disease": {
+        "name": "cutaneous melanoma",
+        "efo_id": "MONDO_0005012"
+      },
+      "modality": "small_molecule",
+      "narrative": {
+        "target_overview": "GRIN2A \u2014 glutamate ionotropic receptor NMDA type subunit 2A. Component of N-methyl-D-aspartate (NMDA) receptors (NMDARs) that function as heterotetrameric, ligand-gated cation channels with high calcium permeability and voltage-dependent block by Mg(2+) (PubMed:20890276, PubMed:23",
+        "pathways": [
+          "MECP2 regulates neuronal receptors and channels",
+          "Unblocking of NMDA receptors, glutamate binding and activation",
+          "Assembly and cell surface presentation of NMDA receptors",
+          "Negative regulation of NMDA receptor-mediated neuronal transmission",
+          "Synaptic adhesion-like molecules"
+        ],
+        "liabilities": [
+          "17 curated safety liability(ies) (convulsions, dizziness, pain) and 20 distinct mouse-knockout phenotypes on record. Representative mouse-KO phenotypes: increased startle reflex, decreased thermal nociceptive threshold, abnormal spatial working memory."
+        ],
+        "evidence_gaps": [
+          "Single-cell tissue specificity (tau) and malignant-vs-stromal fraction are NOT available from Open Targets. Value shown is a designed prior (sharply tumour-restricted): neuronal-restricted; strong specificity but weak melanoma tractability."
+        ],
+        "proposed_experiments": [
+          {
+            "experiment": "single-cell tau + malignant-fraction profiling",
+            "axis": "right_tissue",
+            "cost_tier": 3,
+            "rationale": "resolves the only unmeasured axis; likely the highest-VoI action"
+          }
+        ]
+      },
+      "axes": {
+        "right_target": {
+          "value": 0.545,
+          "confidence": 0.9,
+          "cost": 1,
+          "direction": "supports",
+          "strength": "strong",
+          "data_origin": "opentargets",
+          "finding": "Open Targets overall disease association with melanoma = 0.545 (aggregating genetic, somatic, literature and known-drug evidence). Loss-of-function constraint LOEUF (o/e)=0.18, in the constrained tail \u2014 the gene is intolerant to LoF, which raises both a mechanistic causality prior and an on-target-toxicity flag.",
+          "interpretation": "Strong, multi-modal causal support: GRIN2A is a well-credentialled melanoma target and the association is unlikely to be literature-only noise. Sits on MECP2 regulates neuronal receptors and channels, Unblocking of NMDA receptors, glutamate binding and activation.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "associationScore",
+              "geneticConstraint",
+              "pathways"
+            ]
+          }
+        },
+        "right_tissue": {
+          "value": 0.78,
+          "confidence": 0.4,
+          "cost": 3,
+          "direction": "supports",
+          "strength": "strong",
+          "data_origin": "synthetic",
+          "finding": "Single-cell tissue specificity (tau) and malignant-vs-stromal fraction are NOT available from Open Targets. Value shown is a designed prior (sharply tumour-restricted): neuronal-restricted; strong specificity but weak melanoma tractability.",
+          "interpretation": "UNMEASURED axis \u2014 this is the highest-value action for the VoI loop to resolve via a tier-3 run_experiment (single-cell profiling). The prior says GRIN2A is sharply tumour-restricted; if it holds, tissue specificity is a decisive strength that can offset a weaker tractability or safety axis. Until measured, treat this value as a hypothesis, not evidence.",
+          "source": {
+            "db": null,
+            "synthetic_parts": [
+              "tau_specificity",
+              "malignant_fraction"
+            ],
+            "designed_tradeoff": true
+          }
+        },
+        "right_safety": {
+          "value": 0.417,
+          "confidence": 0.6,
+          "cost": 1,
+          "direction": "neutral",
+          "strength": "moderate",
+          "data_origin": "opentargets",
+          "finding": "17 curated safety liability(ies) (convulsions, dizziness, pain) and 20 distinct mouse-knockout phenotypes on record. Representative mouse-KO phenotypes: increased startle reflex, decreased thermal nociceptive threshold, abnormal spatial working memory.",
+          "interpretation": "Safety is a headwind: the breadth of knockout phenotypes (20) and the curated liability signal point to a broad developmental/essential role, so systemic inhibition risks on-target toxicity in normal tissue \u2014 the therapeutic window is narrow and must be bought back with tumour-selective delivery or dosing.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "safetyLiabilities",
+              "mousePhenotypes"
+            ]
+          }
+        },
+        "right_patient": {
+          "value": 0.35,
+          "confidence": 0.4,
+          "cost": 1,
+          "direction": "neutral",
+          "strength": "weak",
+          "data_origin": "hybrid",
+          "finding": "No melanoma clinical precedent for GRIN2A in Open Targets, so both the patient population and its enrichment biomarker would have to be established de novo (synthetic).",
+          "interpretation": "Patient axis is unproven: with no clinical footprint, GRIN2A carries first-in-class stratification risk, and the arena should discount confidence here accordingly.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "drugAndClinicalCandidates"
+            ],
+            "synthetic_parts": [
+              "biomarker_stratum"
+            ]
+          }
+        },
+        "right_commercial": {
+          "value": 0.336,
+          "confidence": 0.5,
+          "cost": 1,
+          "direction": "neutral",
+          "strength": "weak",
+          "data_origin": "hybrid",
+          "finding": "Competitive intensity is approximated from GRIN2A's prominence as a melanoma target (high-association targets tend to be crowded); the explicit competitor count and whitespace read are synthesised.",
+          "interpretation": "Crowded field: GRIN2A is a well-trodden target, so commercial differentiation must come from a novel modality, payload, or indication niche rather than the target itself.",
+          "source": {
+            "db": "OpenTargets",
+            "synthetic_parts": [
+              "competitor_count",
+              "whitespace"
+            ]
+          }
+        },
+        "tractability": {
+          "value": 0.9,
+          "confidence": 0.9,
+          "cost": 1,
+          "direction": "supports",
+          "strength": "strong",
+          "data_origin": "opentargets",
+          "finding": "Open Targets SM-modality tractability buckets satisfied: Approved Drug, Structure with Ligand, High-Quality Ligand, Druggable Family.",
+          "interpretation": "De-risked modality: GRIN2A already has an approved small_molecule drug, so chemistry/biologics feasibility is proven and the programme starts from precedent rather than discovery risk.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "tractability"
+            ]
+          }
+        }
+      },
+      "label": {
+        "positive": false,
+        "max_clinical_phase": null
+      }
+    },
+    {
+      "id": "H14",
+      "target": {
+        "symbol": "ATR",
+        "ensembl_id": "ENSG00000175054"
+      },
+      "disease": {
+        "name": "cutaneous melanoma",
+        "efo_id": "MONDO_0005012"
+      },
+      "modality": "small_molecule",
+      "narrative": {
+        "target_overview": "ATR \u2014 ATR checkpoint kinase. Serine/threonine protein kinase which activates checkpoint signaling upon genotoxic stresses such as ionizing radiation (IR), ultraviolet light (UV), or DNA replication stalling, thereby acting as a DNA damage sensor (Pu",
+        "pathways": [
+          "Presynaptic phase of homologous DNA pairing and strand exchange",
+          "Regulation of TP53 Activity through Phosphorylation",
+          "Fanconi Anemia Pathway",
+          "TP53 Regulates Transcription of DNA Repair Genes",
+          "Impaired BRCA2 binding to RAD51"
+        ],
+        "liabilities": [
+          "0 curated safety liability(ies) and 70 distinct mouse-knockout phenotypes on record. Representative mouse-KO phenotypes: decreased bone marrow cell number, decreased brain size, abnormal spinal cord morphology."
+        ],
+        "evidence_gaps": [
+          "Single-cell tissue specificity (tau) and malignant-vs-stromal fraction are NOT available from Open Targets. Value shown is a designed prior (broadly expressed / non-specific): housekeeping replication-stress kinase; no tumour restriction."
+        ],
+        "proposed_experiments": [
+          {
+            "experiment": "single-cell tau + malignant-fraction profiling",
+            "axis": "right_tissue",
+            "cost_tier": 3,
+            "rationale": "resolves the only unmeasured axis; likely the highest-VoI action"
+          }
+        ]
+      },
+      "axes": {
+        "right_target": {
+          "value": 0.544,
+          "confidence": 0.9,
+          "cost": 1,
+          "direction": "supports",
+          "strength": "strong",
+          "data_origin": "opentargets",
+          "finding": "Open Targets overall disease association with melanoma = 0.544 (aggregating genetic, somatic, literature and known-drug evidence). Loss-of-function constraint LOEUF (o/e)=0.45, in the tolerant range \u2014 LoF is well tolerated in population data, weakly arguing against essential-gene toxicity.",
+          "interpretation": "Strong, multi-modal causal support: ATR is a well-credentialled melanoma target and the association is unlikely to be literature-only noise. Sits on Presynaptic phase of homologous DNA pairing and strand exchange, Regulation of TP53 Activity through Phosphorylation.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "associationScore",
+              "geneticConstraint",
+              "pathways"
+            ]
+          }
+        },
+        "right_tissue": {
+          "value": 0.26,
+          "confidence": 0.4,
+          "cost": 3,
+          "direction": "refutes",
+          "strength": "weak",
+          "data_origin": "synthetic",
+          "finding": "Single-cell tissue specificity (tau) and malignant-vs-stromal fraction are NOT available from Open Targets. Value shown is a designed prior (broadly expressed / non-specific): housekeeping replication-stress kinase; no tumour restriction.",
+          "interpretation": "UNMEASURED axis \u2014 this is the highest-value action for the VoI loop to resolve via a tier-3 run_experiment (single-cell profiling). The prior says ATR is broadly expressed / non-specific; if it holds, tissue specificity is a liability that a tumour-selective modality would have to compensate for. Until measured, treat this value as a hypothesis, not evidence.",
+          "source": {
+            "db": null,
+            "synthetic_parts": [
+              "tau_specificity",
+              "malignant_fraction"
+            ],
+            "designed_tradeoff": true
+          }
+        },
+        "right_safety": {
+          "value": 0.708,
+          "confidence": 0.6,
+          "cost": 1,
+          "direction": "neutral",
+          "strength": "moderate",
+          "data_origin": "opentargets",
+          "finding": "0 curated safety liability(ies) and 70 distinct mouse-knockout phenotypes on record. Representative mouse-KO phenotypes: decreased bone marrow cell number, decreased brain size, abnormal spinal cord morphology.",
+          "interpretation": "Safety is a headwind: the breadth of knockout phenotypes (70) and the curated liability signal point to a broad developmental/essential role, so systemic inhibition risks on-target toxicity in normal tissue \u2014 the therapeutic window is narrow and must be bought back with tumour-selective delivery or dosing.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "safetyLiabilities",
+              "mousePhenotypes"
+            ]
+          }
+        },
+        "right_patient": {
+          "value": 0.35,
+          "confidence": 0.4,
+          "cost": 1,
+          "direction": "neutral",
+          "strength": "weak",
+          "data_origin": "hybrid",
+          "finding": "No melanoma clinical precedent for ATR in Open Targets, so both the patient population and its enrichment biomarker would have to be established de novo (synthetic).",
+          "interpretation": "Patient axis is unproven: with no clinical footprint, ATR carries first-in-class stratification risk, and the arena should discount confidence here accordingly.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "drugAndClinicalCandidates"
+            ],
+            "synthetic_parts": [
+              "biomarker_stratum"
+            ]
+          }
+        },
+        "right_commercial": {
+          "value": 0.337,
+          "confidence": 0.5,
+          "cost": 1,
+          "direction": "neutral",
+          "strength": "weak",
+          "data_origin": "hybrid",
+          "finding": "Competitive intensity is approximated from ATR's prominence as a melanoma target (high-association targets tend to be crowded); the explicit competitor count and whitespace read are synthesised.",
+          "interpretation": "Crowded field: ATR is a well-trodden target, so commercial differentiation must come from a novel modality, payload, or indication niche rather than the target itself.",
+          "source": {
+            "db": "OpenTargets",
+            "synthetic_parts": [
+              "competitor_count",
+              "whitespace"
+            ]
+          }
+        },
+        "tractability": {
+          "value": 0.6,
+          "confidence": 0.9,
+          "cost": 1,
+          "direction": "supports",
+          "strength": "moderate",
+          "data_origin": "opentargets",
+          "finding": "Open Targets SM-modality tractability buckets satisfied: Advanced Clinical, High-Quality Ligand, Druggable Family.",
+          "interpretation": "Tractable by small_molecule: a druggable pocket / structural handle is present, so the modality is credible though not yet clinically validated for this target.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "tractability"
+            ]
+          }
+        }
+      },
+      "label": {
+        "positive": false,
+        "max_clinical_phase": null
+      }
+    },
+    {
+      "id": "H15",
+      "target": {
+        "symbol": "FGFR1",
+        "ensembl_id": "ENSG00000077782"
+      },
+      "disease": {
+        "name": "cutaneous melanoma",
+        "efo_id": "MONDO_0005012"
+      },
+      "modality": "small_molecule",
+      "narrative": {
+        "target_overview": "FGFR1 \u2014 fibroblast growth factor receptor 1. Tyrosine-protein kinase that acts as a cell-surface receptor for fibroblast growth factors and plays an essential role in the regulation of embryonic development, cell proliferation, differentiation and migration. Requir",
+        "pathways": [
+          "PI5P, PP2A and IER3 Regulate PI3K/AKT Signaling",
+          "Phospholipase C-mediated cascade: FGFR1",
+          "Downstream signaling of activated FGFR1",
+          "Constitutive Signaling by Aberrant PI3K in Cancer",
+          "SHC-mediated cascade:FGFR1"
+        ],
+        "liabilities": [
+          "14 curated safety liability(ies) (anaemia, hypophosphataemia, decreased platelet count) and 202 distinct mouse-knockout phenotypes on record. Representative mouse-KO phenotypes: abnormal middle ear morphology, abnormal vertebrae morphology, decreased embryo size."
+        ],
+        "evidence_gaps": [
+          "Single-cell tissue specificity (tau) and malignant-vs-stromal fraction are NOT available from Open Targets. Value shown is a designed prior (moderately specific): no designed prior; weak association-derived placeholder."
+        ],
+        "proposed_experiments": [
+          {
+            "experiment": "single-cell tau + malignant-fraction profiling",
+            "axis": "right_tissue",
+            "cost_tier": 3,
+            "rationale": "resolves the only unmeasured axis; likely the highest-VoI action"
+          }
+        ]
+      },
+      "axes": {
+        "right_target": {
+          "value": 0.544,
+          "confidence": 0.9,
+          "cost": 1,
+          "direction": "supports",
+          "strength": "strong",
+          "data_origin": "opentargets",
+          "finding": "Open Targets overall disease association with melanoma = 0.544 (aggregating genetic, somatic, literature and known-drug evidence). Loss-of-function constraint LOEUF (o/e)=0.18, in the constrained tail \u2014 the gene is intolerant to LoF, which raises both a mechanistic causality prior and an on-target-toxicity flag.",
+          "interpretation": "Strong, multi-modal causal support: FGFR1 is a well-credentialled melanoma target and the association is unlikely to be literature-only noise. Sits on PI5P, PP2A and IER3 Regulate PI3K/AKT Signaling, Phospholipase C-mediated cascade: FGFR1.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "associationScore",
+              "geneticConstraint",
+              "pathways"
+            ]
+          }
+        },
+        "right_tissue": {
+          "value": 0.633,
+          "confidence": 0.4,
+          "cost": 3,
+          "direction": "supports",
+          "strength": "moderate",
+          "data_origin": "synthetic",
+          "finding": "Single-cell tissue specificity (tau) and malignant-vs-stromal fraction are NOT available from Open Targets. Value shown is a designed prior (moderately specific): no designed prior; weak association-derived placeholder.",
+          "interpretation": "UNMEASURED axis \u2014 this is the highest-value action for the VoI loop to resolve via a tier-3 run_experiment (single-cell profiling). The prior says FGFR1 is moderately specific; if it holds, tissue specificity is neutral \u2014 unlikely to decide the ranking alone. Until measured, treat this value as a hypothesis, not evidence.",
+          "source": {
+            "db": null,
+            "synthetic_parts": [
+              "tau_specificity",
+              "malignant_fraction"
+            ],
+            "designed_tradeoff": false
+          }
+        },
+        "right_safety": {
+          "value": 0.0,
+          "confidence": 0.6,
+          "cost": 1,
+          "direction": "refutes",
+          "strength": "moderate",
+          "data_origin": "opentargets",
+          "finding": "14 curated safety liability(ies) (anaemia, hypophosphataemia, decreased platelet count) and 202 distinct mouse-knockout phenotypes on record. Representative mouse-KO phenotypes: abnormal middle ear morphology, abnormal vertebrae morphology, decreased embryo size.",
+          "interpretation": "Safety is a headwind: the breadth of knockout phenotypes (202) and the curated liability signal point to a broad developmental/essential role, so systemic inhibition risks on-target toxicity in normal tissue \u2014 the therapeutic window is narrow and must be bought back with tumour-selective delivery or dosing.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "safetyLiabilities",
+              "mousePhenotypes"
+            ]
+          }
+        },
+        "right_patient": {
+          "value": 0.35,
+          "confidence": 0.4,
+          "cost": 1,
+          "direction": "neutral",
+          "strength": "weak",
+          "data_origin": "hybrid",
+          "finding": "No melanoma clinical precedent for FGFR1 in Open Targets, so both the patient population and its enrichment biomarker would have to be established de novo (synthetic).",
+          "interpretation": "Patient axis is unproven: with no clinical footprint, FGFR1 carries first-in-class stratification risk, and the arena should discount confidence here accordingly.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "drugAndClinicalCandidates"
+            ],
+            "synthetic_parts": [
+              "biomarker_stratum"
+            ]
+          }
+        },
+        "right_commercial": {
+          "value": 0.337,
+          "confidence": 0.5,
+          "cost": 1,
+          "direction": "neutral",
+          "strength": "weak",
+          "data_origin": "hybrid",
+          "finding": "Competitive intensity is approximated from FGFR1's prominence as a melanoma target (high-association targets tend to be crowded); the explicit competitor count and whitespace read are synthesised.",
+          "interpretation": "Crowded field: FGFR1 is a well-trodden target, so commercial differentiation must come from a novel modality, payload, or indication niche rather than the target itself.",
+          "source": {
+            "db": "OpenTargets",
+            "synthetic_parts": [
+              "competitor_count",
+              "whitespace"
+            ]
+          }
+        },
+        "tractability": {
+          "value": 0.9,
+          "confidence": 0.9,
+          "cost": 1,
+          "direction": "supports",
+          "strength": "strong",
+          "data_origin": "opentargets",
+          "finding": "Open Targets SM-modality tractability buckets satisfied: Approved Drug, Structure with Ligand, High-Quality Ligand, High-Quality Pocket, Druggable Family.",
+          "interpretation": "De-risked modality: FGFR1 already has an approved small_molecule drug, so chemistry/biologics feasibility is proven and the programme starts from precedent rather than discovery risk.",
+          "source": {
+            "db": "OpenTargets",
+            "fields": [
+              "tractability"
+            ]
+          }
+        }
+      },
+      "label": {
+        "positive": false,
+        "max_clinical_phase": null
+      }
+    }
+  ]
+}
