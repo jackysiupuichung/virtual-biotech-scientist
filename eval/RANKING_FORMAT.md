@@ -23,7 +23,7 @@ scores it against the frozen labels. This is the one seam between "producing a r
 |---|---|---|
 | `meta.disease` | no | disease short name (display only) |
 | `meta.efo_id` | no | Open Targets id the pool came from (provenance) |
-| `meta.ranker` | no | who produced this order — `arena`, `claude_science`, `opentargets_score`, … |
+| `meta.ranker` | no | who produced this order — `arena`, `claude_priors`, `opentargets_score`, … |
 | `meta.label_set` | no | which `labels.json` this is meant to be scored against (display only; the actual labels are passed to `augc.py` via `--labels`) |
 | `ranking` | **yes** | ordered list of **target symbols**, **best first** |
 
