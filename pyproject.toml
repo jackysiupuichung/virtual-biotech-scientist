@@ -1,0 +1,40 @@
+[project]
+name = "virtual-biotech-scientist"
+version = "0.1.0"
+description = "Virtual Biotech Scientist — an agentic system over ToolUniverse for therapeutic target discovery."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "scanpy>=1.10",
+    "anndata>=0.10",
+    "numpy>=1.26",
+    "scipy>=1.13",
+    "pandas>=2.2",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+# ToolUniverse (mims-harvard) — the evidence / tool layer: 1000+ scientific tools,
+# datasets, and models (incl. a Boltz-2 backend) exposed to the agents over MCP.
+# Install with `.[tools]`; the MCP server is wired in .mcp.json (uvx tooluniverse) and
+# via the Claude Code plugin. See docs/SETUP.md.
+tools = [
+    "tooluniverse>=1.0",
+]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# No importable packages yet — skills are handled by ToolUniverse / Claude Science,
+# and the arena is being rebuilt. Ship a metadata-only wheel so `pip install -e .`
+# still installs the dependency set. Re-add `packages = [...]` when code lands.
+[tool.hatch.build.targets.wheel]
+bypass-selection = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
