@@ -73,10 +73,10 @@ OT is **threshold-dependent**:
   (`hits@k`: @5=3, @10=3, @20=5) — OT narrowly wins; the prior's advantage doesn't survive the
   stricter "seriously pursued" bar.
 
-Both are the numbers the evidence-gathering arena should beat. Gain curves for all four
-(ranker × label set) are in
-[`data/melanoma_anyclin.gain_curves.svg`](data/melanoma_anyclin.gain_curves.svg) — **colour =
-ranker, dash = label set** (solid = preclinical, dashed = phase 2).
+Both are the numbers the evidence-gathering arena should beat. Gain curves are in
+[`data/melanoma_anyclin.gain_curves.svg`](data/melanoma_anyclin.gain_curves.svg) — **one
+subplot per task** (preclinical | phase 2), **colour = ranker** within each panel, with that
+task's random and perfect references.
 
 (Paper reference: web-augmented LLM ≈ 0.72, matching OT, on their AD set.)
 
@@ -95,7 +95,7 @@ python eval/augc.py --ot-baseline eval/data/melanoma_anyclin.candidates.json \
 python eval/augc.py --ranking eval/data/melanoma_anyclin.claude_priors_ranking.json \
                     --labels  eval/data/melanoma_anyclin.labels.json
 
-# plot gain curves — colour = ranker, dash = label set (repeat --labels to overlay both)
+# plot gain curves — one subplot per task (repeat --labels), colour = ranker
 python eval/plot_gain_curves.py \
        --labels "preclinical:eval/data/melanoma_anyclin.labels.json" \
        --labels "phase2:eval/data/melanoma.labels.json" \
