@@ -33,6 +33,21 @@ endpoints) at build time — the ecosystem moves fast.
 - **LMArena / Chatbot Arena** — Elo for live ranking, **Bradley–Terry** for the stable published
   board with confidence intervals; the pattern we follow for the final leaderboard.
   Chiang et al., arXiv:2403.04132.
+- **LLM pairwise target prioritisation — our closest eval precedent (Adaszewski & Schindler,
+  medRxiv 2025)** — Gemini 2.5 Pro ranks **522 AD targets** across **6 criteria** by **pairwise
+  comparison** (QuickSort with the LLM as comparator), integrated via **Pareto fronts + a
+  utopia-point** ranking. Validates against **known clinical-trial targets** (44 of the 522) via
+  **AUGC** (area under the gain curve): web-augmented **AUGC ≈0.72**, matching Open Targets;
+  **pairwise beats pointwise** with large effect sizes. We adopt their **ground-truth design (AUGC
+  enrichment of clinical-trial targets)** and their **pairwise-vs-pointwise** axis directly.
+  **What they leave open — our contribution:** (1) they do *not* measure pairwise
+  **transitivity/consistency** (only randomise order across 16 runs); (2) no **budgeted VoI**
+  evidence loop (one-shot sort); (3) safety & competitive-landscape were their weakest, unstable
+  criteria (they recommend hybrid LLM + structured data — what our ToolUniverse layer provides).
+  Cite: Adaszewski S., Schindler T. "Large Language Model-Driven Prioritization of Alzheimer's
+  Disease Drug Targets Across Multidimensional Criteria." medRxiv 2025,
+  doi:10.64898/2025.12.28.25343106.
+  https://www.medrxiv.org/content/10.64898/2025.12.28.25343106v1
 - **Multi-objective / VoI foundations** — Pareto optimality; Value of Information (Howard 1966);
   Bayesian optimal experimental design (Chaloner & Verdinelli 1995; Rainforth et al. 2024). These
   ground the multi-objective ranking and the compute-budgeted loop.

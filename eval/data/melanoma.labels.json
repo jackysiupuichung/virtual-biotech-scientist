@@ -1,0 +1,461 @@
+{
+  "meta": {
+    "disease_name": "melanoma",
+    "efo_id": "MONDO_0005012",
+    "candidate_pool_size": 89,
+    "candidate_filter": "hasHighQualityChemicalProbes",
+    "association_size_scanned": 500,
+    "ground_truth": "OpenTargets drugAndClinicalCandidates (drug-in-clinic -> MoA target)",
+    "positive_threshold_phase": "PHASE_2",
+    "n_positives": 9,
+    "positive_rate": 0.1011,
+    "note": "Snapshot; retrospective clinical-phase ground truth. Not future prediction. Candidate filter mirrors Adaszewski & Schindler; GT source differs (OT, not curated list)."
+  },
+  "labels": [
+    {
+      "symbol": "BRAF",
+      "max_clinical_phase": "PHASE_3",
+      "positive": true
+    },
+    {
+      "symbol": "MAP2K1",
+      "max_clinical_phase": "PHASE_3",
+      "positive": true
+    },
+    {
+      "symbol": "MAP2K2",
+      "max_clinical_phase": "PHASE_3",
+      "positive": true
+    },
+    {
+      "symbol": "ATM",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "CDK4",
+      "max_clinical_phase": "PHASE_1",
+      "positive": false
+    },
+    {
+      "symbol": "KDR",
+      "max_clinical_phase": "PHASE_2",
+      "positive": true
+    },
+    {
+      "symbol": "MET",
+      "max_clinical_phase": "PHASE_2",
+      "positive": true
+    },
+    {
+      "symbol": "AKT1",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "ERBB2",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "TERT",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "SETD2",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "MTOR",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "CDK6",
+      "max_clinical_phase": "PHASE_1",
+      "positive": false
+    },
+    {
+      "symbol": "SMARCA4",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "PDGFRB",
+      "max_clinical_phase": "PHASE_2",
+      "positive": true
+    },
+    {
+      "symbol": "NTRK1",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "FGFR2",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "GRIN2A",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "ATR",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "FGFR1",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "KAT6A",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "EP300",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "CD274",
+      "max_clinical_phase": "PHASE_1",
+      "positive": false
+    },
+    {
+      "symbol": "AR",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "FGFR4",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "AKT2",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "SYK",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "NTRK2",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "IKBKB",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "PTPN11",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "MDM2",
+      "max_clinical_phase": "PHASE_1",
+      "positive": false
+    },
+    {
+      "symbol": "CDK12",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "POLQ",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "ESR1",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "DDR2",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "NTRK3",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "LCK",
+      "max_clinical_phase": "PHASE_2",
+      "positive": true
+    },
+    {
+      "symbol": "CREBBP",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "ACVR1B",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "PBRM1",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "KAT6B",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "MAP2K4",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "CHEK2",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "SMO",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "IDH1",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "NCOR1",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "BRD3",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "WRN",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "PIK3CA",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "BTK",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "FAS",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "BRD4",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "JAK1",
+      "max_clinical_phase": "PHASE_1",
+      "positive": false
+    },
+    {
+      "symbol": "JAK2",
+      "max_clinical_phase": "PHASE_1",
+      "positive": false
+    },
+    {
+      "symbol": "EGFR",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "FLT3",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "RET",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "ABL1",
+      "max_clinical_phase": "PHASE_2",
+      "positive": true
+    },
+    {
+      "symbol": "ALK",
+      "max_clinical_phase": "PHASE_1_2",
+      "positive": false
+    },
+    {
+      "symbol": "PTK6",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "EZH2",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "STAT3",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "JAK3",
+      "max_clinical_phase": "PHASE_1",
+      "positive": false
+    },
+    {
+      "symbol": "KRAS",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "CTSS",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "PARP1",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "PIK3CB",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "KDM6A",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "KEAP1",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "NSD2",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "FGFR3",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "IDH2",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "BCL6",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "AKT3",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "PPARG",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "SOS1",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "MAPK1",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "VHL",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "NSD3",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "TRIM24",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "PPM1D",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "ACVR1",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "MALT1",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "GRM5",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "SRC",
+      "max_clinical_phase": "PHASE_2",
+      "positive": true
+    },
+    {
+      "symbol": "BCL2",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "EPAS1",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "PIM1",
+      "max_clinical_phase": null,
+      "positive": false
+    },
+    {
+      "symbol": "RXRA",
+      "max_clinical_phase": null,
+      "positive": false
+    }
+  ]
+}
