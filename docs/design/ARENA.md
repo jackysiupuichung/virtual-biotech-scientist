@@ -113,7 +113,7 @@ affinity      (CELLxGENE)           Transformer)           oracle)
         ▼
 ```
 
-This is the project's headline differentiator (see [DIFFERENTIATION.md](DIFFERENTIATION.md)): the loop
+This is the project's headline differentiator (see [DIFFERENTIATION.md](../background/DIFFERENTIATION.md)): the loop
 doesn't just rank on existing evidence, it **runs a frontier-model computation on real data as the
 "experiment"** and re-ranks on the result. Backends are interchangeable behind one interface; for the
 demo **Boltz-2 is live** (with pre-computed/cached results as a stage-safe fallback), single-cell and

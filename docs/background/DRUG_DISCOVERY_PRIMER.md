@@ -5,7 +5,7 @@ It explains **what drug discovery is**, the **standard pipeline**, and **what "t
 identification" and "prioritisation" actually mean** — then maps those ideas onto the concrete
 [ToolUniverse hypercholesterolemia case study](REFERENCES.md#reference-case-study-reviewed) so the
 abstract terms have a worked example. This is the domain context behind
-[DESIGN.md](DESIGN.md).
+[DESIGN.md](../design/DESIGN.md).
 
 ---
 
@@ -80,7 +80,7 @@ Good prioritisation is **comparative and multi-axis**: you score every candidate
 (genetics, tractability, safety, novelty, chemical matter, competition/IP), then rank them — ideally
 with a written rationale a domain expert can audit.
 
-> This is exactly the step our project focuses on. See [DESIGN.md §3](DESIGN.md#3-methods-prioritisation).
+> This is exactly the step our project focuses on. See [DESIGN.md §3](../design/DESIGN.md#3-methods-prioritisation).
 
 ### Prioritisation vs. validation
 
@@ -98,7 +98,7 @@ These are distinct but interlocking steps, and our system's value-of-information
 
 Our project treats both as one **value-of-information** process — spend the next (cheap or expensive)
 action where it most changes the decision — while respecting that the two differ in cost, evidence
-type, and stakes. See [INFORMATION_MAXIMISATION.md](INFORMATION_MAXIMISATION.md).
+type, and stakes. See [INFORMATION_MAXIMISATION.md](../design/INFORMATION_MAXIMISATION.md).
 
 ---
 
@@ -126,7 +126,7 @@ Two things to notice — they are the openings our project targets:
    stops**; it never tests a hypothesis and loops back.
 
 Our project addresses exactly these gaps: a CSO + scientist-division architecture
-([DESIGN.md](DESIGN.md)) feeding a **prioritisation arena** ([ARENA.md](ARENA.md)) that makes
+([DESIGN.md](../design/DESIGN.md)) feeding a **prioritisation arena** ([ARENA.md](../design/ARENA.md)) that makes
 competing hypotheses **compete head-to-head** and ranks them as a multi-objective optimisation —
 a quantified, reproducible decision instead of a narrative dossier or a deferral to a human.
 

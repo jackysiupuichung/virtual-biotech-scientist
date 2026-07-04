@@ -1,7 +1,7 @@
 # Potential directions
 
 Where this project can go beyond a weekend prototype. Ordered roughly from "buildable at the
-event" to "ambitious roadmap." The core deliverable is the [arena](ARENA.md); these extend it.
+event" to "ambitious roadmap." The core deliverable is the [arena](../design/ARENA.md); these extend it.
 
 ## Near-term (event-buildable)
 
@@ -20,11 +20,11 @@ event" to "ambitious roadmap." The core deliverable is the [arena](ARENA.md); th
 4. **The compute-budgeted VoI loop (ARENA §5).** Promote the stretch goal: boundary-focused match
    selection + a marginal-information stopping rule, so the system spends compute like a scientist
    rather than running a static round-robin.
-5. **Evolving hypotheses** ([self-improving level B](SELF_IMPROVING.md#level-b--self-improving-hypotheses-the-strongest-new-angle-build-a-slice)).
+5. **Evolving hypotheses** ([self-improving level B](../design/SELF_IMPROVING.md#level-b--self-improving-hypotheses-the-strongest-new-angle-build-a-slice)).
    Don't just rank a fixed slate — *mutate* losing hypotheses (swap modality, narrow the patient
    stratum) and re-enter them, keeping a **diverse** front (quality-diversity / MAP-Elites style)
    rather than collapsing to one idea.
-6. **Richer experiment design.** The core loop ([DESIGN.md §4](DESIGN.md#4-closing-the-loop-with-experiments))
+6. **Richer experiment design.** The core loop ([DESIGN.md §4](../design/DESIGN.md#4-closing-the-loop-with-experiments))
    already runs experiments and re-ranks. Extend it with active-learning experiment *design* — more
    backends (ADMET-AI, projected datasets, a simulated oracle), and a Reviewer that drafts the *most
    decisive* test (expected-information-gain) rather than the next obvious one.
@@ -38,10 +38,10 @@ event" to "ambitious roadmap." The core deliverable is the [arena](ARENA.md); th
    hypotheses are tested against reality, not only in silico.
 9. **Multi-disease / multi-modality.** Generalise the axis set and modality assumptions (small
    molecule, biologic, etc.) so the same arena runs across indications.
-10. **Self-improving tool use** ([self-improving level C](SELF_IMPROVING.md#level-c--self-improving-toolkit-one-scripted-instance)).
+10. **Self-improving tool use** ([self-improving level C](../design/SELF_IMPROVING.md#level-c--self-improving-toolkit-one-scripted-instance)).
     Lean on ToolUniverse's tool-composition / spec-optimisation to let the agent build or refine tools
     it lacks for a given axis, rather than being limited to the pre-wired set.
-11. **Self-improving judgement** ([self-improving level D](SELF_IMPROVING.md#level-d--self-improving-judgement-honest-roadmap-do-not-claim)).
+11. **Self-improving judgement** ([self-improving level D](../design/SELF_IMPROVING.md#level-d--self-improving-judgement-honest-roadmap-do-not-claim)).
     Calibrate the arena's axis weights and judge against real clinical-trial-success outcomes — the
     one form of self-improvement that needs ground truth we don't have at the event.
 
