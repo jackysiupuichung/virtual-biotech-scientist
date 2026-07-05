@@ -1,0 +1,22 @@
+{
+  "_comment": "A 10-target arena evaluation subset for melanoma, drawn from eval/data/melanoma.labels.json (OpenTargets drug-in-clinic ground truth, EFO MONDO_0005012). 3 ground-truth positives + 7 negatives. Subagents produce one 5R hypothesis card per target (eval/arena_set/cards/<SYMBOL>.json); the arena's axis-judges then compare pairs to build a Pareto front, and AUGC scores the resulting ranking against these labels.",
+  "meta": {
+    "disease_name": "melanoma",
+    "efo_id": "MONDO_0005012",
+    "n_ground_truth": 3,
+    "n_other": 7,
+    "label_source": "eval/data/melanoma.labels.json (OpenTargets drugAndClinicalCandidates, PHASE_2 threshold)"
+  },
+  "targets": [
+    {"symbol": "BRAF",  "ensembl_id": "ENSG00000157764", "ground_truth": true,  "note": "clinically validated melanoma driver (vemurafenib/dabrafenib), PHASE_3"},
+    {"symbol": "MAP2K1","ensembl_id": "ENSG00000169032", "ground_truth": true,  "note": "MEK1, trametinib/binimetinib target, PHASE_3"},
+    {"symbol": "KDR",   "ensembl_id": "ENSG00000128052", "ground_truth": true,  "note": "VEGFR2, angiogenesis; drug-in-clinic PHASE_2"},
+    {"symbol": "ATM",   "ensembl_id": "ENSG00000149311", "ground_truth": false, "note": "DDR kinase; no melanoma drug-in-clinic at threshold"},
+    {"symbol": "CDK4",  "ensembl_id": "ENSG00000135446", "ground_truth": false, "note": "cell-cycle; PHASE_1 only, below positive threshold"},
+    {"symbol": "AKT1",  "ensembl_id": "ENSG00000142208", "ground_truth": false, "note": "PI3K/AKT; no melanoma drug-in-clinic at threshold"},
+    {"symbol": "ERBB2", "ensembl_id": "ENSG00000141736", "ground_truth": false, "note": "HER2; not a melanoma clinical target at threshold"},
+    {"symbol": "TERT",  "ensembl_id": "ENSG00000164362", "ground_truth": false, "note": "telomerase; promoter-mutated in melanoma but no drug-in-clinic"},
+    {"symbol": "SETD2", "ensembl_id": "ENSG00000181555", "ground_truth": false, "note": "chromatin; no melanoma drug-in-clinic at threshold"},
+    {"symbol": "MTOR",  "ensembl_id": "ENSG00000198793", "ground_truth": false, "note": "mTOR; no melanoma-specific drug-in-clinic at threshold"}
+  ]
+}

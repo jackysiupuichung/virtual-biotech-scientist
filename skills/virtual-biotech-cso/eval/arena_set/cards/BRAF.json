@@ -1,0 +1,36 @@
+{
+  "target": "BRAF",
+  "disease": "melanoma",
+  "per_axis": {
+    "right_target": {
+      "finding": "BRAF is a top-scoring somatic driver in melanoma with maximal OpenTargets association: intoGen somatic-mutation evidence scores 1.0 with a resourceScore of ~6e-55 (cutaneous melanoma ~7e-52), reinforced by multiple literature co-mentions; the recurrent V600E kinase-activating mutation is the canonical melanoma oncogenic driver. Germline GWAS adds only 8 intronic/locus SNPs at 7q34, so the causal signal is somatic rather than heritable.",
+      "grade": "strong",
+      "provenance": "OpenTargets_get_evidence_by_datasource: intoGen somatic_mutation score=1.0, resourceScore=6.02e-55 (melanoma) / 7.29e-52 (cutaneous melanoma), 17997 total evidence rows; gwas_get_snps_for_gene: 8 BRAF-locus SNPs (e.g. rs11762469, intron_variant, 7q34)."
+    },
+    "right_tissue": {
+      "finding": "CellMarker lists BRAF as a marker on cancer cells in brain and lung tumours and, notably, on normal fetal-kidney NKT cells, indicating expression is not tumour-restricted. No melanocyte/melanoma-specific expression record was returned, so tissue selectivity for the melanoma compartment is only indirectly supported.",
+      "grade": "weak",
+      "provenance": "CellMarker_search_by_gene (BRAF, Human): 3 records — 2 cancer-cell (Brain, Lung), 1 normal cell (Natural killer T cell, Fetal kidney); no melanoma-specific record."
+    },
+    "right_safety": {
+      "finding": "Vemurafenib (Zelboraf), the marketed BRAF-V600E inhibitor, has 4046 openFDA adverse-event reports with a high serious/fatal fraction; on-target-off-tumour BRAF/MAPK class effects (paradoxical MAPK activation) are well known, including cutaneous squamous-cell carcinoma. Expression on normal NKT cells adds a plausible on-target-off-tumour liability.",
+      "grade": "supporting",
+      "provenance": "OpenFDA_search_drug_events (vemurafenib/ZELBORAF, NDA202429): 4046 total reports, sample report serious=1 with death+hospitalization; Kinase Inhibitor [EPC], indication metastatic malignant melanoma."
+    },
+    "right_patient": {
+      "finding": "A clear molecular stratification biomarker exists: BRAF V600E/K mutation status defines the treatable subpopulation, and completed Phase 3 trials (e.g. NCT01307397, NCT01689519) enrolled BRAF V600-mutation-positive metastatic melanoma patients, demonstrating a validated patient-selection axis.",
+      "grade": "strong",
+      "provenance": "search_clinical_trials (vemurafenib, melanoma): 27 studies incl. Phase 3 NCT01307397 (BRAF V600+ metastatic) COMPLETED and NCT01689519 (vemurafenib±cobimetinib, V600+) COMPLETED."
+    },
+    "right_commercial": {
+      "finding": "Mature and competitive landscape: BRAF-in-melanoma has an FDA-approved drug (vemurafenib/Zelboraf, Genentech) plus combination regimens with MEK inhibitors (cobimetinib), across 27 registered vemurafenib melanoma trials including multiple Phase 3s — high validation but a crowded, de-risked space with limited whitespace.",
+      "grade": "supporting",
+      "provenance": "search_clinical_trials: total_count=27 vemurafenib melanoma trials, Phase 2/3; OpenFDA: approved product ZELBORAF (Genentech, NDA202429)."
+    },
+    "tractability": {
+      "finding": "Highest-tier druggability: Pharos classifies BRAF as Tclin (a clinically drugged target) in the Kinase family with an approved small-molecule inhibitor, making it fully tractable with a low novelty score (well-explored).",
+      "grade": "strong",
+      "provenance": "Pharos_get_target (BRAF, UniProt P15056): tdl=Tclin, family=Kinase, novelty=0.0025, publicationCount=2635."
+    }
+  }
+}
