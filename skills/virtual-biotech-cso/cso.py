@@ -179,14 +179,14 @@ def decompose_and_route(query: str, case: str, routing: dict[str, Any]) -> list[
     # atlas input we don't fetch live — so the deterministic plan goes straight to the
     # cell-type-specificity profiler (functional; reads the same cell-type signal).
     spec = [
-        ("step_01_gwas", "target_id_and_prioritization", "germline_genetic_support",
+        ("step_01_gwas", "right_target", "germline_genetic_support",
          f"Is there germline genetic support for {target}?", []),
-        ("step_03_celltype_specificity", "target_id_and_prioritization", "cell_type_specificity",
+        ("step_03_celltype_specificity", "right_tissue", "cell_type_specificity",
          f"How cell-type-specific is {target} expression (tau + bimodality)?", []),
-        ("step_04_offtarget_safety", "target_safety", "off_target_expression",
+        ("step_04_offtarget_safety", "right_safety", "off_target_expression",
          f"What is the off-target / broad-tissue expression risk for {target}?",
          ["step_03_celltype_specificity"]),
-        ("step_05_clinical_trials", "clinical_officers", "prior_trials_and_outcomes",
+        ("step_05_clinical_trials", "right_patient", "prior_trials_and_outcomes",
          f"What prior trials and outcomes exist for {target}?", []),
     ]
     return [
@@ -401,7 +401,7 @@ def _reroute_task(gap: dict[str, Any], routing: dict[str, Any] | None = None,
         chosen = REROUTE_FALLBACK_SKILL
     return Subtask(
         step=f"step_{step_n:02d}_reroute",
-        division="target_id_and_prioritization",
+        division="right_target",
         question=f"Reviewer follow-up: {gap.get('missing', 'fill gap')} — {gap.get('why', '')}".strip(),
         skill=chosen,
     )

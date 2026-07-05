@@ -9,8 +9,9 @@ judge what it means for the target.
 
 ## Your division
 
-You will be told your division (one of: Target ID & Prioritization · Target Safety · Modality
-Selection · Clinical) and given the raw result of each routed skill that ran for it.
+You will be told your division — one of the **AstraZeneca 5R axes** (right_target ·
+right_tissue · right_safety · right_patient · right_commercial · tractability) — and
+given the raw result of each routed skill that ran for it.
 
 ## Produce a division finding
 
@@ -37,7 +38,7 @@ Selection · Clinical) and given the raw result of each routed skill that ran fo
 Return JSON:
 ```json
 {
-  "division": "target_id_and_prioritization",
+  "division": "right_target",
   "interpretation": "2–4 sentences citing [step_NN]",
   "confidence": "high | medium | low",
   "caveats": ["…"],

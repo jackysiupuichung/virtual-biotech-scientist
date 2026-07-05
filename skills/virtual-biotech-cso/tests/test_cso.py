@@ -95,9 +95,9 @@ ROUTING = load_routing()
 
 def test_validate_binds_proposed_plan_to_real_skills():
     plan = [
-        {"division": "target_id_and_prioritization",
+        {"division": "right_target",
          "intent": "germline_genetic_support", "question": "germline?"},
-        {"division": "target_id_and_prioritization",
+        {"division": "right_tissue",
          "intent": "cell_type_specificity", "question": "specific?",
          "depends_on": ["step_01_germline_genetic_support"]},
     ]
@@ -117,13 +117,13 @@ def test_validate_rejects_unknown_division():
 def test_validate_rejects_unroutable_intent():
     with pytest.raises(PlanValidationError, match="not routable"):
         validate_and_bind_plan(
-            [{"division": "clinical_officers", "intent": "made_up"}], ROUTING)
+            [{"division": "right_patient", "intent": "made_up"}], ROUTING)
 
 
 def test_validate_rejects_forward_dependency():
     with pytest.raises(PlanValidationError, match="earlier step"):
         validate_and_bind_plan([
-            {"division": "clinical_officers", "intent": "prior_trials_and_outcomes",
+            {"division": "right_patient", "intent": "prior_trials_and_outcomes",
              "depends_on": ["step_99_future"]},
         ], ROUTING)
 
@@ -289,13 +289,13 @@ from cso import group_by_division, Subtask  # noqa: E402
 
 def test_group_by_division_preserves_order_and_groups():
     tasks = [
-        Subtask("step_01_a", "target_id_and_prioritization", "q", "gwas-lookup"),
-        Subtask("step_02_b", "clinical_officers", "q", "clinical-trial-finder"),
-        Subtask("step_03_c", "target_id_and_prioritization", "q", "celltype-specificity-profiler"),
+        Subtask("step_01_a", "right_target", "q", "gwas-lookup"),
+        Subtask("step_02_b", "right_patient", "q", "clinical-trial-finder"),
+        Subtask("step_03_c", "right_target", "q", "celltype-specificity-profiler"),
     ]
     groups = group_by_division(tasks)
-    assert [d for d, _ in groups] == ["target_id_and_prioritization", "clinical_officers"]
-    # the two target_id steps are grouped under one scientist agent
+    assert [d for d, _ in groups] == ["right_target", "right_patient"]
+    # the two right_target steps are grouped under one scientist agent
     assert [t.step for t in groups[0][1]] == ["step_01_a", "step_03_c"]
     assert [t.step for t in groups[1][1]] == ["step_02_b"]
 
@@ -316,7 +316,7 @@ def test_execute_skill_unmapped_axis_defers_to_discovery():
     # An axis with no tool_router.yaml mapping runs the discovery loop; with no
     # executor registered it defers to a Tool_Finder descriptor (source
     # 'tool-descriptor'), never a fabricated result.
-    t = Subtask("step_09_x", "target_id_and_prioritization",
+    t = Subtask("step_09_x", "right_target",
                 "spatial validation?", "scrna-orchestrator")
     env = execute_skill(t, case="b7h3", live=True, target="B7-H3 in lung cancer")
     assert env["source"] == "tool-descriptor"
@@ -326,7 +326,7 @@ def test_execute_skill_unmapped_axis_defers_to_discovery():
 def test_execute_skill_mapped_axis_labels_tooluniverse_source():
     # gwas-lookup maps to a ToolUniverse tool → execute_skill carries the backend's
     # source label (tool-descriptor when the package is absent, tooluniverse when live).
-    t = Subtask("step_01_gwas", "target_id_and_prioritization",
+    t = Subtask("step_01_gwas", "right_target",
                 "germline support?", "gwas-lookup")
     env = execute_skill(t, case="b7h3", live=True, target="B7-H3 in lung cancer")
     assert env["source"] in ("tooluniverse", "tool-descriptor", "unavailable")

@@ -57,10 +57,10 @@ class FakeRunner:
         if "questions" in schema:
             minimal = [
                 {"question": "germline?", "rationale": "causal grounding",
-                 "division": "target_id_and_prioritization",
+                 "division": "right_target",
                  "intent": "germline_genetic_support", "depends_on": []},
                 {"question": "prior trials?", "rationale": "translatability",
-                 "division": "clinical_officers",
+                 "division": "right_patient",
                  "intent": "prior_trials_and_outcomes", "depends_on": []},
             ]
             if self._plan == "minimal":
@@ -75,16 +75,16 @@ class FakeRunner:
             # axis is non-core, so leaving it unassessed never forces a re-route.)
             return {"reasoning": "full assessment", "questions": minimal[:1] + [
                 {"question": "specific?", "rationale": "trial-success prior",
-                 "division": "target_id_and_prioritization",
+                 "division": "right_tissue",
                  "intent": "cell_type_specificity", "depends_on": []},
                 {"question": "safe?", "rationale": "AE risk",
-                 "division": "target_safety",
+                 "division": "right_safety",
                  "intent": "post_market_adverse_events", "depends_on": []},
                 {"question": "somatic drivers?", "rationale": "driver frequency",
-                 "division": "target_id_and_prioritization",
+                 "division": "right_target",
                  "intent": "somatic_mutation_frequency", "depends_on": []},
                 {"question": "on tumour cells?", "rationale": "ADC/CAR-T efficacy",
-                 "division": "target_id_and_prioritization",
+                 "division": "right_tissue",
                  "intent": "malignant_cell_localization", "depends_on": []},
                 minimal[1],
             ]}
@@ -538,8 +538,8 @@ class DivRunner(FakeRunner):
         if "Division Scientist" in prompt.splitlines()[0]:
             # label the finding by the division named in the context (the harness puts
             # "Your division: <name>" at the top of each scientist's context).
-            div = "target_id_and_prioritization"
-            for d in ("clinical_officers", "target_safety", "target_id_and_prioritization"):
+            div = "right_target"
+            for d in ("right_patient", "right_safety", "right_tissue", "right_target"):
                 if d in context:
                     div = d
                     break
@@ -552,17 +552,18 @@ def test_division_scientists_run_and_interpret(monkeypatch, tmp_path):
     out = _run(monkeypatch, DivRunner("synthesize"), tmp_path)
     data = json.loads(Path(out["result"]).read_text())["data"]
     findings = data["division_findings"]
-    # full plan spans target_id (germline+specificity+somatic+malignancy),
-    # target_safety, clinical → one division scientist agent per distinct division.
+    # full plan spans the 5R axes: right_target (germline+somatic), right_tissue
+    # (specificity+malignancy), right_safety, right_patient (trials) → one division
+    # scientist agent per distinct 5R axis.
     divisions = sorted(f["division"] for f in findings)
-    assert divisions == ["clinical_officers", "target_id_and_prioritization",
-                         "target_safety"], findings
+    assert divisions == ["right_patient", "right_safety", "right_target",
+                         "right_tissue"], findings
     assert all(f["source"] == harness.AGENT_SOURCE for f in findings)
     assert all(f["evidence_grade"] == "supporting" for f in findings)
     # each scientist is its own trace span
     trace = (tmp_path / "trace.jsonl").read_text()
-    assert "scientist:target_id_and_prioritization" in trace
-    assert "scientist:clinical_officers" in trace
+    assert "scientist:right_target" in trace
+    assert "scientist:right_patient" in trace
     # every planned step still surfaces as evidence (re-routes legitimately add more,
     # so assert coverage of the plan rather than an exact count).
     evidence_steps = {e["step"] for e in data["evidence"]}

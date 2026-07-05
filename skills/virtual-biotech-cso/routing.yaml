@@ -1,7 +1,12 @@
 # query-intent → ClawBio skill routing map (used by the CSO orchestrator)
-# Divisions mirror Zhang et al. 2026. Each entry: which skill answers which sub-question.
+# The top-level divisions mirror the AstraZeneca 5R decision framework
+# (right Target / Tissue / Safety / Patient / Commercial + cross-cutting
+# Tractability) — see docs/design/DESIGN.md §3.1. Each division is a go/no-go
+# axis; the intents under it are the sub-questions, each bound to the skill
+# (and ToolUniverse tool) that answers it. (Was: Zhang et al. 2026 divisions.)
 
-target_id_and_prioritization:
+# Right Target — does modulating it cause the disease effect?
+right_target:
   germline_genetic_support:
     skill: gwas-lookup
     also: [fine-mapping, gwas-catalog-region-fetch]
@@ -12,6 +17,12 @@ target_id_and_prioritization:
   somatic_mutation_frequency:            # <-- TCGA somatic-driver axis
     skill: tcga-somatic-profiler
     note: per-cancer-type somatic mutation frequency (GDC/TCGA); driver vs expression target
+  functional_dependency:
+    skill: crispr-screen-triage
+    also: [opentargets-target-factors]    # OT geneEssentiality (DepMap), one API call
+
+# Right Tissue — is it where the disease is, and not elsewhere?
+right_tissue:
   single_cell_atlas_fetch:               # <-- data acquisition front-end (our skill)
     skill: cellxgene-fetch
     note: pulls a gene×tissue .h5ad slice from CELLxGENE Census (API, reproducible); feeds the two steps below
@@ -27,11 +38,9 @@ target_id_and_prioritization:
     skill: malignant-expression-profiler
     consumes: cellxgene-fetch
     note: malignant vs non-malignant expression on a tumour slice — the ADC/CAR-T efficacy axis
-  functional_dependency:
-    skill: crispr-screen-triage
-    also: [opentargets-target-factors]    # OT geneEssentiality (DepMap), one API call
 
-target_safety:
+# Right Safety — will hitting it harm normal biology?
+right_safety:
   prioritisation_safety_factors:          # <-- our OT factors skill
     skill: opentargets-target-factors
     note: genetic constraint, mouse-KO, bulk tissue specificity, safety liabilities (Open Targets)
@@ -46,27 +55,25 @@ target_safety:
   regulatory_safety_signals:
     skill: clinpgx
 
-modality_selection:
-  druggability_and_structure:
-    skill: struct-predictor
-    also: [omics-target-evidence-mapper, opentargets-target-factors]  # OT tractability + clinical stage
+# Right Patient — is there a stratum + biomarker where it works?
+right_patient:
+  prior_trials_and_outcomes:
+    skill: clinical-trial-finder
+  fda_adverse_event_signals:
+    skill: openfda-safety              # FDA Safety Officer also serves the patient axis
+  trial_success_prior:
+    skill: celltype-specificity-profiler  # --trial-prior flag
+    note: correlational; label as Zhang et al. 2026
 
-literature_and_landscape:                 # <-- current-web evidence (Tavily)
+# Right Commercial — crowded or whitespace?
+right_commercial:                         # <-- current-web evidence (Tavily)
   recent_literature_and_competitive:
     skill: lit-synthesizer
     note: agentic Tavily web search — recent papers/preprints, competitive/clinical landscape, emerging safety; the natural reviewer re-route target for "is the evidence current?" gaps
     reroute_target: true                  # reviewer may route_to this to fill recency/competitive/safety gaps
 
-clinical_officers:
-  prior_trials_and_outcomes:
-    skill: clinical-trial-finder
-  fda_adverse_event_signals:
-    skill: openfda-safety              # FDA Safety Officer also serves the clinical division
-  trial_success_prior:
-    skill: celltype-specificity-profiler  # --trial-prior flag
-    note: correlational; label as Zhang et al. 2026
-
-equity_heim:                              # stretch / Track 3
-  cross_population_coverage:
-    skill: equity-scorer
-    also: [claw-ancestry-pca]
+# Tractability — can it be drugged with this modality? (cross-cutting, modality-gated)
+tractability:
+  druggability_and_structure:
+    skill: struct-predictor
+    also: [omics-target-evidence-mapper, opentargets-target-factors]  # OT tractability + clinical stage

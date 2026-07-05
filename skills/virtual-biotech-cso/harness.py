@@ -64,8 +64,9 @@ REVIEW_SCHEMA = {
                      "route_to": "skill-name", "expected_readout": "string", "why": "string"}],
 }
 PLAN_SCHEMA = {
-    "subtasks": [{"division": "string (a routing.yaml division)",
-                  "intent": "string (an intent under that division)",
+    "subtasks": [{"division": "string (a 5R axis: right_target, right_tissue, "
+                  "right_safety, right_patient, right_commercial, tractability)",
+                  "intent": "string (an intent under that axis)",
                   "question": "string", "depends_on": ["step_NN_intent"]}],
 }
 # Hybrid planner: first reason freely about the ideal investigation, THEN bind each
@@ -76,8 +77,10 @@ HYBRID_PLAN_SCHEMA = {
     "questions": [{
         "question": "string (a scientific sub-question worth answering for this target)",
         "rationale": "string (why this question matters to the go/no-go decision)",
-        "division": "string (the best-fit routing division, or null if none fits)",
-        "intent": "string (the best-fit intent under that division, or null if none fits)",
+        "division": "string (the best-fit 5R axis — right_target, right_tissue, "
+                    "right_safety, right_patient, right_commercial, tractability — "
+                    "or null if none fits)",
+        "intent": "string (the best-fit intent under that axis, or null if none fits)",
         "depends_on": ["step_NN_intent (earlier bound questions only)"],
     }],
 }
