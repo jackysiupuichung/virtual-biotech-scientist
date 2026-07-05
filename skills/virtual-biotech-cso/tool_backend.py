@@ -117,6 +117,63 @@ def build_call(skill: str, query: str,
     }
 
 
+# --------------------------------------------------------------------------- #
+# Injectable ToolUniverse executor — the discovery loop's hands.
+#
+# The harness is plain Python and cannot call MCP tools. The *driving agent*
+# (this Claude Code session, or the frontend) can. So it injects an executor:
+#   set_tool_executor(fn)  where  fn(verb, payload) -> dict
+# verbs: "find"    payload {description, limit}        -> {tools: [{name, description, parameter}]}
+#        "compose" payload {tool_configs}              -> {graph: {nodes, edges}}
+#        "run"     payload {tool_name, arguments}      -> the tool's raw result
+# When no executor is set, the loop falls back to in-process (if the tooluniverse
+# package is importable) or emits a descriptor for later execution. This keeps the
+# module runnable standalone AND drivable by an agent, with one seam.
+# --------------------------------------------------------------------------- #
+_TOOL_EXECUTOR: "Any | None" = None
+
+
+def set_tool_executor(fn: "Any | None") -> None:
+    """Register the agent/frontend callback that executes ToolUniverse verbs."""
+    global _TOOL_EXECUTOR
+    _TOOL_EXECUTOR = fn
+
+
+# Tool_Finder (embedding RAG) needs ML deps (torch/sentence_transformers) that the
+# hosted MCP server may not have; Tool_Finder_Keyword needs none and returns the same
+# {name, description, parameter} shape. Default to the keyword finder so discovery
+# works on a stock server; an executor may prefer the embedding one when available.
+DEFAULT_FINDER = "Tool_Finder_Keyword"
+
+
+def find_descriptor(description: str, limit: int = 5,
+                    finder: str = DEFAULT_FINDER) -> dict[str, Any]:
+    """A `find` descriptor: discover tools for a sub-question via a ToolUniverse finder."""
+    return {"verb": "find", "tool_name": finder,
+            "arguments": {"description": description, "limit": limit}}
+
+
+def compose_descriptor(tool_configs: list[dict[str, Any]]) -> dict[str, Any]:
+    """A `compose` descriptor: order candidate tools by data-flow (ToolGraph)."""
+    return {"verb": "compose", "tool_name": "ToolGraphGenerationPipeline",
+            "arguments": {"tool_configs": tool_configs}}
+
+
+def run_descriptor(tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
+    """A `run` descriptor: execute one concrete tool via execute_tool."""
+    return {"verb": "run", "tool_name": tool_name, "arguments": arguments}
+
+
+def _exec(verb: str, payload: dict[str, Any]) -> dict[str, Any] | None:
+    """Run a verb through the injected executor; None if none is registered."""
+    if _TOOL_EXECUTOR is None:
+        return None
+    try:
+        return _TOOL_EXECUTOR(verb, payload)
+    except Exception as exc:  # pragma: no cover - executor is agent-supplied
+        return {"status": "error", "reason": f"executor {verb} failed: {exc}"}
+
+
 def _execute_in_process(tool_name: str, arguments: dict[str, Any]) -> dict[str, Any] | None:
     """Execute a ToolUniverse tool in-process if the package is importable.
 
@@ -146,38 +203,118 @@ def _summarize(raw: Any, summary_paths: list[str]) -> dict[str, Any]:
     return digest
 
 
-def run_predefined_tool(skill: str, query: str,
-                        router: dict[str, Any] | None = None) -> dict[str, Any] | None:
-    """Try to answer a routed step with a predefined ToolUniverse/clawbio tool.
+def _run_tool(tool_name: str, arguments: dict[str, Any],
+              summary_paths: list[str]) -> dict[str, Any]:
+    """Execute one concrete tool, best backend available, → an evidence envelope.
 
-    Resolution:
-      * no mapping for this skill        → return None (fall through to old backends)
-      * mapping + package importable     → execute in-process, return {status:ok, ...}
-      * mapping + no package             → return a descriptor envelope for an agent
-                                           / the frontend to execute, status 'deferred'
+    Order: injected agent executor (`run` verb) → in-process package → descriptor.
     """
-    call = build_call(skill, query, router)
-    if call is None:
-        return None
     envelope: dict[str, Any] = {
-        "tool_call": {"tool_name": call["tool_name"], "arguments": call["arguments"]},
-        "backend": call["backend"],
+        "tool_call": {"tool_name": tool_name, "arguments": arguments},
     }
-    executed = _execute_in_process(call["tool_name"], call["arguments"])
+    # 1) agent/frontend executor
+    ran = _exec("run", run_descriptor(tool_name, arguments))
+    if ran is not None and ran.get("status") != "error":
+        raw = ran.get("raw", ran)
+        envelope["summary"] = _summarize(raw, summary_paths)
+        envelope["via"] = f"tooluniverse:{tool_name} (agent)"
+        envelope["source"] = "tooluniverse"
+        return envelope
+    # 2) in-process package
+    executed = _execute_in_process(tool_name, arguments)
     if executed is not None and executed.get("status") == "ok":
-        envelope.update(executed)
-        envelope["summary"] = _summarize(executed.get("raw"), call["summary_paths"])
-        # keep the row light: drop the raw payload once summarized
-        envelope.pop("raw", None)
+        envelope["summary"] = _summarize(executed.get("raw"), summary_paths)
+        envelope["via"] = executed["via"]
         envelope["source"] = "tooluniverse"
         return envelope
     if executed is not None:  # importable but errored — surface honestly
         envelope.update(executed)
         envelope["source"] = "unavailable"
         return envelope
-    # package absent → hand the descriptor to the driving agent / frontend
+    # 3) no executor, no package → descriptor for later execution
     envelope["status"] = "deferred"
-    envelope["reason"] = ("tooluniverse package not importable in-process; execute this "
-                          "tool_call via the MCP ToolUniverse server (agent/frontend).")
+    envelope["reason"] = ("no ToolUniverse executor registered and package not importable; "
+                          "execute this tool_call via the MCP ToolUniverse server.")
     envelope["source"] = "tool-descriptor"
     return envelope
+
+
+def run_predefined_tool(skill: str, query: str,
+                        router: dict[str, Any] | None = None) -> dict[str, Any] | None:
+    """Answer a routed step via its pinned tool_router.yaml tool. None if unmapped."""
+    call = build_call(skill, query, router)
+    if call is None:
+        return None
+    env = _run_tool(call["tool_name"], call["arguments"], call["summary_paths"])
+    env["backend"] = call["backend"]
+    return env
+
+
+def discover_and_run(question: str, query: str, *, limit: int = 5) -> dict[str, Any]:
+    """Dynamic discovery for an axis with NO pinned mapping (the custom-experiment path).
+
+    find → compose → run:
+      1. Tool_Finder(question)                → ranked candidate tools
+      2. ToolGraphGenerationPipeline(top-k)   → data-flow order (best-effort)
+      3. execute_tool on the ordered chain    → evidence
+
+    Requires the injected agent executor for the live path (find/compose need
+    Tool_Finder's ML model). Without an executor it emits a `find` descriptor for
+    the driving agent to run — the honest deferred state, never a fabrication.
+    """
+    found = _exec("find", find_descriptor(question, limit))
+    if found is None:
+        # no executor → hand the discovery step to the agent/frontend
+        return {"status": "deferred", "source": "tool-descriptor",
+                "discover": find_descriptor(question, limit),
+                "reason": "register a ToolUniverse executor (agent/frontend) to run Tool_Finder."}
+    tools = found.get("tools") or found.get("raw") or []
+    if not tools:
+        return {"status": "not executed", "source": "unavailable",
+                "reason": f"Tool_Finder found no tool for: {question!r}"}
+    # order the candidates by data-flow when there's more than one (best-effort)
+    ordered = tools
+    if len(tools) > 1:
+        composed = _exec("compose", compose_descriptor(tools))
+        node_order = _dig(composed or {}, "graph.nodes")
+        if isinstance(node_order, list) and node_order:
+            by_name = {t.get("name"): t for t in tools}
+            ordered = [by_name[n["name"]] for n in node_order
+                       if isinstance(n, dict) and n.get("name") in by_name] or tools
+    # Pick the first ordered candidate whose REQUIRED args we can fill from the parsed
+    # query context; else fall back to the top. Prevents choosing a tool that needs an
+    # arg we can't supply (e.g. an experiment accession) over one that takes gene_symbol.
+    ctx = parse_query(query)
+    fillable = {k: v for k, v in ctx.items() if v}
+
+    def _args_for(tool: dict[str, Any]) -> dict[str, Any] | None:
+        props = (tool.get("parameter") or {}).get("properties", {})
+        required = set((tool.get("parameter") or {}).get("required", []))
+        args: dict[str, Any] = {}
+        for slot in props:
+            # map a tool's arg name to our context by exact or aliased key
+            for key in (slot, "gene_symbol" if slot == "gene" else slot):
+                if key in fillable:
+                    args[slot] = fillable[key]
+                    break
+            else:
+                # some tools want gene_symbol; fill from either gene or gene_symbol
+                if slot in ("gene_symbol", "gene") and (fillable.get("gene_symbol") or fillable.get("gene")):
+                    args[slot] = fillable.get("gene_symbol") or fillable.get("gene")
+        # satisfiable only if every REQUIRED slot got a value
+        return args if required.issubset(args.keys()) else None
+
+    chosen, args = None, {}
+    for cand in ordered:
+        maybe = _args_for(cand)
+        if maybe is not None:
+            chosen, args = cand, maybe
+            break
+    if chosen is None:  # none fully satisfiable → best-effort on the top candidate
+        chosen = ordered[0]
+        args = _args_for(chosen) or {}
+
+    env = _run_tool(chosen["name"], args, [])
+    env["discovered"] = chosen["name"]
+    env["candidates"] = [t.get("name") for t in ordered[:limit]]
+    return env

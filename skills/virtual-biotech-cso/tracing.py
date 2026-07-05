@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 """tracing.py — an in-tree span recorder for the virtual-biotech-cso loop.
 
-The harness already prints an emoji ``Trace`` for the demo and writes findings
-to the knowledge graph, but neither captures the *execution*: which agent role
+The harness already prints an emoji ``Trace`` and writes findings to the knowledge
+graph, but neither captures the *execution*: which agent role
 ran, how long it took, how many tokens it cost, and how the brief→plan→execute→
 review-loop→synthesize spans nest (including re-route iterations). This module
 adds that, staying true to the project's ethos:

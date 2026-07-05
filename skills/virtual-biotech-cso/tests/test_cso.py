@@ -64,7 +64,7 @@ def test_result_digest_specificity_shape():
     assert "tau=0.78" in _result_digest(env)
 
 
-# --------------------------- end-to-end demo ------------------------------ #
+# --------------------------- end-to-end (CLI) ----------------------------- #
 def _run(args, env_extra=None):
     env = os.environ.copy()
     # ensure no LLM/clawbio path is taken even if a key is present in CI
@@ -77,56 +77,8 @@ def _run(args, env_extra=None):
     )
 
 
-@pytest.mark.skip(reason="demo mode removed — CSO is now agent-driven discovery only")
-def test_demo_writes_full_contract(tmp_path):
-    out = tmp_path / "demo"
-    res = _run(["--demo", "--output", str(out)])
-    assert res.returncode == 0, res.stderr
-    summary = json.loads(res.stdout)["summary"]
-    assert summary["case"] == "b7h3"
-    assert summary["mode"] == "demo"
-    assert summary["reviewer_verdict"] == "re-route"
-    assert summary["n_steps"] == 5  # 4 functional steps + one re-route
-
-    assert (out / "report.md").exists()
-    assert (out / "result.json").exists()
-    repro = out / "reproducibility"
-    for f in ("commands.sh", "environment.yml", "checksums.sha256"):
-        assert (repro / f).exists()
-
-    report = (out / "report.md").read_text()
-    assert "cached illustrative fixtures" in report  # honesty label present
-    assert "celltype-specificity-profiler" in report  # chains to PR #1 skill
-    # target-ID dossier structure
-    for header in ("## Executive summary", "## Evidence by division", "## Evidence gaps",
-                   "## Proposed experiments", "## References & data sources"):
-        assert header in report, f"missing section: {header}"
-    assert "**Decision:**" in report                       # decision present
-    assert "[1]" in report                                 # per-row reference markers
-    assert "https://clinicaltrials.gov/" in report          # a harvested source URL
-
-    envelope = json.loads((out / "result.json").read_text())
-    assert envelope["skill"] == "virtual-biotech-cso"
-    assert envelope["data"]["review"]["verdict"] == "re-route"
-    assert len(envelope["data"]["evidence"]) == 5  # 4 functional steps + one re-route
-    # new schema fields
-    for key in ("references", "evidence_gaps", "proposed_experiments"):
-        assert key in envelope["data"], f"missing data key: {key}"
-    assert len(envelope["data"]["references"]) == 5
-    assert envelope["summary"]["decision"] == "CONDITIONAL_GO"
-    assert envelope["data"]["proposed_experiments"]  # non-empty (synthesis + reviewer)
-
-
-@pytest.mark.skip(reason="demo mode removed — CSO is now agent-driven discovery only")
-def test_demo_report_is_deterministic(tmp_path):
-    a, b = tmp_path / "a", tmp_path / "b"
-    _run(["--demo", "--output", str(a)])
-    _run(["--demo", "--output", str(b)])
-    assert (a / "report.md").read_text() == (b / "report.md").read_text()
-
-
 def test_default_mode_is_honest_without_backends(tmp_path):
-    # no --demo, no --live, no API key -> honest 'unavailable'/'not generated', never fabricated
+    # no --live, no API key -> honest 'unavailable'/'not generated', never fabricated
     out = tmp_path / "default"
     res = _run(["--output", str(out)])
     assert res.returncode == 0, res.stderr
@@ -278,13 +230,49 @@ def test_four_lenses_defined():
 from cso import _run_skill_live  # noqa: E402
 
 
-def test_run_skill_live_unmapped_axis_is_not_executed():
-    # An axis with no tool_router.yaml mapping returns an honest "not executed"
-    # envelope (no source), never a fabricated result.
-    env = _run_skill_live("scrna-orchestrator", target="B7-H3 in lung cancer")
-    assert env["status"] == "not executed"
-    assert "ToolUniverse mapping" in env["reason"]
-    assert "source" not in env
+def test_run_skill_live_unmapped_axis_falls_through_to_discovery():
+    # An axis with no tool_router.yaml mapping now runs the dynamic discovery loop
+    # (Tool_Finder → compose → run) over the step's question. With no executor
+    # registered it defers to a `find` descriptor — honest, never a fabrication.
+    env = _run_skill_live("scrna-orchestrator", target="B7-H3 in lung cancer",
+                          question="is CD276 on malignant vs stromal cells?")
+    assert env["status"] == "deferred"
+    assert env["source"] == "tool-descriptor"
+    assert env["discover"]["tool_name"] == "Tool_Finder_Keyword"
+
+
+def test_discovery_loop_runs_with_injected_executor():
+    # With an executor registered, the discovery loop runs find → compose → run and
+    # folds the tool result into the evidence row (source 'tooluniverse').
+    import tool_backend as tb
+
+    calls = []
+
+    def fake_exec(verb, payload):
+        calls.append(verb)
+        if verb == "find":
+            return {"tools": [
+                {"name": "Spatial_expression_tool",
+                 "parameter": {"properties": {"gene_symbol": {}, "disease": {}}}},
+                {"name": "Other_tool", "parameter": {"properties": {}}},
+            ]}
+        if verb == "compose":
+            return {"graph": {"nodes": [{"name": "Spatial_expression_tool"},
+                                        {"name": "Other_tool"}]}}
+        if verb == "run":
+            return {"raw": {"data": {"malignant_fraction": 0.71}}}
+        return {"status": "error"}
+
+    tb.set_tool_executor(fake_exec)
+    try:
+        env = _run_skill_live("scrna-orchestrator", target="B7-H3 in lung cancer",
+                              question="is CD276 on malignant vs stromal cells?")
+    finally:
+        tb.set_tool_executor(None)
+    assert calls == ["find", "compose", "run"]          # full loop fired
+    assert env["source"] == "tooluniverse"
+    assert env["discovered"] == "Spatial_expression_tool"
+    assert env["tool_call"]["arguments"] == {"gene_symbol": "CD276", "disease": "lung cancer"}
 
 
 def test_run_skill_live_mapped_axis_routes_to_tooluniverse():
@@ -324,14 +312,15 @@ def test_literature_proxy_removed():
     ...
 
 
-def test_execute_skill_unmapped_axis_is_unavailable():
-    # An axis with no tool_router.yaml mapping is honestly "unavailable" — never a
-    # fabricated or demo-backed result.
+def test_execute_skill_unmapped_axis_defers_to_discovery():
+    # An axis with no tool_router.yaml mapping runs the discovery loop; with no
+    # executor registered it defers to a Tool_Finder descriptor (source
+    # 'tool-descriptor'), never a fabricated result.
     t = Subtask("step_09_x", "target_id_and_prioritization",
                 "spatial validation?", "scrna-orchestrator")
     env = execute_skill(t, case="b7h3", live=True, target="B7-H3 in lung cancer")
-    assert env["source"] == "unavailable"
-    assert env["result"]["status"] != "ok"
+    assert env["source"] == "tool-descriptor"
+    assert env["result"]["status"] == "deferred"
 
 
 def test_execute_skill_mapped_axis_labels_tooluniverse_source():

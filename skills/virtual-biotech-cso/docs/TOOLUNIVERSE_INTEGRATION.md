@@ -87,10 +87,29 @@ return. That variability is the "custom experiment".
   `run_descriptor()` and an in-process executor for each.
 - Reviewer re-route emits a `find` on the gap instead of routing to a fixed skill.
 
+## What the live loop proved
+
+Running the loop against the real MCP ToolUniverse server (this agent as executor):
+
+- **`Tool_Finder` (embedding) is unavailable** on a stock server — it needs
+  `torch`/`sentence_transformers`. `Tool_Finder_Keyword` needs no ML deps, returns the
+  same `{name, description, parameter}` shape, and works — so it's the DEFAULT finder.
+- **Discovery reaches axes the static map can't.** The single-cell specificity axis
+  (no `tool_router.yaml` entry) discovered `CellMarker_search_by_gene`,
+  `GTEx_get_single_nucleus_expression`, and the SCXA atlas tools. Running
+  `CellMarker_search_by_gene(gene_symbol=CD276)` returned real per-cell-type data
+  (cancer cells in brain/breast/liver + normal stromal cells) — the exact
+  malignant-vs-normal readout the axis needed. This is the custom-experiment payoff:
+  the plan pulled a tool nobody pre-wired.
+- **Arg-satisfiability matters.** `find` ranks tools by relevance, but the top hit may
+  need an arg we can't supply (e.g. an experiment accession). `discover_and_run` picks
+  the first ordered candidate whose *required* args are fillable from `{gene, disease,
+  drug}`, falling back to the top — so it doesn't pick an unrunnable tool.
+
 ## Open risks
 
-- `Tool_Finder` is embedding-based and non-deterministic across model versions —
-  hence the offline cache for the demo; live discovery is for novel targets only.
+- Keyword discovery is shallower than embedding RAG; when the server has the ML deps,
+  an executor may prefer `Tool_Finder`. The finder name is a parameter (`DEFAULT_FINDER`).
 - `ToolGraphGenerationPipeline` makes LLM calls (data-flow inference) — cost/latency
   per novel axis; cache composed chains per axis signature.
 - Arg-mapping: discovered tools have varied schemas. `find` returns the schema; the

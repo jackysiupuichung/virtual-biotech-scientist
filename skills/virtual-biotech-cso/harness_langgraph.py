@@ -58,7 +58,6 @@ class CSOState(TypedDict, total=False):
     query: str
     case: str
     routing: dict[str, Any]
-    demo: bool
     live: bool
     token_budget: int | None
     # accumulated products
@@ -170,7 +169,7 @@ def _reroute_node(s: CSOState, ctx: _Ctx) -> dict[str, Any]:
     with ctx.rec.span(f"reroute:{followup.skill}", kind="tool", iteration=i + 1,
                       missing=gap.get("missing")):
         focus = gap.get("missing") if followup.skill in executed else None
-        env = cso.execute_skill(followup, s["case"], s["demo"], s["live"],
+        env = cso.execute_skill(followup, s["case"], s["live"],
                                 target=s["query"], focus=focus)
     ctx.trace.event("evidence", {**harness._evidence_event(env), "reroute": True})
     sig = [followup.skill, (gap.get("missing") or "").strip()]
@@ -268,7 +267,7 @@ def build_graph(ctx: _Ctx, *, checkpointer: Any = None,
 
 
 def run(query: str, out_dir: Path | None, *, backend: str, model: str | None,
-        demo: bool, live: bool, argv: list[str], quiet: bool = False,
+        live: bool, argv: list[str], quiet: bool = False,
         token_budget: int | None = harness.DEFAULT_TOKEN_BUDGET) -> dict[str, Any]:
     """Run the LangGraph port and write the SAME output contract as harness.run().
 
@@ -289,11 +288,11 @@ def run(query: str, out_dir: Path | None, *, backend: str, model: str | None,
                           "backend": runner.name if calls_llm else "none",
                           "model": runner.model if calls_llm else "none",
                           "calls_llm": calls_llm, "engine": "langgraph",
-                          "mode": "demo" if demo else ("live" if live else "default")})
+                          "mode": "live" if live else "default"})
 
     app = build_graph(ctx)
     init: CSOState = {"query": query, "case": case, "routing": routing,
-                      "demo": demo, "live": live, "token_budget": token_budget,
+                      "live": live, "token_budget": token_budget,
                       "results": [], "reroute_count": 0, "rerouted_sigs": []}
     # recursion_limit must clear brief+plan+divisions + MAX_REROUTES review/reroute
     # cycles + synthesize with headroom; LangGraph counts supersteps, not nodes.
@@ -310,11 +309,11 @@ def run(query: str, out_dir: Path | None, *, backend: str, model: str | None,
 
     # Assemble via the SAME renderer + envelope + output contract as harness.run.
     report_md = cso.synthesize_report(query, case, briefing, results, review,
-                                      synthesis, demo, decision_engine=None)
+                                      synthesis, decision_engine=None)
     report_path = result_path = None
     summary, data = harness._build_envelope(
         query, case, briefing, subtasks, results, review, synthesis, runner, backend,
-        demo, live, division_findings=division_findings, decision_engine=None,
+        live, division_findings=division_findings, decision_engine=None,
         plan_experiments=plan_experiments)
     summary["loop"] = "langgraph-harness"  # mark the engine in the envelope
 
@@ -351,13 +350,12 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--query", type=str, default=cso.DEFAULT_QUERY,
                    help=f"Target-assessment query (default: {cso.DEFAULT_QUERY!r})")
     p.add_argument("--backend",
-                   choices=["auto", "anthropic", "openai", "gemini", "claude-cli"],
-                   default="auto", help="Agent backend (default: auto)")
+                   choices=["auto", "anthropic", "openai", "gemini", "claude-cli", "stub"],
+                   default="auto", help="Agent backend (default: auto; 'stub' = offline)")
     p.add_argument("--model", type=str, default=None, help="Override the model id")
-    p.add_argument("--demo", action="store_true",
-                   help="Use cached fixtures for routed DATA steps; roles run live")
     p.add_argument("--live", action="store_true",
-                   help="Execute routed skills via the ClawBio runtime")
+                   help="Execute routed axes via their ToolUniverse tools "
+                        "(default: routed steps stay honest 'not executed' stubs)")
     p.add_argument("--output", "--out", dest="out", type=str, default="./output",
                    help="Output directory")
     p.add_argument("--print-graph", action="store_true",
@@ -378,7 +376,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     out_dir = Path(args.out).expanduser().resolve()
     result = run(args.query, out_dir, backend=args.backend, model=args.model,
-                 demo=args.demo, live=args.live, argv=argv)
+                 live=args.live, argv=argv)
     print("\n" + json.dumps(result["summary"], indent=2))
     return 0
 

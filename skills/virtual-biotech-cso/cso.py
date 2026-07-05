@@ -544,27 +544,34 @@ def load_briefing(query: str, case: str) -> dict[str, Any]:
 
 
 def _run_skill_live(skill: str, target: str | None = None,
-                    focus: str | None = None) -> dict[str, Any]:
-    """Execute a routed axis via its predefined ToolUniverse tool (no LLM).
+                    focus: str | None = None,
+                    question: str | None = None) -> dict[str, Any]:
+    """Execute a routed axis via ToolUniverse (no LLM). Two tiers:
 
-    ToolUniverse is the only live backend. If ``skill`` maps to a real tool in
-    ``tool_router.yaml``, ``tool_backend.run_predefined_tool`` answers it —
-    executed in-process when the ``tooluniverse`` package is importable, else a
-    tool-call descriptor for the driving agent / frontend to run. If there is no
-    mapping (or the backend import fails), return an honest "not executed"
-    envelope; never fabricate. ``focus`` is accepted for signature compatibility
-    with the review loop's deeper re-routes.
+    1. **Pinned** — if ``skill`` maps to a tool in ``tool_router.yaml``,
+       ``run_predefined_tool`` answers it (fast, deterministic, offline-cacheable).
+    2. **Discovery** — otherwise, run the *custom-experiment* loop over the step's
+       ``question``: Tool_Finder → ToolGraph compose → execute_tool
+       (``discover_and_run``). This is how a novel axis with no pinned tool still
+       gets answered — the plan selects tools from all of ToolUniverse at runtime.
+
+    Both tiers execute via the injected agent executor when set, else in-process
+    (``tooluniverse`` package), else emit a descriptor for the driving agent to run.
+    An axis with neither a mapping nor a discoverable tool returns an honest
+    "not executed" envelope; never a fabrication. ``focus`` steers a deeper
+    re-route's discovery query.
     """
     try:
         import tool_backend
-        predefined = tool_backend.run_predefined_tool(skill, target or "")
-    except Exception:  # pragma: no cover - backend import/parse must never crash the run
-        predefined = None
+    except Exception:  # pragma: no cover - backend import must never crash the run
+        return {"status": "not executed", "reason": "tool_backend import failed."}
+    # Tier 1: pinned mapping
+    predefined = tool_backend.run_predefined_tool(skill, target or "")
     if predefined is not None:
         return predefined
-    return {"status": "not executed",
-            "reason": f"{skill!r} has no ToolUniverse mapping in tool_router.yaml; "
-                      "add one to run this axis."}
+    # Tier 2: dynamic discovery over the sub-question (the custom-experiment path)
+    probe = " ".join(p for p in (question, focus) if p) or skill
+    return tool_backend.discover_and_run(probe, target or "")
 
 
 def execute_skill(task: Subtask, case: str, live: bool,
@@ -584,7 +591,8 @@ def execute_skill(task: Subtask, case: str, live: bool,
         "question": task.question,
     }
     if live:
-        result = _run_skill_live(task.skill, target=target, focus=focus)
+        result = _run_skill_live(task.skill, target=target, focus=focus,
+                                 question=task.question)
     else:
         # default mode: no live backend is touched — routed steps stay honest stubs
         # for the driving agent to fill (this skill makes no LLM call).
