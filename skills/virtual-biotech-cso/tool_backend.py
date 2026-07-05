@@ -217,6 +217,9 @@ def _run_tool(tool_name: str, arguments: dict[str, Any],
     if ran is not None and ran.get("status") != "error":
         raw = ran.get("raw", ran)
         envelope["summary"] = _summarize(raw, summary_paths)
+        # carry a human note (fixtures / annotated payloads use `_note`) for the report
+        if isinstance(raw, dict) and raw.get("_note"):
+            envelope["_note"] = raw["_note"]
         envelope["via"] = f"tooluniverse:{tool_name} (agent)"
         envelope["source"] = "tooluniverse"
         return envelope

@@ -4,6 +4,14 @@
   "disease": "melanoma",
   "query": "Assess PMEL (gp100) as a therapeutic target in melanoma",
   "captured": "2026-07-05",
+  "review": {
+    "_comment": "Drives the review→re-route loop deterministically without an LLM: on the first pass the eval gate forces a 're-route' to fill the named gap (a real one — the initial plan has no target-disease association axis), then approves on the next pass so the loop converges. This exercises the multi-agent control flow the stub reviewer alone can't.",
+    "force_reroute_pass_0": {
+      "route_to": "opentargets-association-evidence",
+      "missing": "target-disease association strength (no association axis in the initial plan)",
+      "why": "germline is weak and expression is shared with normal melanocytes; the go/no-go needs the direct PMEL-melanoma association evidence to weigh against the toxicity liability."
+    }
+  },
   "tools": {
     "gwas_get_snps_for_gene:PMEL": {
       "metadata": {"pagination": {"totalElements": 120}},

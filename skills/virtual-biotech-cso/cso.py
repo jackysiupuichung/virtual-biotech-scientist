@@ -640,15 +640,41 @@ def _md_escape(text: str) -> str:
     return text.replace("|", "\\|").replace("\n", " ")
 
 
+def _humanize_summary(summary: dict[str, Any]) -> str:
+    """Render a tool-digest dict into readable prose.
+
+    The ToolUniverse backend lifts summary values under their dotted source path
+    (e.g. ``{"data.disease.evidences.count": 2953}``). For the report we want
+    ``evidences count: 2953``, not the raw path — so keep the last 1-2 path
+    segments as a label and join ``label: value`` pairs.
+    """
+    parts = []
+    for path, value in summary.items():
+        if value is None:
+            continue
+        label = " ".join(path.split(".")[-2:]).replace("_", " ")
+        parts.append(f"{label}: {value}")
+    return "; ".join(parts)
+
+
 def _result_digest(env: dict[str, Any]) -> str:
     result = env.get("result", {})
     if isinstance(result, dict):
+        # A tool that ran: prefer the humanized summary, then a fixture/raw _note.
+        summary = result.get("summary")
+        if isinstance(summary, dict) and any(v is not None for v in summary.values()):
+            digest = _humanize_summary(summary)
+            note = (result.get("raw") or {}).get("_note") if isinstance(result.get("raw"), dict) else None
+            note = note or result.get("_note")
+            if note:
+                digest = f"{digest} — {_md_escape(str(note))}"
+            return digest[:300]
         if "status" in result:
             return _md_escape(f"{result['status']} — {result.get('reason', '')}")[:160]
         if "interpretation" in result:
             return _md_escape(f"tau={result.get('tau')}; {result.get('interpretation', '')}")
-        if "summary" in result:
-            return _md_escape(str(result["summary"]))[:180]
+        if summary is not None:
+            return _md_escape(str(summary))[:180]
         keys = ", ".join(list(result.keys())[:4])
         return _md_escape(f"{{{keys}}}")
     return _md_escape(str(result))[:120]

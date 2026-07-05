@@ -74,6 +74,30 @@ def make_replay_executor(fixture: dict):
     return executor
 
 
+def make_review_gate(fixture: dict):
+    """Build a harness `gate` that drives the review→re-route loop from the fixture.
+
+    Without an LLM the stub reviewer always votes 'synthesize', so the loop never
+    fires. The fixture's `review.force_reroute_pass_0` says: on the first pass force a
+    re-route to a named skill to fill a real gap, then approve every later pass so the
+    loop converges after one added step. Returns None if the fixture declares no
+    review directive (loop stays inert, as before).
+    """
+    directive = (fixture.get("review") or {}).get("force_reroute_pass_0")
+    if not directive:
+        return None
+
+    def gate(checkpoint: dict):
+        if checkpoint.get("iteration", 0) == 0:
+            return {"action": "override_verdict", "verdict": "re-route",
+                    "route_to": directive["route_to"],
+                    "missing": directive.get("missing", ""),
+                    "why": directive.get("why", "")}
+        return {"action": "approve"}  # converge on subsequent passes
+
+    return gate
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--fixture", required=True, type=str)
@@ -87,7 +111,8 @@ def main(argv: list[str] | None = None) -> int:
     tool_backend.set_tool_executor(make_replay_executor(fixture))
     try:
         result = harness.run(query, out_dir, backend="stub", model=None,
-                             live=True, argv=["eval"], quiet=False)
+                             live=True, argv=["eval"], quiet=False,
+                             gate=make_review_gate(fixture))
     finally:
         tool_backend.set_tool_executor(None)
 
