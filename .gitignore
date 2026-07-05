@@ -28,3 +28,4 @@ kg.json
 
 # Third-party paper PDFs (keep locally, cite by DOI/URL — do not commit binaries)
 docs/**/papers/*.pdf
+skills/virtual-biotech-cso/eval/out/

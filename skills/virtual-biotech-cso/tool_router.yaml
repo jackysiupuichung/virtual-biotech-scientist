@@ -46,6 +46,20 @@ gwas-lookup:
     size: 20
   summary: [metadata.pagination.totalElements]       # # of catalogued SNPs near the gene
 
+# ---- cell-type specificity / off-tumour expression (single-cell) ----------- #
+# CellMarker: which cell types express the gene — cancer vs normal. Answers both the
+# specificity axis (is it tumour-restricted?) and the off-target axis (which normal
+# cells also carry it → toxicity risk). Discovered live earlier; pinned here so the
+# axis runs deterministically instead of falling through to Tool_Finder.
+celltype-specificity-profiler:
+  backend: tooluniverse
+  tool: CellMarker_search_by_gene
+  args:
+    operation: search_by_gene
+    gene_symbol: "{gene}"
+    species: Human
+  summary: [data.total_records, data.cancer_cell_records, data.normal_cell_records]
+
 # ---- target prioritisation factors (Open Targets: constraint, tractability) - #
 opentargets-target-factors:
   backend: tooluniverse
@@ -84,4 +98,4 @@ clinical-trial-finder:
     intervention: "{gene}"       # target/drug as intervention; disease narrows it
     condition: "{disease}"
     max_results: 15
-  summary: []                    # returns NCT list + brief descriptions
+  summary: [data.total_count]    # # of trials; NCT list + briefs in the raw payload
