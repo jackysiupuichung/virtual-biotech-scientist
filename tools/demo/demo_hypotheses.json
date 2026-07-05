@@ -1,0 +1,67 @@
+{
+  "meta": {
+    "disease": "cutaneous melanoma",
+    "efo_id": "MONDO_0005012",
+    "n_hypotheses": 1,
+    "n_positive": 1,
+    "positive_ratio": 1.0,
+    "axes": [
+      "right_target",
+      "right_tissue",
+      "right_safety",
+      "right_patient",
+      "right_commercial",
+      "tractability"
+    ],
+    "card_contract": "per-axis {value[0,1], confidence, cost, direction, strength, data_origin, finding, interpretation, source}",
+    "data_origin_legend": {
+      "opentargets": "real OT field",
+      "hybrid": "real OT + synthesised judgment",
+      "synthetic": "not available in OT; placeholder prior (flag for VoI/run_experiment)"
+    },
+    "note": "Live ToolUniverse-backed demo card. Failed layers are omitted from axes and documented under narrative evidence_gaps."
+  },
+  "hypotheses": [
+    {
+      "id": "H1",
+      "target": {
+        "symbol": "BRAF",
+        "ensembl_id": "ENSG00000157764"
+      },
+      "disease": {
+        "name": "cutaneous melanoma",
+        "efo_id": "MONDO_0005012"
+      },
+      "modality": "small_molecule",
+      "narrative": {
+        "target_overview": "BRAF evidence dossier assembled from ToolUniverse live layers.",
+        "pathways": [],
+        "liabilities": [],
+        "evidence_gaps": [
+          "text_knowledge failed: No backend produced an observation.",
+          "knowledge_graph failed: No backend produced an observation.",
+          "genetics failed: No backend produced an observation.",
+          "omics failed: No backend produced an observation.",
+          "single_cell failed: No backend produced an observation.",
+          "perturbation_model failed: No backend produced an observation.",
+          "perturbation_experiment failed: No backend produced an observation.",
+          "structure_pharmacology failed: No backend produced an observation.",
+          "clinical failed: No backend produced an observation."
+        ],
+        "proposed_experiments": [
+          {
+            "experiment": "replace HPA skin-cancer lookup with a melanoma-compatible expression source",
+            "axis": "right_tissue",
+            "cost_tier": 2,
+            "rationale": "current HPA disease mapping does not support skin cancer in ToolUniverse"
+          }
+        ]
+      },
+      "axes": {},
+      "label": {
+        "positive": true,
+        "max_clinical_phase": "PHASE_3"
+      }
+    }
+  ]
+}

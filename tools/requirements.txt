@@ -1,0 +1,11 @@
+# Recreate the local ToolUniverse runtime used by `.venv-tu131`.
+# Recommended Python: 3.13.x
+#
+# Usage:
+#   python3.13 -m venv .venv-tu131
+#   source .venv-tu131/bin/activate
+#   python -m pip install --upgrade pip
+#   python -m pip install -r tools/requirements.txt
+
+-e .
+tooluniverse==1.3.1
