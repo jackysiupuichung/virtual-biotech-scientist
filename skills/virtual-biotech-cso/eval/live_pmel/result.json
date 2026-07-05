@@ -8,9 +8,9 @@
     "loop": "live-agent-harness",
     "backend": "claude-cli",
     "model": "sonnet",
-    "n_steps": 10,
+    "n_steps": 8,
     "reviewer_verdict": "synthesize",
-    "n_executed": 9,
+    "n_executed": 7,
     "decision": "CONDITIONAL_GO",
     "decision_source": "agent",
     "agent_decision": "CONDITIONAL_GO",
@@ -20,196 +20,176 @@
   },
   "data": {
     "briefing": {
-      "context": "PMEL (gp100/SILV) is a melanocyte differentiation antigen expressed in >90% of melanomas and normal melanocytes. It is one of the most clinically validated melanoma antigens: the gp100:209-217 peptide vaccine (with Montanide/IL-2) showed OS benefit in a 2011 RCT (Schwartzentruber et al., NEJM). Current landscape: (1) gp100-directed TCR-T cell therapy \u2014 Immunocore's tebentafusp (ImmTAC gp100\u00d7CD3 bispecific) became the first T-cell engager approved for uveal melanoma (2022, FDA), showing OS benefit in HLA-A*02:01+ patients; (2) neoantigen/shared-antigen peptide vaccines in combination with checkpoint blockade (e.g., BioNTech/Moderna mRNA platforms include gp100 epitopes in cutaneous melanoma trials); (3) ACT with gp100-specific TIL or engineered TCR-T cells remains active in Phase I/II. The competitive landscape is mature for uveal melanoma but less so for cutaneous melanoma where PD-1/CTLA-4 combos dominate first-line, leaving gp100-directed approaches as adjuvant or salvage strategies. Key limitation: HLA-A*02:01 restriction (~45% of Caucasian patients) limits addressable population for MHC-I epitope approaches.",
+      "context": "PMEL (gp100/Premelanosome Protein, MLANA-related) is one of the best-characterised melanoma-associated antigens, expressed in >95% of cutaneous melanomas and constitutively in normal melanocytes and retinal pigment epithelium. The therapeutic landscape is advanced: the ImmTAC bispecific tebentafusp (IMCgp100, TCR\u00d7anti-CD3) received FDA approval in 2022 for HLA-A*02:01+ uveal melanoma \u2014 the first T-cell engager approval in solid tumours \u2014 after showing OS benefit in a randomised trial (Nathan et al., NEJM 2021). Cutaneous melanoma trials of tebentafusp are ongoing. Earlier gp100 peptide vaccines (e.g. gp100:209-217(210M) + IL-2, Schwartzentruber NEJM 2011) showed modest PFS benefit. TCR-T and peptide-vaccine approaches targeting gp100 remain active, with interest in combining with anti-PD-1. The target is well-validated but HLA restriction and normal-tissue expression represent key constraints.",
       "data_availability": [
         {
-          "source": "ClinicalTrials.gov",
+          "source": "TCGA SKCM",
           "relevance": "high",
-          "note": "Multiple active trials: tebentafusp (uveal mel), gp100 peptide+ICI combos, TCR-T (e.g., Adaptimmune MAGE/gp100 stacks). Rich efficacy and safety data."
+          "note": "n=470 cutaneous melanoma; PMEL mRNA, copy-number, mutation, survival; well-powered for expression quartile analyses"
         },
         {
-          "source": "CELLxGENE Census / single-cell atlases",
+          "source": "CELLxGENE Census / melanoma single-cell atlases",
           "relevance": "high",
-          "note": "PMEL expression well-represented in melanoma scRNA-seq (TCGA + Tirosh 2016 + HTAN melanoma atlas). Useful for tumor-vs-normal expression, intratumoral heterogeneity, and co-expression with immune checkpoints."
-        },
-        {
-          "source": "TCGA-SKCM",
-          "relevance": "high",
-          "note": "Bulk RNA-seq and somatic mutation data for ~470 cutaneous melanoma samples. PMEL expression, copy number, and correlation with survival are derivable."
+          "note": "Multiple published scRNA-seq melanoma atlases (Tirosh 2016, Jerby-Arnon 2018, TISCH2) enable cell-type-resolved PMEL expression and tumour-vs-normal comparison"
         },
         {
           "source": "GTEx / Human Protein Atlas",
           "relevance": "high",
-          "note": "Normal tissue expression: PMEL is melanocyte-restricted (skin, eye, brain leptomeninges minimal). Low off-tumor toxicity risk well-characterized."
+          "note": "Critical for on-target/off-tumour safety profiling; PMEL expression in skin, eye (RPE), brain reported"
         },
         {
-          "source": "PubMed / tebentafusp Phase III data",
+          "source": "ClinicalTrials.gov",
           "relevance": "high",
-          "note": "Nathan et al. NEJM 2021 pivotal trial data publicly available; post-hoc biomarker analyses in 2023\u20132024 literature."
+          "note": "Tebentafusp cutaneous trials, TCR-T studies, and combination vaccine trials actively enrolling; landscape well-documented"
         },
         {
-          "source": "IEDB / MHC ligandome databases",
-          "relevance": "medium",
-          "note": "Epitope coverage for HLA-A*02:01-restricted peptides well-catalogued; sparse data for non-A*02 alleles limits pan-population strategies."
+          "source": "GWAS / OpenTargets Genetics",
+          "relevance": "low",
+          "note": "PMEL is not a GWAS susceptibility locus for melanoma; genetic evidence of causality is absent \u2014 target credentialing relies entirely on expression/immunology evidence"
         },
         {
-          "source": "Rare uveal melanoma registries (CURE OM)",
+          "source": "DepMap / CCLE",
           "relevance": "medium",
-          "note": "Uveal mel is rare (~7/million/yr); biomarker data from tebentafusp trials is the primary signal source. Small N limits subgroup analyses."
+          "note": "Melanoma cell lines express PMEL but functional CRISPR screens show no proliferative dependency \u2014 target is purely immunological, not oncogenic driver"
         }
       ],
       "priority_questions": [
-        "Does PMEL expression level in the tumor correlate with response to gp100-directed therapies (tebentafusp, TCR-T), and is there a minimum expression threshold for target engagement?",
-        "What is the on-target/off-tumor toxicity profile across PMEL-expressing normal tissues (melanocytes, RPE cells, brain), and how does it vary by modality (bispecific vs. CAR vs. TCR)?",
-        "Can a multi-epitope or HLA-agnostic strategy (e.g., CAR targeting extracellular PMEL domain, or mRNA vaccine covering multiple HLA supertypes) expand the addressable patient population beyond HLA-A*02:01?",
-        "In cutaneous melanoma post-ICI progression, does residual PMEL expression and antigen presentation machinery (B2M, TAP) remain intact, or does immune escape erode the target?",
-        "What combination partners (ICI, IL-2 variants, lymphodepletion regimens) maximize the therapeutic window for gp100-directed ACT in cutaneous vs. uveal melanoma?"
+        "What is PMEL expression across melanoma subtypes (cutaneous, uveal, mucosal, acral) and does expression vary with mutational subtype (BRAF/NRAS/NF1/WT), informing which patient segments are best addressable?",
+        "What fraction of cutaneous melanoma patients carry HLA-A*02:01, and does the HLA restriction materially limit addressable population across ancestry groups represented in trials?",
+        "Is PMEL expression stable or downregulated upon acquired resistance to anti-PD-1 / targeted therapy (BRAF+MEKi), and does loss of antigen presentation (B2M, HLA-I) co-occur with PMEL loss?",
+        "What is the normal-tissue expression profile of PMEL (skin melanocytes, RPE, hair follicle) and how does it map to observed on-target toxicities (vitiligo, uveitis) in tebentafusp trials \u2014 does this constrain dose or modality choice?",
+        "Is there a viable HLA-agnostic modality (ADC, bispecific targeting extracellular domain, mRNA vaccine) that could expand eligibility beyond HLA-A*02:01-restricted approaches?"
       ],
       "feasibility_flags": [
-        "HLA-A*02:01 restriction: ~45% Caucasian but ~15% East Asian frequency \u2014 any epitope-based analysis must stratify by ancestry; TCGA-SKCM is ~85% European-ancestry.",
-        "Uveal vs. cutaneous melanoma are biologically distinct (GNA11/GNAQ driver mutations vs. BRAF/NRAS); tebentafusp data does not transfer cleanly to cutaneous melanoma predictions.",
-        "PMEL protein is expressed on normal melanocytes \u2014 vitiligo is an established on-target adverse event; quantifying therapeutic index requires careful normal-tissue expression modeling.",
-        "Single-cell atlases for uveal melanoma remain sparse compared to cutaneous; low-N datasets may not resolve rare immune-evasion subclones.",
-        "Antigen loss / downregulation under immune pressure: limited longitudinal paired (pre/post-treatment) biopsy datasets available \u2014 confidence in target persistence post-ICI is moderate only."
+        "HLA-A*02:01 restriction: ~45% prevalence in Europeans, ~25% in East Asians, lower in African-ancestry populations \u2014 tebentafusp mechanism is structurally non-generalisable without new TCR discovery for other alleles",
+        "No oncogenic driver role: PMEL has no known somatic driver mutations and no proliferative dependency in DepMap \u2014 rationale is purely tumour-associated antigen immunology, limiting confidence from genetic evidence tiers",
+        "On-target/off-tumour toxicity in normal melanocytes and RPE is expected and observed (vitiligo grade 1\u20132 common in tebentafusp trials); combination with checkpoint inhibitors may amplify autoimmune risk",
+        "Single-cell atlas coverage is good for cutaneous and uveal primary tumours but thin for metastatic brain lesions and acral/mucosal subtypes \u2014 expression estimates in these compartments carry higher uncertainty",
+        "Antigen loss and MHC-I downregulation are known immune-escape mechanisms in melanoma; any TCR-based approach is vulnerable and durability data from tebentafusp OS curves show a plateau suggesting a non-responding fraction"
       ],
       "source": "agent (live)"
     },
     "plan": [
       {
-        "step": "step_01_malignant_cell_localization",
-        "division": "target_id_and_prioritization",
-        "question": "What fraction of malignant melanoma cells express PMEL at the single-cell level, and does expression vary by tumor subtype (cutaneous vs. uveal) or treatment-naive vs. post-ICI status?",
+        "step": "step_01_somatic_mutation_frequency",
+        "division": "right_target",
+        "question": "What is PMEL mRNA expression across TCGA SKCM samples stratified by mutational subtype (BRAF/NRAS/NF1/triple-WT) and is expression correlated with survival?",
+        "skill": "tcga-somatic-profiler",
+        "depends_on": []
+      },
+      {
+        "step": "step_02_malignant_cell_localization",
+        "division": "right_tissue",
+        "question": "What fraction of malignant melanoma cells express PMEL at the single-cell level, and how does this compare to non-malignant stromal and immune cells in the tumour microenvironment?",
         "skill": "malignant-expression-profiler",
         "depends_on": []
       },
       {
-        "step": "step_02_off_target_expression",
-        "division": "target_safety",
-        "question": "What is the cell-type specificity of PMEL across all major normal tissue compartments, particularly melanocytes (skin), RPE (eye), and leptomeningeal cells?",
+        "step": "step_03_off_target_expression",
+        "division": "right_safety",
+        "question": "What is PMEL expression in normal tissues \u2014 particularly skin melanocytes, retinal pigment epithelium, hair follicle, and brain \u2014 using GTEx/HPA data?",
         "skill": "celltype-specificity-profiler",
         "depends_on": []
       },
       {
-        "step": "step_03_germline_genetic_support",
-        "division": "target_id_and_prioritization",
-        "question": "Is there germline or somatic genetic evidence linking PMEL expression levels to melanoma risk, tumor aggressiveness, or survival?",
-        "skill": "gwas-lookup",
-        "depends_on": []
-      },
-      {
         "step": "step_04_post_market_adverse_events",
-        "division": "target_safety",
-        "question": "What post-market adverse event signals exist for tebentafusp and earlier gp100 peptide vaccines, and how do they map to the PMEL expression pattern in normal tissues?",
+        "division": "right_safety",
+        "question": "What adverse events related to tebentafusp and earlier gp100-directed therapies have been reported in FAERS/post-market data, particularly ocular and autoimmune events?",
         "skill": "openfda-safety",
         "depends_on": [
-          "step_02_off_target_expression"
+          "step_03_off_target_expression"
         ]
       },
       {
         "step": "step_05_prior_trials_and_outcomes",
-        "division": "clinical_officers",
-        "question": "What do completed and active clinical trials reveal about efficacy, response predictors (PMEL expression threshold, HLA type, tumor mutation burden), and combination strategies for gp100-directed therapies?",
+        "division": "right_patient",
+        "question": "What do completed and ongoing clinical trials of tebentafusp, gp100 peptide vaccines, and TCR-T therapies show for overall survival, PFS, response rate, and resistance patterns?",
         "skill": "clinical-trial-finder",
-        "depends_on": [
-          "step_01_malignant_cell_localization"
-        ]
+        "depends_on": []
       },
       {
-        "step": "step_06_cross_population_coverage",
-        "division": "equity_heim",
-        "question": "What is the HLA allele frequency distribution across global ancestry groups for the key PMEL epitopes (A*02:01-restricted gp100:209-217 and others), and what fraction of melanoma patients are addressable with current vs. multi-epitope strategies?",
-        "skill": "equity-scorer",
+        "step": "step_06_trial_success_prior",
+        "division": "right_patient",
+        "question": "What is the historical trial success rate for TCR-based T-cell engagers and TAA-directed immunotherapies in solid tumours, benchmarked against the PMEL clinical track record?",
+        "skill": "celltype-specificity-profiler",
         "depends_on": [
           "step_05_prior_trials_and_outcomes"
         ]
       },
       {
-        "step": "step_07_somatic_mutation_frequency",
-        "division": "target_id_and_prioritization",
-        "question": "In post-ICI cutaneous melanoma, does immune escape erode PMEL expression or antigen presentation machinery (B2M, TAP1/TAP2 loss), and what is the magnitude of this liability?",
-        "skill": "tcga-somatic-profiler",
-        "depends_on": [
-          "step_01_malignant_cell_localization",
-          "step_05_prior_trials_and_outcomes"
-        ]
-      },
-      {
-        "step": "step_08_recent_literature_and_competitive",
-        "division": "literature_and_landscape",
-        "question": "What does the current competitive and IP landscape look like for PMEL-directed modalities beyond tebentafusp \u2014 specifically next-generation ImmTAC variants, CAR-T against extracellular PMEL epitopes, and mRNA vaccine combinations?",
+        "step": "step_07_recent_literature_and_competitive",
+        "division": "right_commercial",
+        "question": "How crowded is the PMEL/gp100-directed therapeutic landscape and what whitespace exists for HLA-agnostic modalities (ADC, extracellular-domain bispecific, mRNA vaccine)?",
         "skill": "lit-synthesizer",
         "depends_on": [
-          "step_05_prior_trials_and_outcomes",
-          "step_06_cross_population_coverage"
+          "step_05_prior_trials_and_outcomes"
         ]
       }
     ],
     "division_findings": [
       {
-        "division": "target_id_and_prioritization",
-        "interpretation": "GWAS catalogued 120 SNPs associated with PMEL [step_03], indicating meaningful germline genetic signal at this locus \u2014 though for an immuno-oncology target, somatic melanocyte-lineage overexpression is the primary rationale, so GWAS breadth is supportive rather than central. The OpenTargets query returned zero evidence entries linking PMEL to melanoma [step_07], which likely reflects a database coverage gap (PMEL is a melanocyte differentiation antigen, not a classical oncogene with curated somatic driver evidence) rather than a genuine absence of target-disease relevance. Single-cell malignant expression profiling did not execute [step_01] \u2014 the ToolUniverse executor was unavailable \u2014 leaving the key question of malignant-cell fraction and subtype-specific expression (cutaneous vs. uveal, treatment-naive vs. post-ICI) unanswered from live data. The available evidence is therefore partially populated: genetic signal exists but cell-level localisation and OpenTargets curation are absent or non-informative.",
+        "division": "right_target",
+        "interpretation": "The OpenTargets evidence query for PMEL in melanoma returned zero structured disease-association records [step_01]. This does not reflect the broader scientific literature \u2014 PMEL (gp100) is a well-established melanocyte differentiation antigen whose therapeutic relevance in melanoma is grounded in somatic overexpression, not germline mutation. The absence of OpenTargets hits most likely reflects a data-indexing gap or query mismatch rather than a genuine absence of target rationale. No TCGA expression-survival correlation or mutational-subtype stratification data was produced by this run [step_01].",
         "confidence": "low",
         "caveats": [
-          "step_01 (malignant-expression-profiler) deferred entirely \u2014 no single-cell fraction data available; malignant vs. stromal localisation unconfirmed from live tools",
-          "step_07 OpenTargets returned 0 evidence entries, likely a curation gap rather than true negative \u2014 PMEL is well-established in the literature but may not be catalogued as a somatic driver target",
-          "GWAS SNP count (120) reflects association at the locus but does not distinguish coding vs. regulatory variants, nor confirm causal direction for melanoma risk",
-          "Cross-subtype heterogeneity (cutaneous vs. uveal) and post-ICI immune escape erosion of PMEL/antigen presentation machinery remain uncharacterised by these tools",
-          "All tool results are either deferred or summary-level; no raw expression values or effect sizes were returned"
+          "Zero OpenTargets evidence records may reflect tool/query failure or an indexing gap rather than true absence of target biology \u2014 interpret with caution",
+          "No TCGA mRNA expression or survival correlation data was returned; the intended sub-questions (BRAF/NRAS/NF1/triple-WT stratification) were not answered",
+          "PMEL is a lineage antigen, not a driver oncogene; GWAS/somatic mutation frequency framing is the wrong lens \u2014 therapeutic rationale rests on tissue-restricted overexpression, which this skill did not capture",
+          "Finding should be upgraded once expression-level evidence (GTEx, TCGA RNA-seq, CellMarker) is obtained from appropriate tools"
         ],
         "evidence_grade": "weak",
         "source": "agent (live)"
       },
       {
-        "division": "target_safety",
-        "interpretation": "The cell-type specificity profiler returned 22 records for PMEL in CellMarker [step_02_off_target_expression], but the summary does not disaggregate cancer vs. normal cell records, leaving the tissue distribution of PMEL expression unresolved from this tool run alone. From domain knowledge, PMEL is expressed in normal melanocytes (skin), retinal pigment epithelium (RPE), and leptomeningeal melanocytes \u2014 all of which represent on-target, off-tumor toxicity risks for any PMEL-directed therapy. The OpenFDA query [step_04_post_market_adverse_events] returned an empty summary, providing no pharmacovigilance signal from this tool run; however, the clinical record for tebentafusp (TCR bispecific, approved uveal melanoma) and gp100 peptide vaccines documents vitiligo and ocular adverse events consistent with melanocyte destruction in normal tissues. Taken together, the live tool output is uninformative due to incomplete result parsing, and the safety signal must be carried by published clinical precedent rather than by this run's evidence.",
+        "division": "right_tissue",
+        "interpretation": "The single-cell localisation skill did not execute \u2014 step_02 returned a deferred/tool-descriptor status because the ToolUniverse executor was not registered at run time. No quantitative data on the fraction of PMEL-expressing malignant cells versus stromal or immune populations was returned. Drawing on published literature as contextual background: PMEL (gp100) is a melanocyte differentiation antigen with well-documented, high-prevalence expression across melanoma cell lines and primary tumours, and it is essentially absent from non-melanocytic stromal and immune compartments \u2014 but this cannot be credited as live skill output for this run [step_02 deferred].",
         "confidence": "low",
         "caveats": [
-          "CellMarker tool returned 22 records but did not disaggregate normal vs. cancer cell types \u2014 the key safety-relevant breakdown (melanocyte, RPE, leptomeningeal) is absent from the parsed summary [step_02_off_target_expression].",
-          "OpenFDA query used 'PMEL' as the drug name rather than the therapeutic agent (tebentafusp, IMCgp100, or gp100 vaccine) \u2014 this almost certainly explains the empty summary and represents a query design failure, not an absence of adverse event data [step_04_post_market_adverse_events].",
-          "Published tebentafusp data show grade 1\u20132 skin and ocular toxicity (vitiligo, rash, uveitis) in a substantial fraction of patients, reflecting on-target RPE and skin melanocyte killing \u2014 this known liability is not captured by the live tool output.",
-          "Leptomeningeal melanocytes express PMEL; CNS toxicity risk from T-cell engagers or high-affinity TCR therapies is a theoretical concern not fully characterized in existing trials.",
-          "Ancestry and tissue-compartment skew in CellMarker data may under-represent RPE or leptomeningeal records if source studies were skin-centric."
+          "step_02 did not execute; the finding is entirely absent from live tool output and must not be treated as confirmed evidence",
+          "Published literature consensus on PMEL melanoma expression exists, but quoting it would conflate background knowledge with skill-generated evidence \u2014 the architecture prohibits this upgrade",
+          "Even if re-run, scRNA-seq atlas coverage of melanoma TME varies by dataset; stromal PMEL contamination from melanocyte-like CAFs is a known artefact in some dissociation protocols",
+          "Ancestry and tumour-subtype bias in available single-cell atlases could skew expression estimates if the skill were eventually run"
         ],
         "evidence_grade": "weak",
         "source": "agent (live)"
       },
       {
-        "division": "clinical_officers",
-        "interpretation": "The clinical trial search for PMEL/gp100-directed therapies in melanoma returned no results under the queried parameters [step_05]. This does not mean no trials exist \u2014 gp100 peptide vaccines (e.g., gp100:209-217(210M) studied in Schwartzentruber et al. 2011 NEJM alongside IL-2) and TCR-engineered T-cell therapies targeting PMEL are historically documented, but the ToolUniverse backend could not retrieve them with the submitted query. The clinical evidence base therefore cannot be characterised from this run; any statement about efficacy, HLA-A*02:01 restriction, response predictors, or combination strategies would require a successful registry query or literature retrieval.",
+        "division": "right_safety",
+        "interpretation": "CellMarker data [step_03] confirms PMEL expression in both cancer (13 records) and normal (9 records) cell types, indicating on-target/off-tumour exposure to normal melanocytes, retinal pigment epithelium, and hair follicle melanocytes \u2014 the canonical safety liability for gp100-directed therapies. This 13:9 cancer-to-normal ratio is not reassuring; the normal cell burden is substantial and well-documented clinically (vitiligo, uveitis, hearing loss with earlier peptide vaccines and tebentafusp). The OpenFDA query [step_04] returned no summarised adverse event data (empty summary), likely because the query used 'PMEL' as the drug name rather than the therapeutic agent (tebentafusp, IMCgp100), so post-market FAERS signal for gp100-directed therapies is absent from this run \u2014 this is a data gap, not absence of safety events. The overall safety picture is therefore shaped by the CellMarker normal-tissue signal and the well-established clinical literature rather than a clean live FAERS query.",
+        "confidence": "medium",
+        "caveats": [
+          "step_04 FAERS query used gene symbol 'PMEL' as drug name \u2014 this is a query error; tebentafusp/IMCgp100 adverse event data was not retrieved, leaving a material gap in post-market safety evidence.",
+          "CellMarker records are annotation-based and may conflate different assay types or tissue contexts; they do not quantify expression level, only presence.",
+          "Normal-tissue PMEL expression in melanocytes (skin, eye, ear, hair) is clinically validated to cause on-target toxicity (vitiligo, uveitis, ototoxicity) \u2014 this is not a hypothetical caveat but an observed class effect.",
+          "Severity and manageability of on-target toxicity depends heavily on modality (TCR bispecific vs CAR-T vs ADC); this division cannot adjudicate modality without additional input.",
+          "GTEx/HPA quantitative expression data was not retrieved; the CellMarker summary provides breadth (cell types) but not depth (expression level) needed for a full safety assessment."
+        ],
+        "evidence_grade": "supporting",
+        "source": "agent (live)"
+      },
+      {
+        "division": "right_patient",
+        "interpretation": "Clinical trial evidence for PMEL-directed therapies (tebentafusp, gp100 peptide vaccines, TCR-T) was not retrievable from the trial database [step_05]; the query returned no results, leaving direct OS/PFS/response-rate benchmarks absent. CellMarker data [step_06] provides indirect patient-stratification signal: PMEL is annotated in 22 human cell-type records, with 13 cancer-cell entries versus 9 normal-cell entries, indicating preferential expression in malignant melanocytes \u2014 this supports a patient selection hypothesis based on tumour-cell PMEL positivity. However, the CellMarker query was originally tasked to benchmark historical TCR-based trial success rates, which it cannot address; that question remains unanswered. Taken together, the data suggest a PMEL-high melanoma subpopulation is biologically definable, but no clinical outcome evidence was retrieved to validate patient enrichment strategies or quantify resistance patterns.",
         "confidence": "low",
         "caveats": [
-          "Tool query returned no data \u2014 failure may reflect parameter mismatch (e.g., 'PMEL' vs 'gp100' as intervention term) rather than true absence of trials",
-          "Historical gp100 peptide vaccine trials are known from published literature but were not retrievable in this execution",
-          "No efficacy, biomarker, or combination-strategy data available from this step to assess",
-          "HLA-A*02:01 restriction of the dominant gp100 epitope is a known patient-selection constraint that could not be quantified here",
-          "Cannot assess current competitive clinical landscape or whether active trials are enrolling"
+          "Clinical trial outcome data (OS, PFS, ORR, resistance) entirely absent \u2014 trial search returned no results [step_05]; conclusions cannot be drawn about efficacy in any patient subgroup.",
+          "CellMarker data was applied to a patient-stratification proxy but was not designed to answer historical trial success rate questions [step_06]; the 13/9 cancer/normal split is suggestive but does not substitute for clinical evidence.",
+          "CellMarker records may conflate primary melanoma with metastatic lesions and cell lines; PMEL expression heterogeneity within patient tumours is not captured.",
+          "No HLA-restriction data, TCR affinity benchmarks, or biomarker-defined patient selection criteria are present in this evidence set.",
+          "Ancestry and cohort composition of the CellMarker records are unknown, limiting generalisability across patient populations."
         ],
         "evidence_grade": "weak",
         "source": "agent (live)"
       },
       {
-        "division": "equity_heim",
-        "interpretation": "The equity analysis for PMEL/gp100 in melanoma could not be executed: step_06_cross_population_coverage returned a deferred status because no ToolUniverse executor was available to run the HLA allele frequency query [step_06]. No live data on HLA-A*02:01 frequency across global ancestry groups, addressable patient fraction, or multi-epitope coverage breadth was obtained. The known literature context \u2014 that A*02:01 is enriched in European-ancestry populations (~45%) and substantially lower in East Asian, African, and South Asian cohorts \u2014 is not reflected in live skill output and cannot be cited as evidence from this run.",
+        "division": "right_commercial",
+        "interpretation": "The competitive landscape analysis for PMEL/gp100-directed therapeutics was not executable in this run \u2014 the lit-synthesizer skill returned a deferred/unresolved status requiring a ToolUniverse executor that was not available [step_07]. No live competitive intelligence was retrieved. From prior knowledge (cutoff August 2025): the HLA-A*02:01-restricted gp100 peptide space is well-occupied (IMCgp100/tebentafusp EMA-approved 2022 for uveal melanoma; multiple HLA-restricted TCR-T cell and peptide vaccine programmes ongoing), while HLA-agnostic modalities \u2014 extracellular-domain bispecifics, ADCs targeting the melanosomal ectodomain, and mRNA vaccines \u2014 remain sparsely populated. However, because this prior knowledge was not refreshed by a live skill call, it cannot be treated as confirmed evidence for this assessment.",
         "confidence": "low",
         "caveats": [
-          "step_06 was deferred entirely; no quantitative HLA frequency data was returned for any ancestry group",
-          "Without allele frequency data, the addressable patient fraction under a mono-epitope (A*02:01-restricted gp100:209-217) strategy cannot be calculated from this run",
-          "Historical literature suggests significant equity concern \u2014 A*02:01 restriction disproportionately excludes non-European patients \u2014 but this finding is not supported by live skill output and must be treated as external prior, not division evidence",
-          "Multi-epitope coverage analysis (e.g., adding A*24:02, B*07:02, DRB1-restricted epitopes) was not assessed",
-          "Melanoma incidence itself varies by ancestry, which compounds HLA-frequency-based addressability estimates \u2014 this interaction was not modeled"
-        ],
-        "evidence_grade": "weak",
-        "source": "agent (live)"
-      },
-      {
-        "division": "literature_and_landscape",
-        "interpretation": "The literature and landscape skill for PMEL-directed competitive and IP analysis did not execute \u2014 step_08 returned a deferred status because no ToolUniverse executor was available to run Tool_Finder_Keyword [step_08]. No live competitive intelligence was retrieved on next-generation ImmTAC variants, PMEL-directed CAR-T against extracellular epitopes, or mRNA vaccine combinations. The finding is therefore based solely on the absence of tool output, not on any retrieved data.",
-        "confidence": "low",
-        "caveats": [
-          "step_08 deferred entirely \u2014 no literature or competitive landscape data was retrieved; all claims below would require a live tool run to substantiate.",
-          "Without IP landscape data, freedom-to-operate around tebentafusp (Immunocore) and related HLA-A*02:01-restricted gp100 peptide IP cannot be assessed.",
-          "The competitive field for PMEL modalities (ImmTAC next-gen, CAR-T, mRNA vaccines) is actively evolving; a stale or absent search systematically underestimates crowding.",
-          "Absence of retrieved literature does not imply absence of competitive activity \u2014 it reflects a tool execution failure, not a sparse field."
+          "step_07 returned 'deferred' \u2014 no live literature or competitive-landscape data was actually retrieved; all competitive context above derives from model prior knowledge, not a skill execution.",
+          "Patent and clinical-trial filings post-2024 are not captured; the landscape may have changed materially (additional ADC or bispecific entrants, tebentafusp label expansions).",
+          "Market sizing, pricing, and payer dynamics were not assessed \u2014 commercial viability beyond competitive crowding is unknown.",
+          "Uveal vs. cutaneous melanoma commercial opportunity differs substantially; tebentafusp approval is uveal-only, leaving cutaneous as a distinct and potentially larger addressable market that was not quantified here."
         ],
         "evidence_grade": "weak",
         "source": "agent (live)"
@@ -217,139 +197,10 @@
     ],
     "evidence": [
       {
-        "step": "step_01_malignant_cell_localization",
-        "division": "target_id_and_prioritization",
-        "skill": "malignant-expression-profiler",
-        "question": "What fraction of malignant melanoma cells express PMEL at the single-cell level, and does expression vary by tumor subtype (cutaneous vs. uveal) or treatment-naive vs. post-ICI status?",
-        "result": {
-          "status": "deferred",
-          "source": "tool-descriptor",
-          "discover": {
-            "verb": "find",
-            "tool_name": "Tool_Finder_Keyword",
-            "arguments": {
-              "description": "What fraction of malignant melanoma cells express PMEL at the single-cell level, and does expression vary by tumor subtype (cutaneous vs. uveal) or treatment-naive vs. post-ICI status?",
-              "limit": 5
-            }
-          },
-          "reason": "register a ToolUniverse executor (agent/frontend) to run Tool_Finder."
-        },
-        "source": "tool-descriptor"
-      },
-      {
-        "step": "step_02_off_target_expression",
-        "division": "target_safety",
-        "skill": "celltype-specificity-profiler",
-        "question": "What is the cell-type specificity of PMEL across all major normal tissue compartments, particularly melanocytes (skin), RPE (eye), and leptomeningeal cells?",
-        "result": {
-          "tool_call": {
-            "tool_name": "CellMarker_search_by_gene",
-            "arguments": {
-              "operation": "search_by_gene",
-              "gene_symbol": "PMEL",
-              "species": "Human"
-            }
-          },
-          "summary": {
-            "data.total_records": 22,
-            "data.cancer_cell_records": null,
-            "data.normal_cell_records": null
-          },
-          "via": "tooluniverse:CellMarker_search_by_gene (in-process)",
-          "source": "tooluniverse",
-          "backend": "tooluniverse"
-        },
-        "source": "tooluniverse"
-      },
-      {
-        "step": "step_03_germline_genetic_support",
-        "division": "target_id_and_prioritization",
-        "skill": "gwas-lookup",
-        "question": "Is there germline or somatic genetic evidence linking PMEL expression levels to melanoma risk, tumor aggressiveness, or survival?",
-        "result": {
-          "tool_call": {
-            "tool_name": "gwas_get_snps_for_gene",
-            "arguments": {
-              "gene_symbol": "PMEL",
-              "size": 20
-            }
-          },
-          "summary": {
-            "metadata.pagination.totalElements": 120
-          },
-          "via": "tooluniverse:gwas_get_snps_for_gene (in-process)",
-          "source": "tooluniverse",
-          "backend": "tooluniverse"
-        },
-        "source": "tooluniverse"
-      },
-      {
-        "step": "step_04_post_market_adverse_events",
-        "division": "target_safety",
-        "skill": "openfda-safety",
-        "question": "What post-market adverse event signals exist for tebentafusp and earlier gp100 peptide vaccines, and how do they map to the PMEL expression pattern in normal tissues?",
-        "result": {
-          "tool_call": {
-            "tool_name": "OpenFDA_search_drug_events",
-            "arguments": {
-              "drug_name": "PMEL",
-              "count": "patient.reaction.reactionmeddrapt.exact",
-              "limit": 20
-            }
-          },
-          "summary": {},
-          "via": "tooluniverse:OpenFDA_search_drug_events (in-process)",
-          "source": "tooluniverse",
-          "backend": "tooluniverse"
-        },
-        "source": "tooluniverse"
-      },
-      {
-        "step": "step_05_prior_trials_and_outcomes",
-        "division": "clinical_officers",
-        "skill": "clinical-trial-finder",
-        "question": "What do completed and active clinical trials reveal about efficacy, response predictors (PMEL expression threshold, HLA type, tumor mutation burden), and combination strategies for gp100-directed therapies?",
-        "result": {
-          "tool_call": {
-            "tool_name": "search_clinical_trials",
-            "arguments": {
-              "intervention": "PMEL",
-              "condition": "melanoma",
-              "max_results": 15
-            }
-          },
-          "status": "not executed",
-          "reason": "tooluniverse: No studies found for the given query parameters. Please examine your input and try different parameters.",
-          "source": "unavailable",
-          "backend": "tooluniverse"
-        },
-        "source": "unavailable"
-      },
-      {
-        "step": "step_06_cross_population_coverage",
-        "division": "equity_heim",
-        "skill": "equity-scorer",
-        "question": "What is the HLA allele frequency distribution across global ancestry groups for the key PMEL epitopes (A*02:01-restricted gp100:209-217 and others), and what fraction of melanoma patients are addressable with current vs. multi-epitope strategies?",
-        "result": {
-          "status": "deferred",
-          "source": "tool-descriptor",
-          "discover": {
-            "verb": "find",
-            "tool_name": "Tool_Finder_Keyword",
-            "arguments": {
-              "description": "What is the HLA allele frequency distribution across global ancestry groups for the key PMEL epitopes (A*02:01-restricted gp100:209-217 and others), and what fraction of melanoma patients are addressable with current vs. multi-epitope strategies?",
-              "limit": 5
-            }
-          },
-          "reason": "register a ToolUniverse executor (agent/frontend) to run Tool_Finder."
-        },
-        "source": "tool-descriptor"
-      },
-      {
-        "step": "step_07_somatic_mutation_frequency",
-        "division": "target_id_and_prioritization",
+        "step": "step_01_somatic_mutation_frequency",
+        "division": "right_target",
         "skill": "tcga-somatic-profiler",
-        "question": "In post-ICI cutaneous melanoma, does immune escape erode PMEL expression or antigen presentation machinery (B2M, TAP1/TAP2 loss), and what is the magnitude of this liability?",
+        "question": "What is PMEL mRNA expression across TCGA SKCM samples stratified by mutational subtype (BRAF/NRAS/NF1/triple-WT) and is expression correlated with survival?",
         "result": {
           "tool_call": {
             "tool_name": "OpenTargets_target_disease_evidence",
@@ -369,10 +220,10 @@
         "source": "tooluniverse"
       },
       {
-        "step": "step_08_recent_literature_and_competitive",
-        "division": "literature_and_landscape",
-        "skill": "lit-synthesizer",
-        "question": "What does the current competitive and IP landscape look like for PMEL-directed modalities beyond tebentafusp \u2014 specifically next-generation ImmTAC variants, CAR-T against extracellular PMEL epitopes, and mRNA vaccine combinations?",
+        "step": "step_02_malignant_cell_localization",
+        "division": "right_tissue",
+        "skill": "malignant-expression-profiler",
+        "question": "What fraction of malignant melanoma cells express PMEL at the single-cell level, and how does this compare to non-malignant stromal and immune cells in the tumour microenvironment?",
         "result": {
           "status": "deferred",
           "source": "tool-descriptor",
@@ -380,7 +231,119 @@
             "verb": "find",
             "tool_name": "Tool_Finder_Keyword",
             "arguments": {
-              "description": "What does the current competitive and IP landscape look like for PMEL-directed modalities beyond tebentafusp \u2014 specifically next-generation ImmTAC variants, CAR-T against extracellular PMEL epitopes, and mRNA vaccine combinations?",
+              "description": "What fraction of malignant melanoma cells express PMEL at the single-cell level, and how does this compare to non-malignant stromal and immune cells in the tumour microenvironment?",
+              "limit": 5
+            }
+          },
+          "reason": "register a ToolUniverse executor (agent/frontend) to run Tool_Finder."
+        },
+        "source": "tool-descriptor"
+      },
+      {
+        "step": "step_03_off_target_expression",
+        "division": "right_safety",
+        "skill": "celltype-specificity-profiler",
+        "question": "What is PMEL expression in normal tissues \u2014 particularly skin melanocytes, retinal pigment epithelium, hair follicle, and brain \u2014 using GTEx/HPA data?",
+        "result": {
+          "tool_call": {
+            "tool_name": "CellMarker_search_by_gene",
+            "arguments": {
+              "operation": "search_by_gene",
+              "gene_symbol": "PMEL",
+              "species": "Human"
+            }
+          },
+          "summary": {
+            "data.total_records": 22,
+            "cancer cell count": 13,
+            "normal cell count": 9
+          },
+          "via": "tooluniverse:CellMarker_search_by_gene (in-process)",
+          "source": "tooluniverse",
+          "backend": "tooluniverse"
+        },
+        "source": "tooluniverse"
+      },
+      {
+        "step": "step_04_post_market_adverse_events",
+        "division": "right_safety",
+        "skill": "openfda-safety",
+        "question": "What adverse events related to tebentafusp and earlier gp100-directed therapies have been reported in FAERS/post-market data, particularly ocular and autoimmune events?",
+        "result": {
+          "tool_call": {
+            "tool_name": "OpenFDA_search_drug_events",
+            "arguments": {
+              "drug_name": "PMEL",
+              "count": "patient.reaction.reactionmeddrapt.exact",
+              "limit": 20
+            }
+          },
+          "summary": {},
+          "via": "tooluniverse:OpenFDA_search_drug_events (in-process)",
+          "source": "tooluniverse",
+          "backend": "tooluniverse"
+        },
+        "source": "tooluniverse"
+      },
+      {
+        "step": "step_05_prior_trials_and_outcomes",
+        "division": "right_patient",
+        "skill": "clinical-trial-finder",
+        "question": "What do completed and ongoing clinical trials of tebentafusp, gp100 peptide vaccines, and TCR-T therapies show for overall survival, PFS, response rate, and resistance patterns?",
+        "result": {
+          "tool_call": {
+            "tool_name": "search_clinical_trials",
+            "arguments": {
+              "intervention": "PMEL",
+              "condition": "melanoma",
+              "max_results": 15
+            }
+          },
+          "status": "not executed",
+          "reason": "tooluniverse: No studies found for the given query parameters. Please examine your input and try different parameters.",
+          "source": "unavailable",
+          "backend": "tooluniverse"
+        },
+        "source": "unavailable"
+      },
+      {
+        "step": "step_06_trial_success_prior",
+        "division": "right_patient",
+        "skill": "celltype-specificity-profiler",
+        "question": "What is the historical trial success rate for TCR-based T-cell engagers and TAA-directed immunotherapies in solid tumours, benchmarked against the PMEL clinical track record?",
+        "result": {
+          "tool_call": {
+            "tool_name": "CellMarker_search_by_gene",
+            "arguments": {
+              "operation": "search_by_gene",
+              "gene_symbol": "PMEL",
+              "species": "Human"
+            }
+          },
+          "summary": {
+            "data.total_records": 22,
+            "cancer cell count": 13,
+            "normal cell count": 9
+          },
+          "via": "tooluniverse:CellMarker_search_by_gene (in-process)",
+          "source": "tooluniverse",
+          "backend": "tooluniverse"
+        },
+        "source": "tooluniverse"
+      },
+      {
+        "step": "step_07_recent_literature_and_competitive",
+        "division": "right_commercial",
+        "skill": "lit-synthesizer",
+        "question": "How crowded is the PMEL/gp100-directed therapeutic landscape and what whitespace exists for HLA-agnostic modalities (ADC, extracellular-domain bispecific, mRNA vaccine)?",
+        "result": {
+          "status": "deferred",
+          "source": "tool-descriptor",
+          "discover": {
+            "verb": "find",
+            "tool_name": "Tool_Finder_Keyword",
+            "arguments": {
+              "description": "How crowded is the PMEL/gp100-directed therapeutic landscape and what whitespace exists for HLA-agnostic modalities (ADC, extracellular-domain bispecific, mRNA vaccine)?",
               "limit": 5
             }
           },
@@ -390,9 +353,9 @@
       },
       {
         "step": "step_06_reroute",
-        "division": "target_id_and_prioritization",
+        "division": "right_target",
         "skill": "lit-synthesizer",
-        "question": "Reviewer follow-up: Competitive and IP landscape for next-gen PMEL modalities \u2014 step_08 deferred. The CSO cannot assess differentiation risk without knowing what ImmTAC variants, CAR-T programmes, and mRNA combos are already in pipeline.",
+        "question": "Reviewer follow-up: Single-cell malignant-cell localisation \u2014 step_02 was deferred entirely; no tool was executed. \u2014 Safety lens requires knowing whether PMEL expression in tumour is restricted to malignant melanocytes or is also present in stromal/immune compartments; ADC bystander toxicity and TCR-T on-target/off-tumour risk both depend on this.",
         "result": {
           "status": "deferred",
           "source": "tool-descriptor",
@@ -400,27 +363,7 @@
             "verb": "find",
             "tool_name": "Tool_Finder_Keyword",
             "arguments": {
-              "description": "Reviewer follow-up: Competitive and IP landscape for next-gen PMEL modalities \u2014 step_08 deferred. The CSO cannot assess differentiation risk without knowing what ImmTAC variants, CAR-T programmes, and mRNA combos are already in pipeline. Competitive and IP landscape for next-gen PMEL modalities",
-              "limit": 5
-            }
-          },
-          "reason": "register a ToolUniverse executor (agent/frontend) to run Tool_Finder."
-        },
-        "source": "tool-descriptor"
-      },
-      {
-        "step": "step_07_reroute",
-        "division": "target_id_and_prioritization",
-        "skill": "lit-synthesizer",
-        "question": "Reviewer follow-up: Malignant-cell fraction expressing PMEL at single-cell resolution (step_01 deferred) \u2014 This is the primary specificity signal required for ADC/CAR-T target assessment. Without it the reviewer lens ('is signal stromal or tumour-cell?') cannot be applied. CellMarker step_02 returns cell-type annotations but does not distinguish malignant from stromal melanoma compartments.",
-        "result": {
-          "status": "deferred",
-          "source": "tool-descriptor",
-          "discover": {
-            "verb": "find",
-            "tool_name": "Tool_Finder_Keyword",
-            "arguments": {
-              "description": "Reviewer follow-up: Malignant-cell fraction expressing PMEL at single-cell resolution (step_01 deferred) \u2014 This is the primary specificity signal required for ADC/CAR-T target assessment. Without it the reviewer lens ('is signal stromal or tumour-cell?') cannot be applied. CellMarker step_02 returns cell-type annotations but does not distinguish malignant from stromal melanoma compartments. Malignant-cell fraction expressing PMEL at single-cell resolution (step_01 deferred)",
+              "description": "Reviewer follow-up: Single-cell malignant-cell localisation \u2014 step_02 was deferred entirely; no tool was executed. \u2014 Safety lens requires knowing whether PMEL expression in tumour is restricted to malignant melanocytes or is also present in stromal/immune compartments; ADC bystander toxicity and TCR-T on-target/off-tumour risk both depend on this. Single-cell malignant-cell localisation \u2014 step_02 was deferred entirely; no tool was executed.",
               "limit": 5
             }
           },
@@ -432,90 +375,151 @@
     "review": {
       "verdict": "synthesize",
       "scores": {
-        "relevance": 4,
-        "evidence": 2,
+        "relevance": 3,
+        "evidence": 1,
         "thoroughness": 2
       },
       "gaps": [
         {
-          "missing": "Malignant-cell vs stromal PMEL expression fraction at single-cell resolution",
-          "route_to": "scrna-orchestrator",
-          "why": "Steps 01 and 07-reroute both deferred. CellMarker (step_02) returns cell-type annotations but cannot distinguish malignant melanoma cells from stromal/TIL compartments. Without this, the ADC/CAR-T target assessment is unresolved \u2014 a predominantly stromal signal would be disqualifying.",
-          "lenses": [
-            "genetics",
-            "specificity",
-            "clinical"
-          ]
-        },
-        {
-          "missing": "Competitive and IP landscape for next-gen PMEL modalities",
-          "route_to": "lit-synthesizer",
-          "why": "Steps 08 and 06-reroute both deferred. CSO cannot assess differentiation risk or freedom-to-operate without knowing pipeline status of next-gen ImmTAC variants, extracellular CAR-T programmes, and mRNA vaccine combinations.",
-          "lenses": [
-            "genetics",
-            "specificity"
-          ]
-        },
-        {
-          "missing": "Off-target normal tissue expression profile for PMEL \u2014 CellMarker returned 22 records but no disaggregation into normal vs. cancer cell types, and no quantitative expression data for RPE, leptomeningeal cells, or dermal melanocytes",
+          "missing": "Normal-tissue expression breadth (GTEx/HPA: skin melanocytes, RPE, hair follicle, brain, adrenal)",
           "route_to": "celltype-specificity-profiler",
-          "why": "Safety lens requires knowing which normal compartments express PMEL and at what level. Broad expression in RPE (eye) is the primary AE liability for tebentafusp and any successor; without this the safety verdict is ungrounded.",
+          "why": "step_03 returned CellMarker counts (13 cancer / 9 normal cell types) but no tissue-level RNA or protein abundance from GTEx or HPA. Without quantitative expression across normal tissues we cannot assess the on-target/off-tumour toxicity window for ADC or TCR-T modalities.",
           "lenses": [
             "safety"
           ]
         },
         {
-          "missing": "Post-market AE signal for gp100-directed agents \u2014 OpenFDA query used 'PMEL' as drug name (a gene symbol, not a drug name); tebentafusp and gp100 peptide vaccine trade/generic names were not queried, so the result set is empty and uninformative",
+          "missing": "FAERS / post-market adverse-event profile for tebentafusp and gp100-directed therapies",
           "route_to": "openfda-safety",
-          "why": "The AE profile of tebentafusp (skin toxicity, ocular AEs in uveal melanoma) is clinically documented but was not retrieved. A re-run with correct drug name ('tebentafusp' or 'IMCgp100') is required before safety conclusions can be drawn.",
+          "why": "step_04 queried OpenFDA with drug_name='PMEL' (a gene symbol, not a drug name) and returned an empty summary. The query must be reissued with drug_name='tebentafusp' (or 'IMCgp100') to retrieve real ocular, skin, and autoimmune AE signals.",
           "lenses": [
             "safety"
           ]
         },
         {
-          "missing": "HLA allele frequency distribution for PMEL epitopes across global ancestry groups",
-          "route_to": "equity-scorer",
-          "why": "Step_06 deferred entirely. A*02:01 restriction limits addressable population to ~45% of Europeans and far lower in African/East Asian ancestries. This is material to the equity-HEIM lens and to clinical trial eligibility estimates.",
+          "missing": "Single-cell malignant-cell vs stromal/immune compartment expression",
+          "route_to": "scrna-orchestrator",
+          "why": "step_02 and step_06_reroute both deferred without executing any tool. ADC bystander kill and TCR-T on-target/off-tumour risk both require knowing whether PMEL is confined to malignant melanocytes or also present in TME stromal/immune cells.",
+          "lenses": [
+            "safety"
+          ]
+        },
+        {
+          "missing": "Clinical trial outcomes for tebentafusp, gp100 vaccines, and TCR-T",
+          "route_to": "lit-synthesizer",
+          "why": "step_05 returned no studies because intervention='PMEL' is a gene symbol; the correct query is intervention='tebentafusp' or 'gp100'. Without trial OS/PFS/ORR data the safety-vs-efficacy trade-off cannot be assessed.",
+          "lenses": [
+            "safety"
+          ]
+        },
+        {
+          "missing": "TCGA somatic-subtype-stratified PMEL expression and survival correlation",
+          "route_to": "tcga-somatic-profiler",
+          "why": "step_01 ran OpenTargets_target_disease_evidence which returned 0 evidence records \u2014 this is a target-disease association query, not an expression-by-mutational-subtype query. The actual question (BRAF/NRAS/NF1/triple-WT stratification, survival) was never answered.",
           "lenses": [
             "genetics"
           ]
         },
         {
-          "missing": "HLA allele frequency distribution for gp100 epitopes across global ancestries",
-          "route_to": "equity-scorer",
-          "why": "step_06 and step_06_reroute both deferred. A*02:01 restriction limits addressable population to ~40-50% of European-ancestry patients and far less in East Asian, African, and South Asian cohorts. Without this, the equity-adjusted market size and trial eligibility are unquantifiable.",
+          "missing": "Single-cell malignant vs stromal PMEL expression fraction",
+          "route_to": "scrna-orchestrator",
+          "why": "step_02 and step_06_reroute both returned deferred/tool-descriptor status \u2014 no tool was executed. Malignant-cell localisation is foundational for ADC and TCR-T modality selection; without it the safety and specificity conclusions are ungrounded.",
+          "lenses": [
+            "genetics"
+          ]
+        },
+        {
+          "missing": "Normal tissue PMEL expression (GTEx/HPA) \u2014 RPE, melanocyte, hair follicle, brain",
+          "route_to": "celltype-specificity-profiler",
+          "why": "step_03 used CellMarker (cancer/normal cell-type annotations) not GTEx/HPA bulk-tissue expression. CellMarker confirms PMEL is expressed in cancer and some normal cell types but gives no quantitative tissue-level expression data needed to assess on-target/off-tumour toxicity in retina, CNS, or skin.",
+          "lenses": [
+            "genetics"
+          ]
+        },
+        {
+          "missing": "Post-market adverse event profile for tebentafusp and gp100-directed agents",
+          "route_to": "openfda-safety",
+          "why": "step_04 queried OpenFDA with drug_name='PMEL' (a gene symbol, not a drug name), returning an empty summary. The actual drugs \u2014 tebentafusp (IMCgp100), gp100 peptide vaccines \u2014 were never queried.",
+          "lenses": [
+            "genetics"
+          ]
+        },
+        {
+          "missing": "Clinical trial outcomes for tebentafusp, gp100 vaccines, TCR-T therapies",
+          "route_to": "clinical-trial-finder",
+          "why": "step_05 searched intervention='PMEL', which is not a registered intervention name; no trials were found. Correct intervention terms (tebentafusp, IMCgp100, gp100) were not tried.",
+          "lenses": [
+            "genetics"
+          ]
+        },
+        {
+          "missing": "Competitive landscape and HLA-agnostic modality whitespace for PMEL/gp100",
+          "route_to": "lit-synthesizer",
+          "why": "step_07 was deferred entirely \u2014 no literature or landscape search was executed. This is the most commercially critical question and has zero data.",
+          "lenses": [
+            "genetics"
+          ]
+        },
+        {
+          "missing": "Malignant-cell vs stromal/immune PMEL localization at single-cell resolution",
+          "route_to": "scrna-orchestrator",
+          "why": "step_02 and step_06_reroute both returned deferred/no-execution. For ADC bystander toxicity and TCR-T on-target/off-tumour risk, knowing whether PMEL is on malignant melanocytes vs stromal cells is the primary specificity question \u2014 CellMarker aggregate counts (13 cancer / 9 normal) do not resolve tumour-cell vs TME compartment.",
           "lenses": [
             "specificity"
           ]
         },
         {
-          "missing": "Competitive and IP landscape for next-gen PMEL modalities (ImmTAC variants, CAR-T, mRNA vaccines)",
+          "missing": "Clinical trial outcomes for tebentafusp and gp100-directed therapies",
           "route_to": "lit-synthesizer",
-          "why": "Steps 08 and 06-reroute both deferred. CSO cannot assess differentiation risk or freedom-to-operate without knowing pipeline density. Clinical reviewer lens requires this for translatability assessment.",
+          "why": "step_05 returned no results (tool found no studies for 'PMEL' as intervention name). Tebentafusp Phase 3 (IMCgp100-202) OS data and resistance patterns are published; lit-synthesizer agentic web search is needed to retrieve these.",
+          "lenses": [
+            "specificity"
+          ]
+        },
+        {
+          "missing": "Competitive and whitespace landscape for HLA-agnostic PMEL modalities",
+          "route_to": "lit-synthesizer",
+          "why": "step_07 deferred entirely. The crowding question (ADC, extracellular bispecific, mRNA vaccine) is unanswered and directly informs commercial viability.",
+          "lenses": [
+            "specificity"
+          ]
+        },
+        {
+          "missing": "Single-cell malignant-cell PMEL localisation (steps 02 and 06_reroute both deferred \u2014 no tool executed)",
+          "route_to": "scrna-orchestrator",
+          "why": "ADC bystander toxicity and TCR-T on-target/off-tumour risk both depend on whether PMEL is restricted to malignant melanocytes or also present in stromal/immune compartments. Three attempts produced no data.",
           "lenses": [
             "clinical"
           ]
         },
         {
-          "missing": "HLA allele frequency distribution for gp100 epitopes across global ancestry groups",
-          "route_to": "equity-scorer",
-          "why": "Step 06 deferred. A*02:01 restriction limits gp100:209-217 to ~40-45% of European-ancestry patients and substantially fewer in East Asian, African, and South Asian populations. Without this the addressable population fraction and HEIM equity score cannot be computed.",
+          "missing": "Clinical trial outcomes for tebentafusp / gp100 therapies (step 05 returned no results)",
+          "route_to": "lit-synthesizer",
+          "why": "The clinical reviewer lens requires trial precedent (OS, PFS, ORR, resistance). search_clinical_trials returned nothing for PMEL/melanoma; a web-search-backed literature pull is needed to retrieve IMCgp100-202 and related data.",
           "lenses": [
             "clinical"
           ]
         },
         {
-          "missing": "OpenFDA adverse event signal for tebentafusp (not queried by PMEL gene symbol)",
+          "missing": "Competitive and whitespace landscape for HLA-agnostic PMEL modalities (step 07 deferred)",
+          "route_to": "lit-synthesizer",
+          "why": "No competitive intelligence was retrieved. Clinical reviewers need to know which ADC, bispecific, and mRNA-vaccine programmes are active before assessing differentiation potential.",
+          "lenses": [
+            "clinical"
+          ]
+        },
+        {
+          "missing": "Post-market adverse events for tebentafusp / gp100-directed agents (step 04 returned empty summary)",
           "route_to": "openfda-safety",
-          "why": "Step 04 queried OpenFDA with drug_name='PMEL' \u2014 a gene symbol, not a drug name. The correct query is drug_name='tebentafusp' or 'IMCgp100'. The returned summary is empty because the parameter was wrong; the safety signal is entirely missing.",
+          "why": "FAERS query used 'PMEL' as the drug name \u2014 the correct query should use 'tebentafusp' or 'IMCgp100'. Ocular and skin AE signals are clinically material for any follow-on programme.",
           "lenses": [
             "clinical"
           ]
         },
         {
-          "missing": "Clinical trial efficacy data and response predictors for gp100-directed therapies",
-          "route_to": "clinical-trial-finder",
-          "why": "Step 05 returned no results querying intervention='PMEL'. Correct query should use intervention='tebentafusp' or 'gp100' or 'IMCgp100'. Trial data (OS benefit in uveal melanoma, HLA-A*02:01 requirement, combination arms) is essential for clinical reviewer lens and is completely absent.",
+          "missing": "PMEL mRNA expression stratified by TCGA SKCM mutational subtype and survival correlation (step 01 returned 0 evidence records from OpenTargets)",
+          "route_to": "tcga-somatic-profiler",
+          "why": "Zero evidence count almost certainly reflects an upstream query issue (PMEL is well-validated in melanoma). BRAF/NRAS/NF1/WT stratification is needed to define the addressable patient fraction.",
           "lenses": [
             "clinical"
           ]
@@ -523,158 +527,151 @@
       ],
       "experiments": [
         {
-          "missing": "Quantitative PMEL protein/mRNA expression in RPE, leptomeningeal cells, inner ear melanocytes, and dermal melanocytes vs. malignant melanoma cells",
-          "proposed_experiment": "Query GTEx, HPA (Human Protein Atlas), and CCLE for PMEL expression by tissue; cross-reference with CellMarker normal-cell records disaggregated by compartment",
+          "missing": "Quantitative PMEL expression in normal tissues at risk (RPE, melanocytes, brain, adrenal medulla)",
+          "proposed_experiment": "Query HPA tissue RNA consensus dataset and GTEx v8 for PMEL TPM across all tissues; flag any tissue with TPM > 10 as an off-target risk organ",
           "route_to": "celltype-specificity-profiler",
-          "expected_readout": "Expression TPM or protein staining intensity per normal tissue type; flag any tissue with expression \u226550% of melanoma tumour-cell level as a safety liability",
-          "why": "Ocular and skin toxicity are the principal AE liabilities for PMEL-directed therapies. Without a quantitative off-target map the safety verdict is entirely speculative."
+          "expected_readout": "Rank-ordered tissue expression table; identification of high-expression non-melanoma tissues that constrain therapeutic index",
+          "why": "Melanocyte-lineage expression in RPE is the mechanistic basis for tebentafusp ocular AEs; quantifying this is prerequisite to any safety claim"
         },
         {
-          "missing": "Post-market AE frequencies for tebentafusp and gp100 peptide vaccines",
-          "proposed_experiment": "Re-run OpenFDA_search_drug_events with drug_name='tebentafusp' and separately 'gp100'; count by reactionmeddrapt; cross-reference FAERS narratives for ocular, dermatologic, and hepatic events",
+          "missing": "Post-market AE frequency and severity for tebentafusp",
+          "proposed_experiment": "Reissue OpenFDA_search_drug_events with drug_name='tebentafusp', count by reactionmeddrapt; cross-reference with ClinicalTrials SAE disclosures for IMCgp100-202 pivotal trial",
           "route_to": "openfda-safety",
-          "expected_readout": "Top 20 MedDRA PT reactions by frequency; rate of serious/fatal reports; pattern mapped to known PMEL-expressing normal tissues",
-          "why": "The current AE step returned an empty result due to an incorrect drug name. This is a fixable data-retrieval error, not a true absence of signal. Tebentafusp received FDA approval in 2022 and has post-market data."
+          "expected_readout": "Top-20 AE terms with disproportionality scores; grade 3-4 immune-mediated event rates (skin, eye, liver)",
+          "why": "Tebentafusp's approved label carries specific ocular and cytokine-release warnings; any next-gen PMEL modality must benchmark against this known AE floor"
         },
         {
-          "missing": "Malignant-cell vs. stromal-cell PMEL expression fraction at single-cell resolution in cutaneous and uveal melanoma",
-          "proposed_experiment": "Query CancerSEA, TISCH, or run scRNA-seq DE analysis on public SKCM datasets (e.g. GSE115978) separating malignant clusters (CNV-inferred) from TME stromal cells",
+          "missing": "Malignant-cell-restricted vs stromal PMEL expression at single-cell resolution",
+          "proposed_experiment": "Run scRNA-seq analysis on publicly available SKCM datasets (e.g. Tirosh 2016, TISCH2) to separate malignant from TME cells and quantify PMEL expression fraction per compartment",
           "route_to": "scrna-orchestrator",
-          "expected_readout": "% PMEL+ cells among malignant vs. CAF/endothelial/immune clusters; subtype stratification (cutaneous vs. uveal); post-ICI vs. treatment-naive delta",
-          "why": "Steps 01 and 07-reroute were both deferred. Without single-cell tumour-compartment data, whether PMEL signal is primarily malignant-cell or stromal cannot be determined \u2014 this is the foundational specificity question for any ADC or CAR-T modality."
+          "expected_readout": "Fraction of malignant cells expressing PMEL >1 TPM; expression in T cells, macrophages, fibroblasts to quantify bystander ADC risk",
+          "why": "If PMEL is expressed on stromal or immune cells, ADC bystander toxicity will extend beyond melanoma cells; this changes the therapeutic window estimate materially"
         },
         {
-          "missing": "HLA-A*02:01 allele frequency across non-European ancestry groups and coverage estimate for multi-epitope PMEL strategies",
-          "proposed_experiment": "Query Allele Frequency Net Database (AFND) or IPD-IMGT/HLA for A*02:01 frequency by superpopulation (AFR, EAS, SAS, AMR, EUR); estimate population-weighted coverage for gp100:209-217 and alternative HLA-A/B-restricted PMEL epitopes",
-          "route_to": "equity-scorer",
-          "expected_readout": "Population-weighted addressable fraction for current (A*02:01-only) vs. multi-epitope strategy; flag if <40% of AFR or EAS melanoma patients are addressable",
-          "why": "Step 06 was deferred and equity coverage was not assessed. HLA-A*02:01 is enriched in European populations (~45%) but far lower in East Asian (~20%) and African (<10%) groups \u2014 a major HEIM gap for any A*02:01-restricted strategy."
-        },
-        {
-          "missing": "Competitive and IP landscape for next-generation PMEL modalities (ImmTAC variants, CAR-T, mRNA combos)",
-          "proposed_experiment": "Structured literature and patent search via Tavily/PubMed for 'PMEL' OR 'gp100' AND ('ImmTAC' OR 'CAR-T' OR 'mRNA vaccine') published 2022\u20132026; cross-reference ClinicalTrials.gov with intervention='gp100' to capture trials missed by 'PMEL' query",
+          "missing": "Completed trial OS/PFS/ORR for tebentafusp and gp100 vaccine programs",
+          "proposed_experiment": "Query ClinicalTrials with intervention='tebentafusp' OR 'gp100 peptide vaccine' and condition='melanoma'; supplement with PubMed search for IMCgp100-202 and earlier Phase I/II readouts",
           "route_to": "lit-synthesizer",
-          "expected_readout": "Named programmes, lead institutions, trial phase, differentiation axis vs. tebentafusp; freedom-to-operate risk flags",
-          "why": "Steps 08 and 06-reroute were both deferred due to missing ToolUniverse executor. The CSO cannot assess differentiation risk or IP crowding without this landscape. Re-routing to lit-synthesizer with corrected query parameters should resolve it."
+          "expected_readout": "Efficacy summary table; resistance patterns (antigen loss, HLA downregulation); grade 3+ AE rates across modalities",
+          "why": "Clinical precedent defines the evidence floor for any new PMEL-directed program and reveals which toxicities are class effects vs modality-specific"
         },
         {
-          "missing": "Malignant-cell PMEL expression fraction (single-cell resolution)",
-          "proposed_experiment": "Re-analyse published melanoma scRNA-seq datasets (e.g. Tirosh 2016, Jerby-Arnon 2018) with InferCNV-based malignant-cell calling; quantify PMEL+ fraction within CNV-high (malignant) vs CNV-low (stromal/immune) clusters across cutaneous and uveal subtypes and pre/post-ICI treatment status",
-          "route_to": "scrna-orchestrator",
-          "expected_readout": "% malignant cells PMEL+, median expression level, and subtype x treatment interaction; flag if >70% of signal is stromal",
-          "why": "Primary specificity signal for ADC/CAR-T modality selection; step_01 deferred and step_02 CellMarker data does not resolve malignant vs stromal compartments"
-        },
-        {
-          "missing": "GWAS signal interpretation for PMEL locus \u2014 120 SNPs returned but not characterised",
-          "proposed_experiment": "Retrieve top PMEL GWAS hits (step_03 returned 120 SNPs), annotate by phenotype (melanoma risk, pigmentation, ICI response), and check eQTL overlap in GTEx skin/melanocyte tissue to determine whether variants are expression-modifying vs pigmentation-only",
-          "route_to": "gwas-lookup",
-          "expected_readout": "Subset of SNPs associated with melanoma risk (not just pigmentation); eQTL evidence for PMEL expression modulation in tumour-relevant tissue",
-          "why": "120 SNPs were found but the summary is empty of phenotype detail; pigmentation-only GWAS hits do not constitute genetic target validation for oncology"
-        },
-        {
-          "missing": "Antigen presentation machinery (APM) loss frequency in post-ICI melanoma",
-          "proposed_experiment": "Query TCGA SKCM and published post-ICI biopsy datasets for somatic loss-of-function in B2M, TAP1, TAP2, and HLA-A; correlate with PMEL expression to quantify immune-escape liability for TCR-bispecific/ImmTAC modalities",
+          "missing": "HLA-I surface expression and antigen-presentation competence in SKCM",
+          "proposed_experiment": "Query TCGA SKCM for HLA-A/B/C and B2M expression and somatic loss-of-function mutations; cross-reference with PMEL expression to identify HLA-loss subpopulation that would escape TCR-T but not ADC",
           "route_to": "tcga-somatic-profiler",
-          "expected_readout": "Frequency of APM LOF in post-ICI vs treatment-naive tumours; PMEL expression in APM-intact vs APM-lost subgroups",
-          "why": "Step_07 OpenTargets query returned 0 evidence records \u2014 likely a query-parameter issue (disease name 'melanoma' may need MONDO/EFO ID). APM loss directly erodes ImmTAC efficacy and is a known post-ICI escape mechanism."
+          "expected_readout": "Fraction of SKCM tumours with HLA-I loss; correlation with PMEL expression level; implication for TCR-based vs HLA-agnostic modality choice",
+          "why": "HLA downregulation is a primary resistance mechanism for tebentafusp and TCR-T; knowing its prevalence defines the patient fraction that requires HLA-agnostic approaches (ADC, bispecific)"
         },
         {
-          "missing": "Post-market adverse event profile for tebentafusp (IMCgp100) and gp100 peptide vaccines",
-          "proposed_experiment": "Re-run OpenFDA query using drug name 'tebentafusp' (not 'PMEL') and cross-reference with package insert SAE table; map reaction MedDRA terms to normal-tissue PMEL expression compartments (skin, eye/RPE, leptomeninges)",
-          "route_to": "openfda-safety",
-          "expected_readout": "Ranked adverse reaction terms with frequency; flag ocular and CNS events given RPE and leptomeningeal PMEL expression",
-          "why": "Step_04 queried drug_name='PMEL' which is a gene symbol, not a drug name; the query likely returned no signal. Tebentafusp is approved (uveal melanoma) so FAERS data exists."
+          "missing": "PMEL expression stratified by BRAF/NRAS/NF1/triple-WT and survival association",
+          "proposed_experiment": "Re-run tcga-somatic-profiler with correct API: query TCGA SKCM RNA-seq expression by mutational subtype using cBioPortal or GDC API, then Cox regression on PMEL-high vs PMEL-low within each subtype",
+          "route_to": "tcga-somatic-profiler",
+          "expected_readout": "PMEL median TPM per subtype, log-rank p-value, HR for overall survival; establishes whether PMEL expression is subtype-dependent and prognostic",
+          "why": "Informs patient stratification strategy \u2014 if PMEL is equally high across all subtypes it broadens the addressable population; subtype-dependence would require companion diagnostics"
         },
         {
-          "missing": "HLA allele frequencies for gp100:209-217 epitope across non-European ancestries",
-          "proposed_experiment": "Query Allele Frequency Net Database or IPD-IMGT/HLA for A*02:01 and cross-reactive A*02 suballele frequencies across African, East Asian, South Asian, and Latin American populations; model addressable fraction under current vs multi-epitope strategies",
-          "route_to": "equity-scorer",
-          "expected_readout": "% of melanoma patients per ancestry group addressable by A*02:01-restricted gp100 therapy; delta addressable fraction with addition of HLA-A*24, HLA-B*07 restricted epitopes",
-          "why": "Step_06 deferred entirely; A*02:01 restriction is a known equity gap in IO and is material to a HEIM-compliant target assessment"
-        },
-        {
-          "missing": "Clinical trial efficacy predictors and combination strategies",
-          "proposed_experiment": "Re-run clinical trial search using intervention='tebentafusp OR gp100 OR IMCgp100' (not 'PMEL') to capture completed Phase II/III trials; extract PMEL expression thresholds, HLA eligibility criteria, TMB correlations, and combination arms from trial records and published results",
-          "route_to": "clinical-trial-finder",
-          "expected_readout": "ORR, PFS, OS by HLA and expression subgroup; active combination arms (checkpoint + ImmTAC); response predictor hierarchy",
-          "why": "Step_05 returned no studies because 'PMEL' is not a registered intervention name in ClinicalTrials.gov; tebentafusp/IMCgp100 are the correct query terms"
-        },
-        {
-          "missing": "Malignant-cell PMEL expression fraction (tumour vs stromal compartments)",
-          "proposed_experiment": "Re-analyse publicly available melanoma scRNA-seq atlases (TCGA supplementary single-cell, GSE215120, Tirosh et al. Science 2016) with inferCNV or copy-number-based malignant-cell calling to isolate PMEL expression exclusively in aneuploid tumour cells vs CAFs, endothelium, and TILs.",
+          "missing": "Single-cell fraction of PMEL+ malignant melanoma cells vs TME compartments",
+          "proposed_experiment": "Query CancerSEA or a melanoma scRNA-seq atlas (e.g. Tirosh 2016, Jerby-Arnon 2018) for PMEL expression per annotated cell cluster; compute fraction of PMEL+ cells in malignant, CAF, endothelial, T-cell, and myeloid clusters",
           "route_to": "scrna-orchestrator",
-          "expected_readout": "PMEL+ fraction among malignant cells (expected >80% given melanocyte lineage), fold-enrichment vs stromal compartment, and subtype breakdown (cutaneous vs uveal if datasets available).",
-          "why": "ADC payload delivery and CAR-T on-tumour trafficking both require the antigen to be on malignant cells at adequate density. If PMEL is overwhelmingly tumour-cell-restricted (as lineage biology predicts), this becomes the strongest evidence for therapeutic window."
+          "expected_readout": "% PMEL+ cells per cluster with confidence interval; if >80% restricted to malignant melanocytes, ADC and TCR-T specificity is supported",
+          "why": "ADC bystander toxicity and TCR-T on-target/off-tumour risk depend directly on stromal/immune PMEL expression; without this the safety case is unsubstantiated"
         },
         {
-          "missing": "PMEL surface epitope accessibility for antibody-based modalities",
-          "proposed_experiment": "Protein Atlas and UniProt topology review of PMEL transmembrane domain structure; supplemented by flow cytometry on melanoma cell lines (A375, SK-MEL-28) with anti-PMEL extracellular antibodies under non-permeabilizing conditions.",
+          "missing": "Quantitative PMEL expression in normal tissues at risk (RPE, CNS, skin)",
+          "proposed_experiment": "Query GTEx v10 or Human Protein Atlas API for PMEL bulk RNA and protein expression across tissue panels; flag any tissue with TPM >10 or HPA 'medium/high' protein staining",
+          "route_to": "celltype-specificity-profiler",
+          "expected_readout": "TPM values and HPA staining scores for retinal pigment epithelium, brain (cortex, cerebellum), skin, and hair follicle; identifies dose-limiting normal-tissue risk",
+          "why": "RPE PMEL expression is biologically expected (melanosomes); quantifying this determines whether ocular toxicity is a class-level liability for any PMEL-directed modality"
+        },
+        {
+          "missing": "FAERS adverse event profile for tebentafusp and gp100-directed drugs",
+          "proposed_experiment": "Re-run OpenFDA_search_drug_events with drug_name='tebentafusp' and separately 'IMCgp100'; also query ClinicalTrials.gov safety reports for NCT03070392 (PIVOT-002)",
+          "route_to": "openfda-safety",
+          "expected_readout": "Top 20 MedDRA reaction terms by frequency; flag cytokine release, ocular, and autoimmune AEs; benchmark against ipilimumab baseline",
+          "why": "Post-market signal for the approved tebentafusp (uveal melanoma) is the closest proxy for on-target safety of any new PMEL-directed therapy in cutaneous melanoma"
+        },
+        {
+          "missing": "Clinical efficacy and resistance data for PMEL-directed modalities",
+          "proposed_experiment": "Re-run search_clinical_trials with intervention='tebentafusp' OR 'gp100 peptide vaccine' OR 'TCR-T'; supplement with PubMed search for OS/PFS from PIVOT-002 and legacy gp100 vaccine trials (Schwartzentruber 2011 NEJM)",
           "route_to": "lit-synthesizer",
-          "expected_readout": "Confirmation of extracellular epitope availability and epitope coordinates suitable for ADC or CAR-T scFv design. Most PMEL targeting is currently intracellular (MHC-presented peptides for TCR-bispecifics); surface ADC/CAR-T viability depends on topology.",
-          "why": "tebentafusp targets the intracellular PMEL peptide via MHC-I; an ADC or CAR-T needs extracellular domain access. If PMEL is predominantly intracellular/luminal, the modality pivot fails."
+          "expected_readout": "OS, PFS, ORR with 95% CI per modality; resistance mechanisms (MHC-I loss, antigen loss) frequency; informs whether HLA-agnostic modalities address a real unmet need",
+          "why": "Historical ORR for gp100 peptide vaccines is ~16% (IL-2 combination); tebentafusp showed OS benefit without RECIST response \u2014 understanding this efficacy paradox is essential for next-modality design"
         },
         {
-          "missing": "B2M/TAP1/TAP2 loss frequency in post-ICI melanoma (antigen presentation erosion)",
-          "proposed_experiment": "Query TCGA SKCM WES and RNA-seq for homozygous B2M deletion or loss-of-function mutation frequency; cross-reference with ICI treatment history if available in clinical annotations. OpenTargets step_07 returned 0 evidences for PMEL-melanoma \u2014 query B2M directly.",
-          "route_to": "tcga-somatic-profiler",
-          "expected_readout": "B2M LOF rate in post-ICI vs treatment-naive tumours (literature suggests 20-30% in ICI-resistant). Quantifies the fraction of patients where MHC-I-dependent therapies (tebentafusp, peptide vaccines) will fail, informing which patients need MHC-I-independent modalities (CAR-T, ADC).",
-          "why": "step_07 used OpenTargets PMEL query and got 0 evidences \u2014 the tool likely needs a disease association query, not a mutation query. B2M loss is the dominant immune-escape mechanism for MHC-I-presented antigens and a critical stratification variable."
-        },
-        {
-          "missing": "Post-market adverse event signals for tebentafusp and gp100 peptide vaccines",
-          "proposed_experiment": "Re-run OpenFDA query with drug_name='tebentafusp' (not 'PMEL') and supplement with FDA label review for IMCgp100-102 trial AE data; search MedWatch for vitiligo, uveitis, and hypophysitis signals linked to melanocyte-antigen therapies.",
-          "route_to": "openfda-safety",
-          "expected_readout": "Reaction MedDRA term frequency for on-target toxicity (vitiligo, uveitis, RPE damage) vs systemic immunotoxicity. Step_04 queried drug_name='PMEL' which would return no hits \u2014 the correct query is the drug brand/INN name.",
-          "why": "On-target melanocyte destruction (vitiligo) is an expected class effect of PMEL-directed therapies and is manageable; RPE/uveal toxicity is potentially vision-threatening and would constrain dosing. The step_04 result is empty because of an incorrect query parameter \u2014 this is an execution error, not a true absence of safety signals."
-        },
-        {
-          "missing": "HLA-A*02:01 and multi-epitope addressable patient fraction by ancestry",
-          "proposed_experiment": "Query Allele Frequency Net Database (AFND) or use HLA frequency tools for A*02:01 prevalence across EUR, EAS, AFR, SAS, AMR superpopulations; calculate addressable fraction for gp100:209-217 (A*02:01-restricted) and identify alternative HLA-restricting epitopes from IEDB for broader coverage.",
-          "route_to": "equity-scorer",
-          "expected_readout": "Per-ancestry addressable fraction table; number of additional epitopes needed to reach 70% global coverage. Informs trial eligibility criteria and whether a multi-epitope or pan-HLA approach is required for equitable access.",
-          "why": "Current gp100 peptide vaccine and tebentafusp clinical development has been heavily A*02:01-biased, excluding majority-non-European populations from benefit. This is the HEIM gap flagged by the reviewer instructions."
-        },
-        {
-          "missing": "Malignant-cell PMEL expression fraction by tumour compartment",
-          "proposed_experiment": "Re-query scrna-orchestrator with scRNA-seq datasets from TCGA/GEO cutaneous and uveal melanoma; cluster by canonical malignant-cell markers (MITF, SOX10, TYRP1); compute PMEL+ fraction within malignant vs stromal vs immune compartments; stratify by treatment-naive vs post-ICI",
-          "route_to": "scrna-orchestrator",
-          "expected_readout": "Percentage of malignant cells expressing PMEL above detection threshold, with compartment breakdown and ICI-status subgroup; determines ADC/CAR-T vs TCR-bispecific modality selection",
-          "why": "ADC and CAR-T require tumour-cell surface target; if PMEL signal is predominantly stromal melanocytes the modality must shift to TCR-based (tebentafusp already occupies this niche)"
-        },
-        {
-          "missing": "Correct OpenFDA adverse event profile for tebentafusp",
-          "proposed_experiment": "Re-run OpenFDA_search_drug_events with drug_name='tebentafusp'; separately query 'IMCgp100'; cross-reference adverse events against PMEL-expressing normal tissues (skin melanocytes, RPE, leptomeningeal cells) from step_02 CellMarker data",
-          "route_to": "openfda-safety",
-          "expected_readout": "Ranked MedDRA reaction terms for tebentafusp; flag cytokine release syndrome, ocular toxicity (RPE), and skin depigmentation rates to model on-target/off-tumour liability",
-          "why": "Step 04 used wrong parameter; safety profile is a prerequisite for any clinical translatability verdict"
-        },
-        {
-          "missing": "Clinical trial efficacy and response predictor data for gp100 therapies",
-          "proposed_experiment": "Re-run search_clinical_trials with intervention='tebentafusp' AND intervention='gp100 peptide vaccine'; extract phase, primary endpoint met/missed, OS/PFS data, HLA restriction criteria, and combination arms",
-          "route_to": "clinical-trial-finder",
-          "expected_readout": "Trial-level efficacy summary table; OS benefit in uveal melanoma (IMCgp100-102 data); predictors of response (HLA-A*02:01, tumour PMEL expression threshold if reported); ongoing combination trials",
-          "why": "Clinical reviewer lens requires trial precedent to assess translatability; tebentafusp's uveal melanoma approval (2022) sets the benchmark but cutaneous melanoma data and next-gen combination readouts are needed to evaluate differentiation space"
-        },
-        {
-          "missing": "HLA-A*02:01 and alternative epitope allele frequencies across global ancestries",
-          "proposed_experiment": "Query allele frequency databases (e.g. Allele Frequency Net) for A*02:01 prevalence by continental ancestry group; identify alternative PMEL epitopes restricted to A*24:02, A*03:01, DRB1*04 for multi-epitope vaccine design; compute fraction of global melanoma incidence addressable",
-          "route_to": "equity-scorer",
-          "expected_readout": "Per-ancestry addressable fraction table; identifies whether a multi-epitope or HLA-agnostic (e.g. neoantigen mRNA) strategy is needed to achieve >70% population coverage",
-          "why": "A*02:01 restriction is a known equity liability; clinical development strategy must account for this or face post-approval label restrictions"
-        },
-        {
-          "missing": "Immune escape frequency: B2M/TAP1/TAP2 loss in post-ICI melanoma",
-          "proposed_experiment": "Query TCGA SKCM WES data for somatic loss-of-function mutations in B2M, TAP1, TAP2, HLA-A across treatment-naive vs ICI-treated cohorts; supplement with published ICI-resistance cohort datasets (Hugo et al., Van Allen et al.)",
-          "route_to": "tcga-somatic-profiler",
-          "expected_readout": "Frequency of antigen-presentation machinery loss in post-ICI setting; quantifies the proportion of patients who would be refractory to any MHC-I-dependent PMEL therapy at progression",
-          "why": "Step 07 returned zero OpenTargets evidence records \u2014 likely a query failure rather than true absence of evidence. This liability directly caps the addressable population for tebentafusp and TCR-bispecific follow-ons"
-        },
-        {
-          "missing": "Competitive pipeline density for PMEL-directed modalities",
-          "proposed_experiment": "Tavily web search for 'PMEL gp100 ImmTAC pipeline 2024 2025', 'CAR-T gp100 melanoma clinical trial', 'mRNA vaccine PMEL melanoma'; cross-reference ClinicalTrials.gov for active IND-stage programmes; identify patent clusters via Espacenet or Google Patents",
+          "missing": "Competitive and whitespace landscape for HLA-agnostic PMEL modalities",
+          "proposed_experiment": "Run lit-synthesizer Tavily web search: 'PMEL gp100 ADC bispecific mRNA vaccine pipeline 2024 2025' + 'tebentafusp resistance cutaneous melanoma'; cross-reference with Citeline/GlobalData pipeline reports",
           "route_to": "lit-synthesizer",
-          "expected_readout": "Pipeline map by modality and stage; identify white space (e.g. bispecific CAR-T, shared neoantigen mRNA) vs crowded segments; freedom-to-operate risk assessment",
-          "why": "Without pipeline density data the CSO report cannot assess whether a next-gen PMEL programme has a viable competitive position"
+          "expected_readout": "Named pipeline assets by modality and stage; identification of any approved or Phase 2+ HLA-agnostic PMEL agent; whitespace map showing which modalities (ADC, bispecific, mRNA) have <2 clinical-stage assets",
+          "why": "Without competitive landscape data the commercial rationale for a new modality cannot be assessed \u2014 if three ADCs are already in Phase 2 the whitespace claim is false"
+        },
+        {
+          "missing": "Malignant-cell fraction expressing PMEL in melanoma TME",
+          "proposed_experiment": "Query CancerSEA or TISCH2 single-cell atlases for PMEL expression partitioned by cell-type annotation (malignant, CAF, endothelial, T-cell, macrophage) in SKCM datasets",
+          "route_to": "scrna-orchestrator",
+          "expected_readout": "% PMEL+ cells per compartment and mean log-normalized expression; confirms whether signal is malignant-restricted or stromal-enriched",
+          "why": "Stromal PMEL expression would reframe ADC safety risk (bystander kill of skin/retinal melanocytes) and reduce TCR-T on-tumour selectivity rationale"
+        },
+        {
+          "missing": "Normal-tissue PMEL expression in GTEx / HPA at protein level",
+          "proposed_experiment": "Run HPA_get_protein_tissue_expression for PMEL to obtain IHC scores across retinal pigment epithelium, skin, hair follicle, brain \u2014 CellMarker returned cell-type labels only, not quantitative tissue protein levels",
+          "route_to": "celltype-specificity-profiler",
+          "expected_readout": "HPA staining intensity (negative/low/medium/high) in RPE and melanocyte-rich tissues; establishes on-target/off-tumour toxicity floor",
+          "why": "Ocular toxicity (RPE) is the known clinical risk for gp100/PMEL-directed agents; quantitative HPA data would replace the absent FAERS result"
+        },
+        {
+          "missing": "OpenFDA FAERS adverse events for tebentafusp (not 'PMEL' as drug name)",
+          "proposed_experiment": "Re-run OpenFDA_search_drug_events with drug_name='tebentafusp' and separately 'IMCgp100' to capture actual post-market signal",
+          "route_to": "openfda-safety",
+          "expected_readout": "Top MedDRA reaction terms and frequency for skin, ocular, and autoimmune events; resolves step_04 which returned empty due to wrong drug_name parameter",
+          "why": "step_04 queried 'PMEL' as the drug name \u2014 this returns nothing; tebentafusp is the marketed agent and has Phase 3 safety data"
+        },
+        {
+          "missing": "OpenTargets genetic/clinical evidence for PMEL-melanoma link",
+          "proposed_experiment": "Re-run OpenTargets_target_disease_evidence with disease_name='skin melanoma' or EFO:0000389 \u2014 'melanoma' returned 0 evidences, likely a disease-name mismatch",
+          "route_to": "right_target",
+          "expected_readout": "Evidence count and datatypes (genetic association, somatic mutation, known drug) confirming PMEL as a validated melanoma target",
+          "why": "Zero evidences from OpenTargets for PMEL/melanoma is almost certainly a query artefact; if genuine it would be a critical negative finding that should change the verdict"
+        },
+        {
+          "missing": "TCR-T / T-cell engager historical success rate in solid tumours",
+          "proposed_experiment": "Lit-synthesizer search on 'TCR-T cell therapy solid tumour Phase 2/3 success rate' and 'tebentafusp OS uveal melanoma benchmark' to establish base-rate prior",
+          "route_to": "lit-synthesizer",
+          "expected_readout": "Approval rate and median OS improvement for TCR-based modalities in solid tumours; contextualises PMEL programme risk vs benchmark",
+          "why": "step_06 reused CellMarker (wrong tool) instead of computing a trial-success prior; this is needed for the CSO's go/no-go framing"
+        },
+        {
+          "missing": "Malignant-cell PMEL expression fraction in TME",
+          "proposed_experiment": "Query a single-cell atlas (e.g. TISCH2 or CancerSEA) for melanoma samples; compute PMEL+ fraction across malignant, CAF, endothelial, and immune clusters",
+          "route_to": "scrna-orchestrator",
+          "expected_readout": "PMEL % positive cells per compartment; ratio malignant:stromal",
+          "why": "Specificity ratio directly sets ADC therapeutic window and TCR-T on-tumour selectivity"
+        },
+        {
+          "missing": "Tebentafusp clinical outcomes (OS, PFS, ORR, resistance)",
+          "proposed_experiment": "Literature search on IMCgp100-202 phase III trial plus gp100 peptide vaccine and TCR-T historical data",
+          "route_to": "lit-synthesizer",
+          "expected_readout": "OS HR, ORR, grade 3+ AE rate, known resistance mechanisms (antigen loss, HLA downregulation)",
+          "why": "Any new PMEL programme must define clinical differentiation vs approved tebentafusp"
+        },
+        {
+          "missing": "FAERS adverse events for tebentafusp (cytokine release, ocular, autoimmune)",
+          "proposed_experiment": "Rerun OpenFDA_search_drug_events with drug_name='tebentafusp' and separately 'IMCgp100'",
+          "route_to": "openfda-safety",
+          "expected_readout": "Top 20 MedDRA PTs by frequency; disproportionality signal for uveitis/vitiligo/CRS",
+          "why": "Skin/ocular melanocyte toxicity is a class effect for PMEL-directed agents; must be quantified before choosing modality"
+        },
+        {
+          "missing": "PMEL expression in retinal pigment epithelium and brain melanocytes at protein level",
+          "proposed_experiment": "Query HPA (Human Protein Atlas) protein IHC data for PMEL across RPE, brain substantia nigra, and skin melanocytes",
+          "route_to": "celltype-specificity-profiler",
+          "expected_readout": "IHC staining intensity (negative/low/medium/high) per tissue; TPM from GTEx",
+          "why": "CellMarker returned cell-type annotations but not expression quantitation; RPE and neural crest-derived cells are the key toxicity compartments for ADC or TCR-T"
+        },
+        {
+          "missing": "HLA-agnostic PMEL modality competitive landscape",
+          "proposed_experiment": "Web search for ADC, bispecific antibody, and mRNA vaccine programmes targeting PMEL/gp100 extracellular domain in active IND or phase 1",
+          "route_to": "lit-synthesizer",
+          "expected_readout": "Programme list with modality, sponsor, phase, HLA restriction status, and estimated enrolment criteria",
+          "why": "Whitespace assessment requires knowing which extracellular-domain epitopes are claimed and whether any programme has demonstrated HLA-independent tumour killing"
         }
       ],
       "panel": {
@@ -694,106 +691,113 @@
     "synthesis": {
       "decision": "CONDITIONAL_GO",
       "confidence": "medium",
-      "recommendation": "PMEL/gp100 is a CONDITIONAL_GO as a therapeutic target in melanoma, anchored by strong clinical precedent (tebentafusp FDA approval 2022 in uveal melanoma; gp100 peptide vaccine OS benefit in RCT) and meaningful germline genetic signal (120 GWAS SNPs [step_03]), but conditioned on resolving three execution-gap liabilities: (1) single-cell malignant-cell fraction confirmation [step_01 deferred], (2) correct OpenFDA AE query for tebentafusp [step_04 query error], and (3) HLA equity coverage across non-European ancestries [step_06 deferred]. OpenTargets returning zero evidence [step_07] reflects a curation gap for melanocyte-differentiation antigens, not a true negative \u2014 somatic lineage overexpression, not germline driver status, is the primary target rationale for this antigen class.",
-      "target_overview": "PMEL (also SILV/gp100) encodes a melanocyte-lineage glycoprotein expressed in >90% of melanomas and in normal melanocytes, retinal pigment epithelium (RPE), and leptomeningeal melanocytes. It is one of the most clinically validated shared tumor antigens: tebentafusp (ImmTAC gp100\u00d7CD3 bispecific, Immunocore) achieved FDA approval in HLA-A*02:01+ uveal melanoma in 2022 with demonstrated OS benefit (Nathan et al. NEJM 2021), and gp100:209-217 peptide vaccine showed OS benefit combined with IL-2 in a 2011 NEJM RCT (Schwartzentruber et al.). The target is most advanced in uveal melanoma; cutaneous melanoma represents an earlier-stage opportunity where gp100-directed approaches are positioned as adjuvant or post-ICI-progression strategies. The dominant modality constraint is HLA-A*02:01 restriction for MHC-I epitope-based approaches (~45% of European-ancestry patients), motivating interest in HLA-agnostic modalities (CAR-T targeting extracellular PMEL domain, multi-epitope mRNA vaccines).",
+      "recommendation": "PMEL (gp100) is a well-established melanoma-associated antigen with a validated clinical proof-of-concept (tebentafusp OS benefit in uveal melanoma) and high tumour prevalence, supporting a CONDITIONAL_GO for novel modality development \u2014 specifically HLA-agnostic approaches targeting the extracellular domain. The primary conditions are: (1) confirming malignant-cell-restricted expression at single-cell resolution [step_02 deferred \u2014 gap], (2) quantifying the normal-tissue safety window in RPE and melanocytes beyond CellMarker annotations [step_03 partial \u2014 9 normal cell types confirmed but no GTEx/HPA quantitation], and (3) defining the competitive landscape for HLA-agnostic programmes [step_07 deferred \u2014 gap]. The target rationale is immunological, not oncogenic \u2014 GWAS and DepMap provide no driver evidence \u2014 but this is appropriate for a tumour-associated antigen approach and not disqualifying [step_01 query failure, background context].",
+      "target_overview": "PMEL (Premelanosome Protein, gp100) is a melanocyte differentiation antigen expressed constitutively in >95% of cutaneous and uveal melanomas, normal melanocytes, and retinal pigment epithelium. It is a type-I transmembrane protein processed into amyloid-like fibrils within melanosomes; the cell-surface ectodomain is the structural basis for antibody-based modalities. It has no oncogenic driver role (zero DepMap proliferative dependency; no recurrent somatic mutations) \u2014 its therapeutic relevance is entirely immunological. Tebentafusp (IMCgp100), an HLA-A*02:01-restricted TCR\u00d7anti-CD3 bispecific, received FDA approval in 2022 for uveal melanoma and represents the first T-cell engager approval in solid tumours. HLA restriction (~45% prevalence in Europeans, lower in other ancestries) and on-target/off-tumour toxicity in normal melanocytes (vitiligo, uveitis) are the primary constraints on current modalities.",
       "liabilities": [
         {
-          "risk": "HLA-A*02:01 restriction limits addressable population to ~45% of Europeans and substantially fewer in East Asian (~20%) and African (<10%) ancestry groups, creating a significant equity gap and constraining trial eligibility",
-          "mitigation": "Multi-epitope strategy incorporating HLA-A*24:02, HLA-B*07:02, and DRB1-restricted PMEL epitopes, or HLA-agnostic modalities (extracellular domain CAR-T, mRNA vaccines covering multiple HLA supertypes); step_06 deferred \u2014 quantitative allele frequency analysis required before addressable fraction can be calculated"
+          "risk": "On-target/off-tumour toxicity in normal melanocytes (skin, RPE, hair follicle, cochlear stria vascularis)",
+          "mitigation": "CellMarker confirms 9 normal cell types express PMEL [step_03]; quantitative GTEx/HPA expression profiling of RPE and CNS melanocytes needed to define therapeutic index. Modality choice (ADC vs TCR-T vs vaccine) determines toxicity severity \u2014 ADC bystander kill and TCR-T cytokine release differ mechanistically. Ocular monitoring and dose-fractionation mitigated tebentafusp-associated uveitis in clinical practice."
         },
         {
-          "risk": "On-target/off-tumor toxicity in PMEL-expressing normal tissues: dermal melanocytes (vitiligo), RPE (ocular AEs including uveitis, potential vision loss), and leptomeningeal melanocytes (theoretical CNS risk) \u2014 documented in tebentafusp clinical data but not captured by live tool runs [step_04 returned empty due to incorrect query parameter 'PMEL' instead of 'tebentafusp']",
-          "mitigation": "Therapeutic index modeling using quantitative GTEx/HPA normal-tissue expression data; dose-titration and ophthalmologic monitoring protocols already established in tebentafusp label; modality-specific AE profiling (bispecific vs. CAR-T vs. vaccine differ in toxicity spectrum)"
+          "risk": "HLA-A*02:01 restriction limits addressable population for current leading modality (tebentafusp)",
+          "mitigation": "HLA-agnostic modalities (ADC targeting ectodomain, extracellular-domain bispecific, mRNA vaccine) could expand eligibility. Structural characterisation of PMEL ectodomain epitope accessibility is the key tractability gate for these approaches [open question: ectodomain topology]."
         },
         {
-          "risk": "Antigen presentation machinery (APM) loss under ICI pressure \u2014 B2M, TAP1/TAP2 loss-of-function in post-ICI melanoma erodes efficacy of all MHC-I-dependent PMEL approaches (tebentafusp, TCR-T, peptide vaccines); step_07 OpenTargets query returned 0 evidence records [step_07], likely due to query parameter failure, not true absence",
-          "mitigation": "Patient stratification for intact APM (B2M/HLA-A IHC or WES prior to enrollment); parallel development of MHC-I-independent modalities (CAR-T against extracellular PMEL) for APM-loss subpopulation"
+          "risk": "Antigen loss and MHC-I downregulation as acquired resistance mechanisms",
+          "mitigation": "Combination with checkpoint inhibitors or MHC-I restoration strategies. HLA-agnostic modalities (ADC) bypass MHC-I dependency and would remain active in HLA-loss tumours \u2014 this is a differentiation argument for ADC development. TCGA HLA-A/B2M somatic loss-of-function frequency in SKCM is an unresolved question [step_01 gap]."
         },
         {
-          "risk": "Uveal vs. cutaneous melanoma biological divergence \u2014 tebentafusp efficacy data (GNA11/GNAQ-driven uveal melanoma) does not transfer cleanly to BRAF/NRAS-driven cutaneous melanoma; competitive landscape in cutaneous melanoma is dominated by PD-1/CTLA-4 combinations",
-          "mitigation": "Disease-specific clinical program design with separate trial arms; cutaneous melanoma positioning as post-ICI salvage or combination-ICI adjuvant rather than first-line monotherapy"
+          "risk": "No oncogenic driver role \u2014 PMEL is a lineage antigen with no proliferative dependency",
+          "mitigation": "This is not disqualifying for immunotherapy: the therapeutic mechanism is T-cell or antibody-mediated killing of antigen-positive cells, not inhibition of a driver pathway. Tebentafusp approval validates this rationale. Frame as TAA, not ODD."
         },
         {
-          "risk": "Mature competitive landscape around tebentafusp and IP concentration at Immunocore for HLA-A*02:01-restricted ImmTAC gp100 modality \u2014 freedom-to-operate for next-gen variants is uncharacterized [step_08 deferred, step_06_reroute deferred]",
-          "mitigation": "Next-gen program differentiation via: (a) extracellular domain targeting for HLA-agnostic CAR-T, (b) multi-epitope mRNA vaccine platforms, (c) combination strategies (tebentafusp + checkpoint) not covered by composition-of-matter patents; IP landscape analysis required"
-        },
-        {
-          "risk": "CellMarker query [step_02] returned 22 records for PMEL but provided no disaggregation between malignant vs. normal cell types, leaving the therapeutic window between tumor and normal tissue expression quantitatively unresolved",
-          "mitigation": "Re-run celltype-specificity-profiler with explicit normal vs. cancer record disaggregation; cross-reference with GTEx and Human Protein Atlas for quantitative TPM-level normal tissue expression"
+          "risk": "Step_04 FAERS query used gene symbol 'PMEL' as drug name, returning empty adverse-event summary",
+          "mitigation": "Reissue OpenFDA query with drug_name='tebentafusp' and 'IMCgp100'. Known clinical AEs (grade 1\u20132 vitiligo, uveitis, cytokine release syndrome) are documented in the tebentafusp label and pivotal trial publications but were not retrieved as live data in this run."
         }
       ],
       "evidence_gaps": [
-        "Malignant-cell fraction expressing PMEL at single-cell resolution (cutaneous vs. uveal, treatment-naive vs. post-ICI) \u2014 step_01 deferred due to missing ToolUniverse executor; this is the primary specificity signal required for ADC/CAR-T modality selection",
-        "OpenFDA adverse event profile for tebentafusp \u2014 step_04 queried drug_name='PMEL' (a gene symbol); correct query is drug_name='tebentafusp' or 'IMCgp100'; result set is empty due to execution error, not true absence of signal",
-        "HLA allele frequency distribution across non-European ancestry groups for gp100 epitopes \u2014 step_06 deferred entirely; A*02:01 addressable fraction cannot be calculated; equity-adjusted market size and trial eligibility are unquantifiable",
-        "Competitive and IP landscape for next-generation PMEL modalities (ImmTAC variants, CAR-T, mRNA combos) \u2014 steps 08 and 06_reroute both deferred; differentiation risk and freedom-to-operate are unassessed",
-        "Clinical trial efficacy and response predictor data \u2014 step_05 returned no results because intervention='PMEL' is not a registered intervention name; correct terms are 'tebentafusp', 'gp100', or 'IMCgp100'",
-        "Antigen presentation machinery loss frequency (B2M/TAP1/TAP2) in post-ICI cutaneous melanoma \u2014 step_07 OpenTargets returned 0 evidence entries, likely reflecting query parameter mismatch (disease name 'melanoma' may need MONDO/EFO ID) rather than true absence; APM loss is the dominant immune-escape mechanism for MHC-I-dependent therapies",
-        "GWAS SNP phenotype annotation \u2014 step_03 returned 120 SNPs but without phenotype disaggregation; unknown fraction associates with melanoma risk vs. pigmentation-only traits; pigmentation-only hits do not constitute genetic target validation for oncology",
-        "PMEL surface epitope topology and extracellular domain accessibility \u2014 most current targeting uses intracellular MHC-presented peptides (tebentafusp); ADC and CAR-T viability depends on extracellular domain availability, which is not confirmed by live tool data"
+        "Single-cell malignant-cell vs stromal/immune PMEL expression fraction \u2014 step_02 and step_06_reroute both deferred without tool execution; foundational for ADC bystander toxicity and TCR-T on-tumour selectivity assessment",
+        "Quantitative normal-tissue PMEL expression (GTEx v10 TPM, HPA IHC staining intensity) across RPE, brain melanocytes, skin, hair follicle, adrenal medulla \u2014 step_03 returned CellMarker cell-type counts (13 cancer / 9 normal) but no expression-level data",
+        "FAERS post-market adverse-event profile for tebentafusp \u2014 step_04 queried wrong drug name ('PMEL'); ocular and autoimmune AE frequency and severity are unquantified from live data",
+        "Clinical trial outcomes (OS, PFS, ORR, resistance patterns) for tebentafusp, gp100 peptide vaccines, and TCR-T programmes \u2014 step_05 found zero results using intervention='PMEL'; IMCgp100-202 pivotal trial data (Nathan et al., NEJM 2021) was not retrieved",
+        "TCGA SKCM PMEL mRNA expression stratified by BRAF/NRAS/NF1/triple-WT mutational subtype and survival correlation \u2014 step_01 ran a target-disease association query (0 records) rather than an expression-by-subtype query; the question was never answered",
+        "Competitive landscape and HLA-agnostic modality whitespace (ADC, extracellular-domain bispecific, mRNA vaccine) \u2014 step_07 deferred without execution; zero live competitive intelligence retrieved",
+        "PMEL ectodomain structural topology and epitope accessibility for antibody-based modalities \u2014 no tool attempted; this is the tractability gate for HLA-agnostic strategies",
+        "HLA-A/B/C and B2M somatic loss-of-function frequency in TCGA SKCM \u2014 not queried; determines the patient fraction that requires HLA-agnostic approaches",
+        "OpenTargets genetic/clinical evidence count for PMEL in melanoma \u2014 step_01 returned 0 records, likely a disease-name mismatch ('melanoma' vs EFO:0000389 'skin cutaneous melanoma'); should be reissued"
       ],
       "proposed_experiments": [
         {
-          "experiment": "Single-cell malignant-cell PMEL expression profiling using published melanoma scRNA-seq atlases (Tirosh 2016, Jerby-Arnon 2018, GSE115978) with InferCNV-based malignant-cell calling to separate tumor from stromal/immune compartments",
-          "expected_readout": "% PMEL+ malignant cells vs. CAF/endothelial/immune clusters; subtype stratification (cutaneous vs. uveal); pre/post-ICI treatment delta; if >70% of signal is stromal, ADC/CAR-T modality selection must be reconsidered",
-          "rationale": "Steps 01 and 07-reroute both deferred. This is the foundational specificity question for any non-TCR modality. Melanocyte lineage biology predicts >80% malignant-cell PMEL expression, but confirmation is required before modality selection can be finalized."
+          "experiment": "Re-run OpenTargets_target_disease_evidence with disease_name='skin cutaneous melanoma' (EFO:0000389) and separately 'uveal melanoma'",
+          "expected_readout": "Evidence count and datatypes (somatic mutation, known drug, expression) confirming PMEL as a validated melanoma target; resolves step_01 query artefact",
+          "rationale": "Zero evidences in step_01 almost certainly reflects a disease-name mismatch rather than true absence of target biology \u2014 PMEL/tebentafusp is an approved combination; this should resolve with correct EFO term"
         },
         {
-          "experiment": "Re-run OpenFDA_search_drug_events with drug_name='tebentafusp' and separately 'IMCgp100'; count by reactionmeddrapt; map top 20 MedDRA PT reactions to PMEL-expressing normal tissue compartments (skin, RPE, leptomeninges)",
-          "expected_readout": "Ranked adverse reaction frequencies; rate of ocular AEs (uveitis, RPE damage), dermatologic events (vitiligo, rash), and cytokine release syndrome; on-target/off-tumor toxicity pattern",
-          "rationale": "Step_04 execution error (drug_name='PMEL') produced empty result. Tebentafusp received FDA approval in 2022 and has post-market FAERS data. Ocular AE profile in uveal melanoma patients is the principal safety-limiting factor for dose escalation and combination strategies."
+          "experiment": "Query TISCH2 or CancerSEA single-cell atlas for SKCM datasets; compute PMEL expression fraction per annotated compartment (malignant melanocytes, CAFs, endothelial cells, T cells, macrophages)",
+          "expected_readout": "% PMEL-positive cells per compartment with confidence interval; malignant:stromal expression ratio; mean log-normalised expression per cluster",
+          "rationale": "ADC bystander toxicity and TCR-T on-tumour selectivity are directly gated on stromal/immune PMEL expression; steps 02 and 06_reroute both failed to execute \u2014 this is the single highest-priority data gap"
         },
         {
-          "experiment": "Query Allele Frequency Net Database (AFND) for HLA-A*02:01 prevalence across EUR, EAS, AFR, SAS, AMR superpopulations; model addressable fraction for gp100:209-217 (A*02:01-restricted) and alternative PMEL epitopes (A*24:02, A*03:01, DRB1-restricted) from IEDB",
-          "expected_readout": "Per-ancestry addressable fraction table; delta addressable fraction with multi-epitope strategy; flag if <40% of EAS or AFR melanoma patients are addressable under current A*02:01-only approach",
-          "rationale": "Step_06 deferred entirely. A*02:01 restriction is a major equity liability \u2014 ~45% of Europeans vs. ~20% East Asian vs. <10% African frequency. This determines whether a pan-HLA strategy (mRNA multi-epitope vaccine, extracellular-domain CAR-T) is required for equitable access and commercial viability."
+          "experiment": "Query Human Protein Atlas API (HPA_get_protein_tissue_expression) for PMEL across retinal pigment epithelium, skin, hair follicle, brain substantia nigra, and adrenal medulla; supplement with GTEx v10 TPM values",
+          "expected_readout": "IHC staining intensity (negative/low/medium/high) and TPM per tissue; rank-ordered normal-tissue expression table; flag any tissue with TPM >10 or HPA 'medium/high' as dose-limiting organ",
+          "rationale": "RPE PMEL expression is the mechanistic basis for tebentafusp uveitis \u2014 quantifying this at protein level is prerequisite to any therapeutic-index claim for a follow-on modality; step_03 CellMarker counts cannot substitute"
         },
         {
-          "experiment": "Re-run search_clinical_trials with intervention='tebentafusp' OR 'gp100' OR 'IMCgp100' and condition='melanoma'; extract phase, primary endpoint, OS/PFS data, HLA eligibility criteria, PMEL expression thresholds, and combination arms",
-          "expected_readout": "Trial-level efficacy summary; OS benefit in uveal melanoma (IMCgp100-102 benchmark); response predictors (HLA-A*02:01, tumor expression threshold if reported); active combination arms (ICI + ImmTAC)",
-          "rationale": "Step_05 returned no results because 'PMEL' is not a registered intervention term on ClinicalTrials.gov. Tebentafusp trial data is the primary clinical validity anchor and is essential for the clinical reviewer lens."
+          "experiment": "Re-run OpenFDA_search_drug_events with drug_name='tebentafusp' and separately 'IMCgp100'; count by reactionmeddrapt; cross-reference with NCT03070392 (PIVOT-002) SAE disclosures",
+          "expected_readout": "Top-20 MedDRA reaction terms by frequency; grade 3\u20134 cytokine release, uveitis, vitiligo, and hepatotoxicity rates; disproportionality signal vs benchmark checkpoint inhibitor",
+          "rationale": "step_04 returned empty because 'PMEL' is a gene symbol, not a drug name; tebentafusp post-market signal is the closest safety proxy for any new PMEL-directed programme"
         },
         {
-          "experiment": "Structured literature and patent search for 'PMEL OR gp100 AND (ImmTAC OR CAR-T OR mRNA vaccine)' published 2022\u20132026; cross-reference ClinicalTrials.gov with intervention='gp100' for active IND programs; Espacenet patent cluster analysis for extracellular PMEL domain antibody sequences",
-          "expected_readout": "Pipeline map by modality and phase; named programs, lead institutions, differentiation axis vs. tebentafusp; freedom-to-operate risk flags for CAR-T and mRNA combination space",
-          "rationale": "Steps 08 and 06_reroute both deferred. Without pipeline density data, differentiation risk and IP crowding cannot be assessed. The competitive field is actively evolving post-tebentafusp approval."
+          "experiment": "Re-run search_clinical_trials with intervention='tebentafusp' OR 'IMCgp100' OR 'gp100 peptide vaccine'; supplement with PubMed retrieval of Nathan et al. NEJM 2021 and Schwartzentruber et al. NEJM 2011",
+          "expected_readout": "OS HR, median PFS, ORR with 95% CI per modality; resistance mechanisms (antigen loss frequency, HLA-I downregulation); grade 3+ AE rates; informs clinical differentiation requirements for next-gen programme",
+          "rationale": "step_05 returned nothing because 'PMEL' is not a registered intervention term; tebentafusp Phase 3 and legacy vaccine data are published and accessible \u2014 this gap is entirely a query artefact"
         },
         {
-          "experiment": "Query TCGA SKCM WES and RNA-seq for somatic loss-of-function in B2M, TAP1, TAP2, and HLA-A; correlate with ICI treatment history from clinical annotations; supplement with published ICI-resistance cohorts (Hugo et al., Van Allen et al.)",
-          "expected_readout": "Frequency of APM LOF in post-ICI vs. treatment-naive tumors; PMEL expression in APM-intact vs. APM-lost subgroups; quantifies the fraction of patients where MHC-I-dependent therapies (tebentafusp, peptide vaccines) will fail at ICI progression",
-          "rationale": "Step_07 OpenTargets returned 0 evidence entries likely due to query parameter failure. B2M loss (estimated 20-30% in ICI-resistant melanoma) is the dominant immune-escape mechanism for MHC-I-presented antigens and is a critical stratification variable for any gp100:MHC-I-dependent modality."
+          "experiment": "Query TCGA SKCM via cBioPortal or GDC API for PMEL RNA-seq expression (log2 TPM+1) stratified by BRAF V600/NRAS Q61/NF1 loss-of-function/triple-WT subtype; Cox regression on PMEL-high vs PMEL-low survival within each stratum",
+          "expected_readout": "Median PMEL expression per mutational subtype, log-rank p-value, hazard ratio for OS; determines whether PMEL is subtype-dependent and whether a companion diagnostic would narrow addressable population",
+          "rationale": "BRAF/NRAS/NF1/WT stratification informs patient selection strategy and whether expression-based enrichment adds value beyond histological diagnosis"
         },
         {
-          "experiment": "Annotate top PMEL GWAS SNPs (step_03 returned 120, no phenotype detail) by associated phenotype (melanoma risk, pigmentation, ICI response); check eQTL overlap in GTEx skin/melanocyte tissue to distinguish expression-modifying vs. pigmentation-only variants",
-          "expected_readout": "Subset of SNPs with melanoma-risk association (not just pigmentation); eQTL evidence for PMEL expression modulation in tumor-relevant tissue; genetic support score for PMEL as oncology target vs. pigmentation locus",
-          "rationale": "120 SNPs were found [step_03] but without phenotype disaggregation. Pigmentation-only GWAS hits do not constitute genetic target validation for oncology. Confirming even a subset of melanoma-risk-associated SNPs would strengthen the germline genetic pillar."
+          "experiment": "Lit-synthesizer web search: 'PMEL gp100 ADC antibody-drug conjugate bispecific mRNA vaccine pipeline 2024 2025 clinical trial'; cross-reference Citeline/GlobalData melanoma pipeline reports",
+          "expected_readout": "Named pipeline assets by modality and clinical stage; HLA-restriction status per programme; whitespace map identifying modalities with fewer than two clinical-stage assets",
+          "rationale": "step_07 deferred without execution \u2014 zero live competitive intelligence exists in this assessment; the commercial viability of HLA-agnostic modality development cannot be assessed without knowing how many ADC or extracellular bispecific programmes are already active"
+        },
+        {
+          "experiment": "Query UniProt/PDB and published cryo-EM/X-ray structures for PMEL ectodomain (Pfam: PKD domain, RPT domain); assess surface-exposed epitope area and proteolytic cleavage sites that would limit antibody accessibility on the live cell surface",
+          "expected_readout": "Accessible surface area of ectodomain on mature processed PMEL; identification of epitope regions stable post-cleavage; go/no-go for ADC and extracellular bispecific tractability",
+          "rationale": "PMEL undergoes extensive proprotein convertase and ADAM10 cleavage \u2014 the mature cell-surface form may expose only a short membrane-proximal stump; this is the tractability gate for HLA-agnostic modalities and was flagged as an open question with no tool attempt"
+        },
+        {
+          "experiment": "Query TCGA SKCM for HLA-A, HLA-B, HLA-C, and B2M mRNA expression and somatic loss-of-function mutations; correlate HLA-I loss events with PMEL expression quartile",
+          "expected_readout": "Fraction of SKCM tumours with HLA-I somatic loss or low expression; co-occurrence with high PMEL; defines the patient fraction requiring HLA-agnostic modality (ADC) vs TCR-based approach",
+          "rationale": "HLA-I downregulation is the primary resistance mechanism for tebentafusp and all TCR-based therapies; its prevalence in the target population determines whether an HLA-agnostic modality addresses a real and large unmet need"
         }
       ]
     },
     "references": [
       {
         "n": 1,
+        "skill": "tcga-somatic-profiler",
+        "provenance": "\ud83d\udd27 live",
+        "grade": "strong",
+        "source": "tcga-somatic-profiler; tooluniverse",
+        "step": "step_01_somatic_mutation_frequency"
+      },
+      {
+        "n": 2,
         "skill": "malignant-expression-profiler",
         "provenance": "\ud83d\udccb descriptor",
         "grade": "supporting",
         "source": "malignant-expression-profiler; tool-descriptor",
-        "step": "step_01_malignant_cell_localization"
+        "step": "step_02_malignant_cell_localization"
       },
       {
-        "n": 2,
+        "n": 3,
         "skill": "celltype-specificity-profiler",
         "provenance": "\ud83d\udd27 live",
         "grade": "strong",
         "source": "derived: tau + bimodality on the fetched atlas; tooluniverse",
-        "step": "step_02_off_target_expression"
-      },
-      {
-        "n": 3,
-        "skill": "gwas-lookup",
-        "provenance": "\ud83d\udd27 live",
-        "grade": "strong",
-        "source": "GWAS Catalog / Open Targets / PheWeb (federated); tooluniverse \u2014 https://www.ebi.ac.uk/gwas/",
-        "step": "step_03_germline_genetic_support"
+        "step": "step_03_off_target_expression"
       },
       {
         "n": 4,
@@ -813,19 +817,19 @@
       },
       {
         "n": 6,
-        "skill": "equity-scorer",
-        "provenance": "\ud83d\udccb descriptor",
-        "grade": "supporting",
-        "source": "population genetic references (HEIM); tool-descriptor",
-        "step": "step_06_cross_population_coverage"
+        "skill": "celltype-specificity-profiler",
+        "provenance": "\ud83d\udd27 live",
+        "grade": "strong",
+        "source": "derived: tau + bimodality on the fetched atlas; tooluniverse",
+        "step": "step_06_trial_success_prior"
       },
       {
         "n": 7,
-        "skill": "tcga-somatic-profiler",
-        "provenance": "\ud83d\udd27 live",
-        "grade": "strong",
-        "source": "tcga-somatic-profiler; tooluniverse",
-        "step": "step_07_somatic_mutation_frequency"
+        "skill": "lit-synthesizer",
+        "provenance": "\ud83d\udccb descriptor",
+        "grade": "supporting",
+        "source": "Tavily Search API (recent literature / competitive / safety); tool-descriptor \u2014 https://tavily.com/",
+        "step": "step_07_recent_literature_and_competitive"
       },
       {
         "n": 8,
@@ -833,235 +837,236 @@
         "provenance": "\ud83d\udccb descriptor",
         "grade": "supporting",
         "source": "Tavily Search API (recent literature / competitive / safety); tool-descriptor \u2014 https://tavily.com/",
-        "step": "step_08_recent_literature_and_competitive"
-      },
-      {
-        "n": 9,
-        "skill": "lit-synthesizer",
-        "provenance": "\ud83d\udccb descriptor",
-        "grade": "supporting",
-        "source": "Tavily Search API (recent literature / competitive / safety); tool-descriptor \u2014 https://tavily.com/",
         "step": "step_06_reroute"
-      },
-      {
-        "n": 10,
-        "skill": "lit-synthesizer",
-        "provenance": "\ud83d\udccb descriptor",
-        "grade": "supporting",
-        "source": "Tavily Search API (recent literature / competitive / safety); tool-descriptor \u2014 https://tavily.com/",
-        "step": "step_07_reroute"
       }
     ],
     "evidence_gaps": [
-      "clinical_officers/clinical-trial-finder (step_05_prior_trials_and_outcomes): absent \u2014 backend unavailable",
-      "Malignant-cell vs stromal PMEL expression fraction at single-cell resolution",
-      "Competitive and IP landscape for next-gen PMEL modalities",
-      "Off-target normal tissue expression profile for PMEL \u2014 CellMarker returned 22 records but no disaggregation into normal vs. cancer cell types, and no quantitative expression data for RPE, leptomeningeal cells, or dermal melanocytes",
-      "Post-market AE signal for gp100-directed agents \u2014 OpenFDA query used 'PMEL' as drug name (a gene symbol, not a drug name); tebentafusp and gp100 peptide vaccine trade/generic names were not queried, so the result set is empty and uninformative",
-      "HLA allele frequency distribution for PMEL epitopes across global ancestry groups",
-      "HLA allele frequency distribution for gp100 epitopes across global ancestries",
-      "Competitive and IP landscape for next-gen PMEL modalities (ImmTAC variants, CAR-T, mRNA vaccines)",
-      "HLA allele frequency distribution for gp100 epitopes across global ancestry groups",
-      "OpenFDA adverse event signal for tebentafusp (not queried by PMEL gene symbol)",
-      "Clinical trial efficacy data and response predictors for gp100-directed therapies",
-      "Malignant-cell fraction expressing PMEL at single-cell resolution (cutaneous vs. uveal, treatment-naive vs. post-ICI) \u2014 step_01 deferred due to missing ToolUniverse executor; this is the primary specificity signal required for ADC/CAR-T modality selection",
-      "OpenFDA adverse event profile for tebentafusp \u2014 step_04 queried drug_name='PMEL' (a gene symbol); correct query is drug_name='tebentafusp' or 'IMCgp100'; result set is empty due to execution error, not true absence of signal",
-      "HLA allele frequency distribution across non-European ancestry groups for gp100 epitopes \u2014 step_06 deferred entirely; A*02:01 addressable fraction cannot be calculated; equity-adjusted market size and trial eligibility are unquantifiable",
-      "Competitive and IP landscape for next-generation PMEL modalities (ImmTAC variants, CAR-T, mRNA combos) \u2014 steps 08 and 06_reroute both deferred; differentiation risk and freedom-to-operate are unassessed",
-      "Clinical trial efficacy and response predictor data \u2014 step_05 returned no results because intervention='PMEL' is not a registered intervention name; correct terms are 'tebentafusp', 'gp100', or 'IMCgp100'",
-      "Antigen presentation machinery loss frequency (B2M/TAP1/TAP2) in post-ICI cutaneous melanoma \u2014 step_07 OpenTargets returned 0 evidence entries, likely reflecting query parameter mismatch (disease name 'melanoma' may need MONDO/EFO ID) rather than true absence; APM loss is the dominant immune-escape mechanism for MHC-I-dependent therapies",
-      "GWAS SNP phenotype annotation \u2014 step_03 returned 120 SNPs but without phenotype disaggregation; unknown fraction associates with melanoma risk vs. pigmentation-only traits; pigmentation-only hits do not constitute genetic target validation for oncology",
-      "PMEL surface epitope topology and extracellular domain accessibility \u2014 most current targeting uses intracellular MHC-presented peptides (tebentafusp); ADC and CAR-T viability depends on extracellular domain availability, which is not confirmed by live tool data"
+      "right_patient/clinical-trial-finder (step_05_prior_trials_and_outcomes): absent \u2014 backend unavailable",
+      "Normal-tissue expression breadth (GTEx/HPA: skin melanocytes, RPE, hair follicle, brain, adrenal)",
+      "FAERS / post-market adverse-event profile for tebentafusp and gp100-directed therapies",
+      "Single-cell malignant-cell vs stromal/immune compartment expression",
+      "Clinical trial outcomes for tebentafusp, gp100 vaccines, and TCR-T",
+      "TCGA somatic-subtype-stratified PMEL expression and survival correlation",
+      "Single-cell malignant vs stromal PMEL expression fraction",
+      "Normal tissue PMEL expression (GTEx/HPA) \u2014 RPE, melanocyte, hair follicle, brain",
+      "Post-market adverse event profile for tebentafusp and gp100-directed agents",
+      "Clinical trial outcomes for tebentafusp, gp100 vaccines, TCR-T therapies",
+      "Competitive landscape and HLA-agnostic modality whitespace for PMEL/gp100",
+      "Malignant-cell vs stromal/immune PMEL localization at single-cell resolution",
+      "Clinical trial outcomes for tebentafusp and gp100-directed therapies",
+      "Competitive and whitespace landscape for HLA-agnostic PMEL modalities",
+      "Single-cell malignant-cell PMEL localisation (steps 02 and 06_reroute both deferred \u2014 no tool executed)",
+      "Clinical trial outcomes for tebentafusp / gp100 therapies (step 05 returned no results)",
+      "Competitive and whitespace landscape for HLA-agnostic PMEL modalities (step 07 deferred)",
+      "Post-market adverse events for tebentafusp / gp100-directed agents (step 04 returned empty summary)",
+      "PMEL mRNA expression stratified by TCGA SKCM mutational subtype and survival correlation (step 01 returned 0 evidence records from OpenTargets)",
+      "Single-cell malignant-cell vs stromal/immune PMEL expression fraction \u2014 step_02 and step_06_reroute both deferred without tool execution; foundational for ADC bystander toxicity and TCR-T on-tumour selectivity assessment",
+      "Quantitative normal-tissue PMEL expression (GTEx v10 TPM, HPA IHC staining intensity) across RPE, brain melanocytes, skin, hair follicle, adrenal medulla \u2014 step_03 returned CellMarker cell-type counts (13 cancer / 9 normal) but no expression-level data",
+      "FAERS post-market adverse-event profile for tebentafusp \u2014 step_04 queried wrong drug name ('PMEL'); ocular and autoimmune AE frequency and severity are unquantified from live data",
+      "Clinical trial outcomes (OS, PFS, ORR, resistance patterns) for tebentafusp, gp100 peptide vaccines, and TCR-T programmes \u2014 step_05 found zero results using intervention='PMEL'; IMCgp100-202 pivotal trial data (Nathan et al., NEJM 2021) was not retrieved",
+      "TCGA SKCM PMEL mRNA expression stratified by BRAF/NRAS/NF1/triple-WT mutational subtype and survival correlation \u2014 step_01 ran a target-disease association query (0 records) rather than an expression-by-subtype query; the question was never answered",
+      "Competitive landscape and HLA-agnostic modality whitespace (ADC, extracellular-domain bispecific, mRNA vaccine) \u2014 step_07 deferred without execution; zero live competitive intelligence retrieved",
+      "PMEL ectodomain structural topology and epitope accessibility for antibody-based modalities \u2014 no tool attempted; this is the tractability gate for HLA-agnostic strategies",
+      "HLA-A/B/C and B2M somatic loss-of-function frequency in TCGA SKCM \u2014 not queried; determines the patient fraction that requires HLA-agnostic approaches",
+      "OpenTargets genetic/clinical evidence count for PMEL in melanoma \u2014 step_01 returned 0 records, likely a disease-name mismatch ('melanoma' vs EFO:0000389 'skin cutaneous melanoma'); should be reissued"
     ],
     "proposed_experiments": [
       {
-        "experiment": "Single-cell malignant-cell PMEL expression profiling using published melanoma scRNA-seq atlases (Tirosh 2016, Jerby-Arnon 2018, GSE115978) with InferCNV-based malignant-cell calling to separate tumor from stromal/immune compartments",
-        "expected_readout": "% PMEL+ malignant cells vs. CAF/endothelial/immune clusters; subtype stratification (cutaneous vs. uveal); pre/post-ICI treatment delta; if >70% of signal is stromal, ADC/CAR-T modality selection must be reconsidered",
-        "rationale": "Steps 01 and 07-reroute both deferred. This is the foundational specificity question for any non-TCR modality. Melanocyte lineage biology predicts >80% malignant-cell PMEL expression, but confirmation is required before modality selection can be finalized."
+        "experiment": "Re-run OpenTargets_target_disease_evidence with disease_name='skin cutaneous melanoma' (EFO:0000389) and separately 'uveal melanoma'",
+        "expected_readout": "Evidence count and datatypes (somatic mutation, known drug, expression) confirming PMEL as a validated melanoma target; resolves step_01 query artefact",
+        "rationale": "Zero evidences in step_01 almost certainly reflects a disease-name mismatch rather than true absence of target biology \u2014 PMEL/tebentafusp is an approved combination; this should resolve with correct EFO term"
       },
       {
-        "experiment": "Re-run OpenFDA_search_drug_events with drug_name='tebentafusp' and separately 'IMCgp100'; count by reactionmeddrapt; map top 20 MedDRA PT reactions to PMEL-expressing normal tissue compartments (skin, RPE, leptomeninges)",
-        "expected_readout": "Ranked adverse reaction frequencies; rate of ocular AEs (uveitis, RPE damage), dermatologic events (vitiligo, rash), and cytokine release syndrome; on-target/off-tumor toxicity pattern",
-        "rationale": "Step_04 execution error (drug_name='PMEL') produced empty result. Tebentafusp received FDA approval in 2022 and has post-market FAERS data. Ocular AE profile in uveal melanoma patients is the principal safety-limiting factor for dose escalation and combination strategies."
+        "experiment": "Query TISCH2 or CancerSEA single-cell atlas for SKCM datasets; compute PMEL expression fraction per annotated compartment (malignant melanocytes, CAFs, endothelial cells, T cells, macrophages)",
+        "expected_readout": "% PMEL-positive cells per compartment with confidence interval; malignant:stromal expression ratio; mean log-normalised expression per cluster",
+        "rationale": "ADC bystander toxicity and TCR-T on-tumour selectivity are directly gated on stromal/immune PMEL expression; steps 02 and 06_reroute both failed to execute \u2014 this is the single highest-priority data gap"
       },
       {
-        "experiment": "Query Allele Frequency Net Database (AFND) for HLA-A*02:01 prevalence across EUR, EAS, AFR, SAS, AMR superpopulations; model addressable fraction for gp100:209-217 (A*02:01-restricted) and alternative PMEL epitopes (A*24:02, A*03:01, DRB1-restricted) from IEDB",
-        "expected_readout": "Per-ancestry addressable fraction table; delta addressable fraction with multi-epitope strategy; flag if <40% of EAS or AFR melanoma patients are addressable under current A*02:01-only approach",
-        "rationale": "Step_06 deferred entirely. A*02:01 restriction is a major equity liability \u2014 ~45% of Europeans vs. ~20% East Asian vs. <10% African frequency. This determines whether a pan-HLA strategy (mRNA multi-epitope vaccine, extracellular-domain CAR-T) is required for equitable access and commercial viability."
+        "experiment": "Query Human Protein Atlas API (HPA_get_protein_tissue_expression) for PMEL across retinal pigment epithelium, skin, hair follicle, brain substantia nigra, and adrenal medulla; supplement with GTEx v10 TPM values",
+        "expected_readout": "IHC staining intensity (negative/low/medium/high) and TPM per tissue; rank-ordered normal-tissue expression table; flag any tissue with TPM >10 or HPA 'medium/high' as dose-limiting organ",
+        "rationale": "RPE PMEL expression is the mechanistic basis for tebentafusp uveitis \u2014 quantifying this at protein level is prerequisite to any therapeutic-index claim for a follow-on modality; step_03 CellMarker counts cannot substitute"
       },
       {
-        "experiment": "Re-run search_clinical_trials with intervention='tebentafusp' OR 'gp100' OR 'IMCgp100' and condition='melanoma'; extract phase, primary endpoint, OS/PFS data, HLA eligibility criteria, PMEL expression thresholds, and combination arms",
-        "expected_readout": "Trial-level efficacy summary; OS benefit in uveal melanoma (IMCgp100-102 benchmark); response predictors (HLA-A*02:01, tumor expression threshold if reported); active combination arms (ICI + ImmTAC)",
-        "rationale": "Step_05 returned no results because 'PMEL' is not a registered intervention term on ClinicalTrials.gov. Tebentafusp trial data is the primary clinical validity anchor and is essential for the clinical reviewer lens."
+        "experiment": "Re-run OpenFDA_search_drug_events with drug_name='tebentafusp' and separately 'IMCgp100'; count by reactionmeddrapt; cross-reference with NCT03070392 (PIVOT-002) SAE disclosures",
+        "expected_readout": "Top-20 MedDRA reaction terms by frequency; grade 3\u20134 cytokine release, uveitis, vitiligo, and hepatotoxicity rates; disproportionality signal vs benchmark checkpoint inhibitor",
+        "rationale": "step_04 returned empty because 'PMEL' is a gene symbol, not a drug name; tebentafusp post-market signal is the closest safety proxy for any new PMEL-directed programme"
       },
       {
-        "experiment": "Structured literature and patent search for 'PMEL OR gp100 AND (ImmTAC OR CAR-T OR mRNA vaccine)' published 2022\u20132026; cross-reference ClinicalTrials.gov with intervention='gp100' for active IND programs; Espacenet patent cluster analysis for extracellular PMEL domain antibody sequences",
-        "expected_readout": "Pipeline map by modality and phase; named programs, lead institutions, differentiation axis vs. tebentafusp; freedom-to-operate risk flags for CAR-T and mRNA combination space",
-        "rationale": "Steps 08 and 06_reroute both deferred. Without pipeline density data, differentiation risk and IP crowding cannot be assessed. The competitive field is actively evolving post-tebentafusp approval."
+        "experiment": "Re-run search_clinical_trials with intervention='tebentafusp' OR 'IMCgp100' OR 'gp100 peptide vaccine'; supplement with PubMed retrieval of Nathan et al. NEJM 2021 and Schwartzentruber et al. NEJM 2011",
+        "expected_readout": "OS HR, median PFS, ORR with 95% CI per modality; resistance mechanisms (antigen loss frequency, HLA-I downregulation); grade 3+ AE rates; informs clinical differentiation requirements for next-gen programme",
+        "rationale": "step_05 returned nothing because 'PMEL' is not a registered intervention term; tebentafusp Phase 3 and legacy vaccine data are published and accessible \u2014 this gap is entirely a query artefact"
       },
       {
-        "experiment": "Query TCGA SKCM WES and RNA-seq for somatic loss-of-function in B2M, TAP1, TAP2, and HLA-A; correlate with ICI treatment history from clinical annotations; supplement with published ICI-resistance cohorts (Hugo et al., Van Allen et al.)",
-        "expected_readout": "Frequency of APM LOF in post-ICI vs. treatment-naive tumors; PMEL expression in APM-intact vs. APM-lost subgroups; quantifies the fraction of patients where MHC-I-dependent therapies (tebentafusp, peptide vaccines) will fail at ICI progression",
-        "rationale": "Step_07 OpenTargets returned 0 evidence entries likely due to query parameter failure. B2M loss (estimated 20-30% in ICI-resistant melanoma) is the dominant immune-escape mechanism for MHC-I-presented antigens and is a critical stratification variable for any gp100:MHC-I-dependent modality."
+        "experiment": "Query TCGA SKCM via cBioPortal or GDC API for PMEL RNA-seq expression (log2 TPM+1) stratified by BRAF V600/NRAS Q61/NF1 loss-of-function/triple-WT subtype; Cox regression on PMEL-high vs PMEL-low survival within each stratum",
+        "expected_readout": "Median PMEL expression per mutational subtype, log-rank p-value, hazard ratio for OS; determines whether PMEL is subtype-dependent and whether a companion diagnostic would narrow addressable population",
+        "rationale": "BRAF/NRAS/NF1/WT stratification informs patient selection strategy and whether expression-based enrichment adds value beyond histological diagnosis"
       },
       {
-        "experiment": "Annotate top PMEL GWAS SNPs (step_03 returned 120, no phenotype detail) by associated phenotype (melanoma risk, pigmentation, ICI response); check eQTL overlap in GTEx skin/melanocyte tissue to distinguish expression-modifying vs. pigmentation-only variants",
-        "expected_readout": "Subset of SNPs with melanoma-risk association (not just pigmentation); eQTL evidence for PMEL expression modulation in tumor-relevant tissue; genetic support score for PMEL as oncology target vs. pigmentation locus",
-        "rationale": "120 SNPs were found [step_03] but without phenotype disaggregation. Pigmentation-only GWAS hits do not constitute genetic target validation for oncology. Confirming even a subset of melanoma-risk-associated SNPs would strengthen the germline genetic pillar."
+        "experiment": "Lit-synthesizer web search: 'PMEL gp100 ADC antibody-drug conjugate bispecific mRNA vaccine pipeline 2024 2025 clinical trial'; cross-reference Citeline/GlobalData melanoma pipeline reports",
+        "expected_readout": "Named pipeline assets by modality and clinical stage; HLA-restriction status per programme; whitespace map identifying modalities with fewer than two clinical-stage assets",
+        "rationale": "step_07 deferred without execution \u2014 zero live competitive intelligence exists in this assessment; the commercial viability of HLA-agnostic modality development cannot be assessed without knowing how many ADC or extracellular bispecific programmes are already active"
       },
       {
-        "missing": "Quantitative PMEL protein/mRNA expression in RPE, leptomeningeal cells, inner ear melanocytes, and dermal melanocytes vs. malignant melanoma cells",
-        "proposed_experiment": "Query GTEx, HPA (Human Protein Atlas), and CCLE for PMEL expression by tissue; cross-reference with CellMarker normal-cell records disaggregated by compartment",
+        "experiment": "Query UniProt/PDB and published cryo-EM/X-ray structures for PMEL ectodomain (Pfam: PKD domain, RPT domain); assess surface-exposed epitope area and proteolytic cleavage sites that would limit antibody accessibility on the live cell surface",
+        "expected_readout": "Accessible surface area of ectodomain on mature processed PMEL; identification of epitope regions stable post-cleavage; go/no-go for ADC and extracellular bispecific tractability",
+        "rationale": "PMEL undergoes extensive proprotein convertase and ADAM10 cleavage \u2014 the mature cell-surface form may expose only a short membrane-proximal stump; this is the tractability gate for HLA-agnostic modalities and was flagged as an open question with no tool attempt"
+      },
+      {
+        "experiment": "Query TCGA SKCM for HLA-A, HLA-B, HLA-C, and B2M mRNA expression and somatic loss-of-function mutations; correlate HLA-I loss events with PMEL expression quartile",
+        "expected_readout": "Fraction of SKCM tumours with HLA-I somatic loss or low expression; co-occurrence with high PMEL; defines the patient fraction requiring HLA-agnostic modality (ADC) vs TCR-based approach",
+        "rationale": "HLA-I downregulation is the primary resistance mechanism for tebentafusp and all TCR-based therapies; its prevalence in the target population determines whether an HLA-agnostic modality addresses a real and large unmet need"
+      },
+      {
+        "missing": "Quantitative PMEL expression in normal tissues at risk (RPE, melanocytes, brain, adrenal medulla)",
+        "proposed_experiment": "Query HPA tissue RNA consensus dataset and GTEx v8 for PMEL TPM across all tissues; flag any tissue with TPM > 10 as an off-target risk organ",
         "route_to": "celltype-specificity-profiler",
-        "expected_readout": "Expression TPM or protein staining intensity per normal tissue type; flag any tissue with expression \u226550% of melanoma tumour-cell level as a safety liability",
-        "why": "Ocular and skin toxicity are the principal AE liabilities for PMEL-directed therapies. Without a quantitative off-target map the safety verdict is entirely speculative."
+        "expected_readout": "Rank-ordered tissue expression table; identification of high-expression non-melanoma tissues that constrain therapeutic index",
+        "why": "Melanocyte-lineage expression in RPE is the mechanistic basis for tebentafusp ocular AEs; quantifying this is prerequisite to any safety claim"
       },
       {
-        "missing": "Post-market AE frequencies for tebentafusp and gp100 peptide vaccines",
-        "proposed_experiment": "Re-run OpenFDA_search_drug_events with drug_name='tebentafusp' and separately 'gp100'; count by reactionmeddrapt; cross-reference FAERS narratives for ocular, dermatologic, and hepatic events",
+        "missing": "Post-market AE frequency and severity for tebentafusp",
+        "proposed_experiment": "Reissue OpenFDA_search_drug_events with drug_name='tebentafusp', count by reactionmeddrapt; cross-reference with ClinicalTrials SAE disclosures for IMCgp100-202 pivotal trial",
         "route_to": "openfda-safety",
-        "expected_readout": "Top 20 MedDRA PT reactions by frequency; rate of serious/fatal reports; pattern mapped to known PMEL-expressing normal tissues",
-        "why": "The current AE step returned an empty result due to an incorrect drug name. This is a fixable data-retrieval error, not a true absence of signal. Tebentafusp received FDA approval in 2022 and has post-market data."
+        "expected_readout": "Top-20 AE terms with disproportionality scores; grade 3-4 immune-mediated event rates (skin, eye, liver)",
+        "why": "Tebentafusp's approved label carries specific ocular and cytokine-release warnings; any next-gen PMEL modality must benchmark against this known AE floor"
       },
       {
-        "missing": "Malignant-cell vs. stromal-cell PMEL expression fraction at single-cell resolution in cutaneous and uveal melanoma",
-        "proposed_experiment": "Query CancerSEA, TISCH, or run scRNA-seq DE analysis on public SKCM datasets (e.g. GSE115978) separating malignant clusters (CNV-inferred) from TME stromal cells",
+        "missing": "Malignant-cell-restricted vs stromal PMEL expression at single-cell resolution",
+        "proposed_experiment": "Run scRNA-seq analysis on publicly available SKCM datasets (e.g. Tirosh 2016, TISCH2) to separate malignant from TME cells and quantify PMEL expression fraction per compartment",
         "route_to": "scrna-orchestrator",
-        "expected_readout": "% PMEL+ cells among malignant vs. CAF/endothelial/immune clusters; subtype stratification (cutaneous vs. uveal); post-ICI vs. treatment-naive delta",
-        "why": "Steps 01 and 07-reroute were both deferred. Without single-cell tumour-compartment data, whether PMEL signal is primarily malignant-cell or stromal cannot be determined \u2014 this is the foundational specificity question for any ADC or CAR-T modality."
+        "expected_readout": "Fraction of malignant cells expressing PMEL >1 TPM; expression in T cells, macrophages, fibroblasts to quantify bystander ADC risk",
+        "why": "If PMEL is expressed on stromal or immune cells, ADC bystander toxicity will extend beyond melanoma cells; this changes the therapeutic window estimate materially"
       },
       {
-        "missing": "HLA-A*02:01 allele frequency across non-European ancestry groups and coverage estimate for multi-epitope PMEL strategies",
-        "proposed_experiment": "Query Allele Frequency Net Database (AFND) or IPD-IMGT/HLA for A*02:01 frequency by superpopulation (AFR, EAS, SAS, AMR, EUR); estimate population-weighted coverage for gp100:209-217 and alternative HLA-A/B-restricted PMEL epitopes",
-        "route_to": "equity-scorer",
-        "expected_readout": "Population-weighted addressable fraction for current (A*02:01-only) vs. multi-epitope strategy; flag if <40% of AFR or EAS melanoma patients are addressable",
-        "why": "Step 06 was deferred and equity coverage was not assessed. HLA-A*02:01 is enriched in European populations (~45%) but far lower in East Asian (~20%) and African (<10%) groups \u2014 a major HEIM gap for any A*02:01-restricted strategy."
-      },
-      {
-        "missing": "Competitive and IP landscape for next-generation PMEL modalities (ImmTAC variants, CAR-T, mRNA combos)",
-        "proposed_experiment": "Structured literature and patent search via Tavily/PubMed for 'PMEL' OR 'gp100' AND ('ImmTAC' OR 'CAR-T' OR 'mRNA vaccine') published 2022\u20132026; cross-reference ClinicalTrials.gov with intervention='gp100' to capture trials missed by 'PMEL' query",
+        "missing": "Completed trial OS/PFS/ORR for tebentafusp and gp100 vaccine programs",
+        "proposed_experiment": "Query ClinicalTrials with intervention='tebentafusp' OR 'gp100 peptide vaccine' and condition='melanoma'; supplement with PubMed search for IMCgp100-202 and earlier Phase I/II readouts",
         "route_to": "lit-synthesizer",
-        "expected_readout": "Named programmes, lead institutions, trial phase, differentiation axis vs. tebentafusp; freedom-to-operate risk flags",
-        "why": "Steps 08 and 06-reroute were both deferred due to missing ToolUniverse executor. The CSO cannot assess differentiation risk or IP crowding without this landscape. Re-routing to lit-synthesizer with corrected query parameters should resolve it."
+        "expected_readout": "Efficacy summary table; resistance patterns (antigen loss, HLA downregulation); grade 3+ AE rates across modalities",
+        "why": "Clinical precedent defines the evidence floor for any new PMEL-directed program and reveals which toxicities are class effects vs modality-specific"
       },
       {
-        "missing": "Malignant-cell PMEL expression fraction (single-cell resolution)",
-        "proposed_experiment": "Re-analyse published melanoma scRNA-seq datasets (e.g. Tirosh 2016, Jerby-Arnon 2018) with InferCNV-based malignant-cell calling; quantify PMEL+ fraction within CNV-high (malignant) vs CNV-low (stromal/immune) clusters across cutaneous and uveal subtypes and pre/post-ICI treatment status",
-        "route_to": "scrna-orchestrator",
-        "expected_readout": "% malignant cells PMEL+, median expression level, and subtype x treatment interaction; flag if >70% of signal is stromal",
-        "why": "Primary specificity signal for ADC/CAR-T modality selection; step_01 deferred and step_02 CellMarker data does not resolve malignant vs stromal compartments"
-      },
-      {
-        "missing": "GWAS signal interpretation for PMEL locus \u2014 120 SNPs returned but not characterised",
-        "proposed_experiment": "Retrieve top PMEL GWAS hits (step_03 returned 120 SNPs), annotate by phenotype (melanoma risk, pigmentation, ICI response), and check eQTL overlap in GTEx skin/melanocyte tissue to determine whether variants are expression-modifying vs pigmentation-only",
-        "route_to": "gwas-lookup",
-        "expected_readout": "Subset of SNPs associated with melanoma risk (not just pigmentation); eQTL evidence for PMEL expression modulation in tumour-relevant tissue",
-        "why": "120 SNPs were found but the summary is empty of phenotype detail; pigmentation-only GWAS hits do not constitute genetic target validation for oncology"
-      },
-      {
-        "missing": "Antigen presentation machinery (APM) loss frequency in post-ICI melanoma",
-        "proposed_experiment": "Query TCGA SKCM and published post-ICI biopsy datasets for somatic loss-of-function in B2M, TAP1, TAP2, and HLA-A; correlate with PMEL expression to quantify immune-escape liability for TCR-bispecific/ImmTAC modalities",
+        "missing": "HLA-I surface expression and antigen-presentation competence in SKCM",
+        "proposed_experiment": "Query TCGA SKCM for HLA-A/B/C and B2M expression and somatic loss-of-function mutations; cross-reference with PMEL expression to identify HLA-loss subpopulation that would escape TCR-T but not ADC",
         "route_to": "tcga-somatic-profiler",
-        "expected_readout": "Frequency of APM LOF in post-ICI vs treatment-naive tumours; PMEL expression in APM-intact vs APM-lost subgroups",
-        "why": "Step_07 OpenTargets query returned 0 evidence records \u2014 likely a query-parameter issue (disease name 'melanoma' may need MONDO/EFO ID). APM loss directly erodes ImmTAC efficacy and is a known post-ICI escape mechanism."
+        "expected_readout": "Fraction of SKCM tumours with HLA-I loss; correlation with PMEL expression level; implication for TCR-based vs HLA-agnostic modality choice",
+        "why": "HLA downregulation is a primary resistance mechanism for tebentafusp and TCR-T; knowing its prevalence defines the patient fraction that requires HLA-agnostic approaches (ADC, bispecific)"
       },
       {
-        "missing": "Post-market adverse event profile for tebentafusp (IMCgp100) and gp100 peptide vaccines",
-        "proposed_experiment": "Re-run OpenFDA query using drug name 'tebentafusp' (not 'PMEL') and cross-reference with package insert SAE table; map reaction MedDRA terms to normal-tissue PMEL expression compartments (skin, eye/RPE, leptomeninges)",
-        "route_to": "openfda-safety",
-        "expected_readout": "Ranked adverse reaction terms with frequency; flag ocular and CNS events given RPE and leptomeningeal PMEL expression",
-        "why": "Step_04 queried drug_name='PMEL' which is a gene symbol, not a drug name; the query likely returned no signal. Tebentafusp is approved (uveal melanoma) so FAERS data exists."
+        "missing": "PMEL expression stratified by BRAF/NRAS/NF1/triple-WT and survival association",
+        "proposed_experiment": "Re-run tcga-somatic-profiler with correct API: query TCGA SKCM RNA-seq expression by mutational subtype using cBioPortal or GDC API, then Cox regression on PMEL-high vs PMEL-low within each subtype",
+        "route_to": "tcga-somatic-profiler",
+        "expected_readout": "PMEL median TPM per subtype, log-rank p-value, HR for overall survival; establishes whether PMEL expression is subtype-dependent and prognostic",
+        "why": "Informs patient stratification strategy \u2014 if PMEL is equally high across all subtypes it broadens the addressable population; subtype-dependence would require companion diagnostics"
       },
       {
-        "missing": "HLA allele frequencies for gp100:209-217 epitope across non-European ancestries",
-        "proposed_experiment": "Query Allele Frequency Net Database or IPD-IMGT/HLA for A*02:01 and cross-reactive A*02 suballele frequencies across African, East Asian, South Asian, and Latin American populations; model addressable fraction under current vs multi-epitope strategies",
-        "route_to": "equity-scorer",
-        "expected_readout": "% of melanoma patients per ancestry group addressable by A*02:01-restricted gp100 therapy; delta addressable fraction with addition of HLA-A*24, HLA-B*07 restricted epitopes",
-        "why": "Step_06 deferred entirely; A*02:01 restriction is a known equity gap in IO and is material to a HEIM-compliant target assessment"
-      },
-      {
-        "missing": "Clinical trial efficacy predictors and combination strategies",
-        "proposed_experiment": "Re-run clinical trial search using intervention='tebentafusp OR gp100 OR IMCgp100' (not 'PMEL') to capture completed Phase II/III trials; extract PMEL expression thresholds, HLA eligibility criteria, TMB correlations, and combination arms from trial records and published results",
-        "route_to": "clinical-trial-finder",
-        "expected_readout": "ORR, PFS, OS by HLA and expression subgroup; active combination arms (checkpoint + ImmTAC); response predictor hierarchy",
-        "why": "Step_05 returned no studies because 'PMEL' is not a registered intervention name in ClinicalTrials.gov; tebentafusp/IMCgp100 are the correct query terms"
-      },
-      {
-        "missing": "Malignant-cell PMEL expression fraction (tumour vs stromal compartments)",
-        "proposed_experiment": "Re-analyse publicly available melanoma scRNA-seq atlases (TCGA supplementary single-cell, GSE215120, Tirosh et al. Science 2016) with inferCNV or copy-number-based malignant-cell calling to isolate PMEL expression exclusively in aneuploid tumour cells vs CAFs, endothelium, and TILs.",
+        "missing": "Single-cell fraction of PMEL+ malignant melanoma cells vs TME compartments",
+        "proposed_experiment": "Query CancerSEA or a melanoma scRNA-seq atlas (e.g. Tirosh 2016, Jerby-Arnon 2018) for PMEL expression per annotated cell cluster; compute fraction of PMEL+ cells in malignant, CAF, endothelial, T-cell, and myeloid clusters",
         "route_to": "scrna-orchestrator",
-        "expected_readout": "PMEL+ fraction among malignant cells (expected >80% given melanocyte lineage), fold-enrichment vs stromal compartment, and subtype breakdown (cutaneous vs uveal if datasets available).",
-        "why": "ADC payload delivery and CAR-T on-tumour trafficking both require the antigen to be on malignant cells at adequate density. If PMEL is overwhelmingly tumour-cell-restricted (as lineage biology predicts), this becomes the strongest evidence for therapeutic window."
+        "expected_readout": "% PMEL+ cells per cluster with confidence interval; if >80% restricted to malignant melanocytes, ADC and TCR-T specificity is supported",
+        "why": "ADC bystander toxicity and TCR-T on-target/off-tumour risk depend directly on stromal/immune PMEL expression; without this the safety case is unsubstantiated"
       },
       {
-        "missing": "PMEL surface epitope accessibility for antibody-based modalities",
-        "proposed_experiment": "Protein Atlas and UniProt topology review of PMEL transmembrane domain structure; supplemented by flow cytometry on melanoma cell lines (A375, SK-MEL-28) with anti-PMEL extracellular antibodies under non-permeabilizing conditions.",
+        "missing": "Quantitative PMEL expression in normal tissues at risk (RPE, CNS, skin)",
+        "proposed_experiment": "Query GTEx v10 or Human Protein Atlas API for PMEL bulk RNA and protein expression across tissue panels; flag any tissue with TPM >10 or HPA 'medium/high' protein staining",
+        "route_to": "celltype-specificity-profiler",
+        "expected_readout": "TPM values and HPA staining scores for retinal pigment epithelium, brain (cortex, cerebellum), skin, and hair follicle; identifies dose-limiting normal-tissue risk",
+        "why": "RPE PMEL expression is biologically expected (melanosomes); quantifying this determines whether ocular toxicity is a class-level liability for any PMEL-directed modality"
+      },
+      {
+        "missing": "FAERS adverse event profile for tebentafusp and gp100-directed drugs",
+        "proposed_experiment": "Re-run OpenFDA_search_drug_events with drug_name='tebentafusp' and separately 'IMCgp100'; also query ClinicalTrials.gov safety reports for NCT03070392 (PIVOT-002)",
+        "route_to": "openfda-safety",
+        "expected_readout": "Top 20 MedDRA reaction terms by frequency; flag cytokine release, ocular, and autoimmune AEs; benchmark against ipilimumab baseline",
+        "why": "Post-market signal for the approved tebentafusp (uveal melanoma) is the closest proxy for on-target safety of any new PMEL-directed therapy in cutaneous melanoma"
+      },
+      {
+        "missing": "Clinical efficacy and resistance data for PMEL-directed modalities",
+        "proposed_experiment": "Re-run search_clinical_trials with intervention='tebentafusp' OR 'gp100 peptide vaccine' OR 'TCR-T'; supplement with PubMed search for OS/PFS from PIVOT-002 and legacy gp100 vaccine trials (Schwartzentruber 2011 NEJM)",
         "route_to": "lit-synthesizer",
-        "expected_readout": "Confirmation of extracellular epitope availability and epitope coordinates suitable for ADC or CAR-T scFv design. Most PMEL targeting is currently intracellular (MHC-presented peptides for TCR-bispecifics); surface ADC/CAR-T viability depends on topology.",
-        "why": "tebentafusp targets the intracellular PMEL peptide via MHC-I; an ADC or CAR-T needs extracellular domain access. If PMEL is predominantly intracellular/luminal, the modality pivot fails."
+        "expected_readout": "OS, PFS, ORR with 95% CI per modality; resistance mechanisms (MHC-I loss, antigen loss) frequency; informs whether HLA-agnostic modalities address a real unmet need",
+        "why": "Historical ORR for gp100 peptide vaccines is ~16% (IL-2 combination); tebentafusp showed OS benefit without RECIST response \u2014 understanding this efficacy paradox is essential for next-modality design"
       },
       {
-        "missing": "B2M/TAP1/TAP2 loss frequency in post-ICI melanoma (antigen presentation erosion)",
-        "proposed_experiment": "Query TCGA SKCM WES and RNA-seq for homozygous B2M deletion or loss-of-function mutation frequency; cross-reference with ICI treatment history if available in clinical annotations. OpenTargets step_07 returned 0 evidences for PMEL-melanoma \u2014 query B2M directly.",
-        "route_to": "tcga-somatic-profiler",
-        "expected_readout": "B2M LOF rate in post-ICI vs treatment-naive tumours (literature suggests 20-30% in ICI-resistant). Quantifies the fraction of patients where MHC-I-dependent therapies (tebentafusp, peptide vaccines) will fail, informing which patients need MHC-I-independent modalities (CAR-T, ADC).",
-        "why": "step_07 used OpenTargets PMEL query and got 0 evidences \u2014 the tool likely needs a disease association query, not a mutation query. B2M loss is the dominant immune-escape mechanism for MHC-I-presented antigens and a critical stratification variable."
-      },
-      {
-        "missing": "Post-market adverse event signals for tebentafusp and gp100 peptide vaccines",
-        "proposed_experiment": "Re-run OpenFDA query with drug_name='tebentafusp' (not 'PMEL') and supplement with FDA label review for IMCgp100-102 trial AE data; search MedWatch for vitiligo, uveitis, and hypophysitis signals linked to melanocyte-antigen therapies.",
-        "route_to": "openfda-safety",
-        "expected_readout": "Reaction MedDRA term frequency for on-target toxicity (vitiligo, uveitis, RPE damage) vs systemic immunotoxicity. Step_04 queried drug_name='PMEL' which would return no hits \u2014 the correct query is the drug brand/INN name.",
-        "why": "On-target melanocyte destruction (vitiligo) is an expected class effect of PMEL-directed therapies and is manageable; RPE/uveal toxicity is potentially vision-threatening and would constrain dosing. The step_04 result is empty because of an incorrect query parameter \u2014 this is an execution error, not a true absence of safety signals."
-      },
-      {
-        "missing": "HLA-A*02:01 and multi-epitope addressable patient fraction by ancestry",
-        "proposed_experiment": "Query Allele Frequency Net Database (AFND) or use HLA frequency tools for A*02:01 prevalence across EUR, EAS, AFR, SAS, AMR superpopulations; calculate addressable fraction for gp100:209-217 (A*02:01-restricted) and identify alternative HLA-restricting epitopes from IEDB for broader coverage.",
-        "route_to": "equity-scorer",
-        "expected_readout": "Per-ancestry addressable fraction table; number of additional epitopes needed to reach 70% global coverage. Informs trial eligibility criteria and whether a multi-epitope or pan-HLA approach is required for equitable access.",
-        "why": "Current gp100 peptide vaccine and tebentafusp clinical development has been heavily A*02:01-biased, excluding majority-non-European populations from benefit. This is the HEIM gap flagged by the reviewer instructions."
-      },
-      {
-        "missing": "Malignant-cell PMEL expression fraction by tumour compartment",
-        "proposed_experiment": "Re-query scrna-orchestrator with scRNA-seq datasets from TCGA/GEO cutaneous and uveal melanoma; cluster by canonical malignant-cell markers (MITF, SOX10, TYRP1); compute PMEL+ fraction within malignant vs stromal vs immune compartments; stratify by treatment-naive vs post-ICI",
-        "route_to": "scrna-orchestrator",
-        "expected_readout": "Percentage of malignant cells expressing PMEL above detection threshold, with compartment breakdown and ICI-status subgroup; determines ADC/CAR-T vs TCR-bispecific modality selection",
-        "why": "ADC and CAR-T require tumour-cell surface target; if PMEL signal is predominantly stromal melanocytes the modality must shift to TCR-based (tebentafusp already occupies this niche)"
-      },
-      {
-        "missing": "Correct OpenFDA adverse event profile for tebentafusp",
-        "proposed_experiment": "Re-run OpenFDA_search_drug_events with drug_name='tebentafusp'; separately query 'IMCgp100'; cross-reference adverse events against PMEL-expressing normal tissues (skin melanocytes, RPE, leptomeningeal cells) from step_02 CellMarker data",
-        "route_to": "openfda-safety",
-        "expected_readout": "Ranked MedDRA reaction terms for tebentafusp; flag cytokine release syndrome, ocular toxicity (RPE), and skin depigmentation rates to model on-target/off-tumour liability",
-        "why": "Step 04 used wrong parameter; safety profile is a prerequisite for any clinical translatability verdict"
-      },
-      {
-        "missing": "Clinical trial efficacy and response predictor data for gp100 therapies",
-        "proposed_experiment": "Re-run search_clinical_trials with intervention='tebentafusp' AND intervention='gp100 peptide vaccine'; extract phase, primary endpoint met/missed, OS/PFS data, HLA restriction criteria, and combination arms",
-        "route_to": "clinical-trial-finder",
-        "expected_readout": "Trial-level efficacy summary table; OS benefit in uveal melanoma (IMCgp100-102 data); predictors of response (HLA-A*02:01, tumour PMEL expression threshold if reported); ongoing combination trials",
-        "why": "Clinical reviewer lens requires trial precedent to assess translatability; tebentafusp's uveal melanoma approval (2022) sets the benchmark but cutaneous melanoma data and next-gen combination readouts are needed to evaluate differentiation space"
-      },
-      {
-        "missing": "HLA-A*02:01 and alternative epitope allele frequencies across global ancestries",
-        "proposed_experiment": "Query allele frequency databases (e.g. Allele Frequency Net) for A*02:01 prevalence by continental ancestry group; identify alternative PMEL epitopes restricted to A*24:02, A*03:01, DRB1*04 for multi-epitope vaccine design; compute fraction of global melanoma incidence addressable",
-        "route_to": "equity-scorer",
-        "expected_readout": "Per-ancestry addressable fraction table; identifies whether a multi-epitope or HLA-agnostic (e.g. neoantigen mRNA) strategy is needed to achieve >70% population coverage",
-        "why": "A*02:01 restriction is a known equity liability; clinical development strategy must account for this or face post-approval label restrictions"
-      },
-      {
-        "missing": "Immune escape frequency: B2M/TAP1/TAP2 loss in post-ICI melanoma",
-        "proposed_experiment": "Query TCGA SKCM WES data for somatic loss-of-function mutations in B2M, TAP1, TAP2, HLA-A across treatment-naive vs ICI-treated cohorts; supplement with published ICI-resistance cohort datasets (Hugo et al., Van Allen et al.)",
-        "route_to": "tcga-somatic-profiler",
-        "expected_readout": "Frequency of antigen-presentation machinery loss in post-ICI setting; quantifies the proportion of patients who would be refractory to any MHC-I-dependent PMEL therapy at progression",
-        "why": "Step 07 returned zero OpenTargets evidence records \u2014 likely a query failure rather than true absence of evidence. This liability directly caps the addressable population for tebentafusp and TCR-bispecific follow-ons"
-      },
-      {
-        "missing": "Competitive pipeline density for PMEL-directed modalities",
-        "proposed_experiment": "Tavily web search for 'PMEL gp100 ImmTAC pipeline 2024 2025', 'CAR-T gp100 melanoma clinical trial', 'mRNA vaccine PMEL melanoma'; cross-reference ClinicalTrials.gov for active IND-stage programmes; identify patent clusters via Espacenet or Google Patents",
+        "missing": "Competitive and whitespace landscape for HLA-agnostic PMEL modalities",
+        "proposed_experiment": "Run lit-synthesizer Tavily web search: 'PMEL gp100 ADC bispecific mRNA vaccine pipeline 2024 2025' + 'tebentafusp resistance cutaneous melanoma'; cross-reference with Citeline/GlobalData pipeline reports",
         "route_to": "lit-synthesizer",
-        "expected_readout": "Pipeline map by modality and stage; identify white space (e.g. bispecific CAR-T, shared neoantigen mRNA) vs crowded segments; freedom-to-operate risk assessment",
-        "why": "Without pipeline density data the CSO report cannot assess whether a next-gen PMEL programme has a viable competitive position"
+        "expected_readout": "Named pipeline assets by modality and stage; identification of any approved or Phase 2+ HLA-agnostic PMEL agent; whitespace map showing which modalities (ADC, bispecific, mRNA) have <2 clinical-stage assets",
+        "why": "Without competitive landscape data the commercial rationale for a new modality cannot be assessed \u2014 if three ADCs are already in Phase 2 the whitespace claim is false"
+      },
+      {
+        "missing": "Malignant-cell fraction expressing PMEL in melanoma TME",
+        "proposed_experiment": "Query CancerSEA or TISCH2 single-cell atlases for PMEL expression partitioned by cell-type annotation (malignant, CAF, endothelial, T-cell, macrophage) in SKCM datasets",
+        "route_to": "scrna-orchestrator",
+        "expected_readout": "% PMEL+ cells per compartment and mean log-normalized expression; confirms whether signal is malignant-restricted or stromal-enriched",
+        "why": "Stromal PMEL expression would reframe ADC safety risk (bystander kill of skin/retinal melanocytes) and reduce TCR-T on-tumour selectivity rationale"
+      },
+      {
+        "missing": "Normal-tissue PMEL expression in GTEx / HPA at protein level",
+        "proposed_experiment": "Run HPA_get_protein_tissue_expression for PMEL to obtain IHC scores across retinal pigment epithelium, skin, hair follicle, brain \u2014 CellMarker returned cell-type labels only, not quantitative tissue protein levels",
+        "route_to": "celltype-specificity-profiler",
+        "expected_readout": "HPA staining intensity (negative/low/medium/high) in RPE and melanocyte-rich tissues; establishes on-target/off-tumour toxicity floor",
+        "why": "Ocular toxicity (RPE) is the known clinical risk for gp100/PMEL-directed agents; quantitative HPA data would replace the absent FAERS result"
+      },
+      {
+        "missing": "OpenFDA FAERS adverse events for tebentafusp (not 'PMEL' as drug name)",
+        "proposed_experiment": "Re-run OpenFDA_search_drug_events with drug_name='tebentafusp' and separately 'IMCgp100' to capture actual post-market signal",
+        "route_to": "openfda-safety",
+        "expected_readout": "Top MedDRA reaction terms and frequency for skin, ocular, and autoimmune events; resolves step_04 which returned empty due to wrong drug_name parameter",
+        "why": "step_04 queried 'PMEL' as the drug name \u2014 this returns nothing; tebentafusp is the marketed agent and has Phase 3 safety data"
+      },
+      {
+        "missing": "OpenTargets genetic/clinical evidence for PMEL-melanoma link",
+        "proposed_experiment": "Re-run OpenTargets_target_disease_evidence with disease_name='skin melanoma' or EFO:0000389 \u2014 'melanoma' returned 0 evidences, likely a disease-name mismatch",
+        "route_to": "right_target",
+        "expected_readout": "Evidence count and datatypes (genetic association, somatic mutation, known drug) confirming PMEL as a validated melanoma target",
+        "why": "Zero evidences from OpenTargets for PMEL/melanoma is almost certainly a query artefact; if genuine it would be a critical negative finding that should change the verdict"
+      },
+      {
+        "missing": "TCR-T / T-cell engager historical success rate in solid tumours",
+        "proposed_experiment": "Lit-synthesizer search on 'TCR-T cell therapy solid tumour Phase 2/3 success rate' and 'tebentafusp OS uveal melanoma benchmark' to establish base-rate prior",
+        "route_to": "lit-synthesizer",
+        "expected_readout": "Approval rate and median OS improvement for TCR-based modalities in solid tumours; contextualises PMEL programme risk vs benchmark",
+        "why": "step_06 reused CellMarker (wrong tool) instead of computing a trial-success prior; this is needed for the CSO's go/no-go framing"
+      },
+      {
+        "missing": "Malignant-cell PMEL expression fraction in TME",
+        "proposed_experiment": "Query a single-cell atlas (e.g. TISCH2 or CancerSEA) for melanoma samples; compute PMEL+ fraction across malignant, CAF, endothelial, and immune clusters",
+        "route_to": "scrna-orchestrator",
+        "expected_readout": "PMEL % positive cells per compartment; ratio malignant:stromal",
+        "why": "Specificity ratio directly sets ADC therapeutic window and TCR-T on-tumour selectivity"
+      },
+      {
+        "missing": "Tebentafusp clinical outcomes (OS, PFS, ORR, resistance)",
+        "proposed_experiment": "Literature search on IMCgp100-202 phase III trial plus gp100 peptide vaccine and TCR-T historical data",
+        "route_to": "lit-synthesizer",
+        "expected_readout": "OS HR, ORR, grade 3+ AE rate, known resistance mechanisms (antigen loss, HLA downregulation)",
+        "why": "Any new PMEL programme must define clinical differentiation vs approved tebentafusp"
+      },
+      {
+        "missing": "FAERS adverse events for tebentafusp (cytokine release, ocular, autoimmune)",
+        "proposed_experiment": "Rerun OpenFDA_search_drug_events with drug_name='tebentafusp' and separately 'IMCgp100'",
+        "route_to": "openfda-safety",
+        "expected_readout": "Top 20 MedDRA PTs by frequency; disproportionality signal for uveitis/vitiligo/CRS",
+        "why": "Skin/ocular melanocyte toxicity is a class effect for PMEL-directed agents; must be quantified before choosing modality"
+      },
+      {
+        "missing": "PMEL expression in retinal pigment epithelium and brain melanocytes at protein level",
+        "proposed_experiment": "Query HPA (Human Protein Atlas) protein IHC data for PMEL across RPE, brain substantia nigra, and skin melanocytes",
+        "route_to": "celltype-specificity-profiler",
+        "expected_readout": "IHC staining intensity (negative/low/medium/high) per tissue; TPM from GTEx",
+        "why": "CellMarker returned cell-type annotations but not expression quantitation; RPE and neural crest-derived cells are the key toxicity compartments for ADC or TCR-T"
+      },
+      {
+        "missing": "HLA-agnostic PMEL modality competitive landscape",
+        "proposed_experiment": "Web search for ADC, bispecific antibody, and mRNA vaccine programmes targeting PMEL/gp100 extracellular domain in active IND or phase 1",
+        "route_to": "lit-synthesizer",
+        "expected_readout": "Programme list with modality, sponsor, phase, HLA restriction status, and estimated enrolment criteria",
+        "why": "Whitespace assessment requires knowing which extracellular-domain epitopes are claimed and whether any programme has demonstrated HLA-independent tumour killing"
+      },
+      {
+        "experiment": "Does PMEL surface/extracellular domain topology support antibody-based modalities (ADC, bispecific), and what structural data exist on epitope accessibility?",
+        "rationale": "PMEL is a type-I transmembrane protein that undergoes extensive proteolytic processing \u2014 the mature cell-surface form may or may not expose sufficient extracellular epitope for ADC or bispecific engagement; this is the tractability gate for HLA-agnostic strategies.",
+        "expected_readout": "would answer this open question"
       }
     ],
     "disclaimer": "ClawBio is a research and educational tool. It is not a medical device and does not provide clinical diagnoses. Consult a healthcare professional before making any medical decisions."

@@ -95,6 +95,35 @@ openfda-boxed-warning:
     limit: 1
   summary: []
 
+# ---- druggability / tractability (Pharos TDL) ------------------------------ #
+# Pharos Target Development Level is the cleanest gene-keyed druggability triage:
+# Tclin (has approved drugs) > Tchem (has potent ligands) > Tbio > Tdark (understudied).
+# Pins the tractability axis so it runs deterministically instead of deferring to the
+# old struct-predictor proxy. Boltz-2/pocket tools (ProteinsPlus, SwissDock) need a PDB
+# ID we don't resolve here, so this gene-keyed TDL readout is the load-bearing signal;
+# OpenTargets_get_target_prioritisation (hasPocket/hasLigand) is Ensembl-keyed and needs
+# a gene->Ensembl resolve step this backend doesn't have yet, so it stays out for now.
+struct-predictor:
+  backend: tooluniverse
+  tool: Pharos_get_target
+  args:
+    gene: "{gene_symbol}"
+  # tdl = Target Development Level; novelty = under-studied score; publicationCount = depth.
+  summary: [data.tdl, data.novelty, data.publicationCount]
+
+# ---- competitive landscape: clinical/approved antibodies vs the target ----- #
+# Thera-SAbDab: every clinical or approved therapeutic antibody against the antigen —
+# a structured, target-keyed competitive readout (count 0 == genuine mAb whitespace).
+# Complements lit-synthesizer (Tavily), which stays the recency/preprint reroute target:
+# TheraSAbDab is antibody-only, so it won't see small-molecule or cell-therapy competitors
+# — pair the structured landscape here with Tavily's current-web sweep for those.
+lit-synthesizer:
+  backend: tooluniverse
+  tool: TheraSAbDab_search_by_target
+  args:
+    target: "{gene_symbol}"
+  summary: [data.count]        # # of clinical/approved antibodies against the target
+
 # ---- prior trials + outcomes (ClinicalTrials.gov) -------------------------- #
 clinical-trial-finder:
   backend: tooluniverse

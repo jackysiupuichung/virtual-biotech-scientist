@@ -69,11 +69,19 @@ right_patient:
 right_commercial:                         # <-- current-web evidence (Tavily)
   recent_literature_and_competitive:
     skill: lit-synthesizer
-    note: agentic Tavily web search — recent papers/preprints, competitive/clinical landscape, emerging safety; the natural reviewer re-route target for "is the evidence current?" gaps
+    note: >-
+      pinned to Thera-SAbDab (clinical/approved antibodies vs the target — structured
+      competitive landscape) via tool_router.yaml; Tavily web search remains the recency/
+      preprint reroute path for small-molecule / cell-therapy competitors TheraSAbDab
+      (antibody-only) can't see and for "is the evidence current?" gaps
     reroute_target: true                  # reviewer may route_to this to fill recency/competitive/safety gaps
 
 # Tractability — can it be drugged with this modality? (cross-cutting, modality-gated)
 tractability:
   druggability_and_structure:
     skill: struct-predictor
+    note: >-
+      pinned to Pharos Target Development Level (Tclin/Tchem/Tbio/Tdark — gene-keyed
+      druggability triage) via tool_router.yaml; OT prioritisation (hasPocket/hasLigand)
+      is Ensembl-keyed and awaits a gene->Ensembl resolve step before it can be pinned
     also: [omics-target-evidence-mapper, opentargets-target-factors]  # OT tractability + clinical stage
