@@ -48,8 +48,13 @@ ALGORITHM_NOTE = (
 )
 
 
-async def run_analysis(hypotheses: List[Dict[str, Any]]) -> ParetoResult:
-    red_flagged, survivors = await red_flag_filter(hypotheses)
+async def run_analysis(
+    hypotheses: List[Dict[str, Any]], *, skip_red_flags: bool = False
+) -> ParetoResult:
+    if skip_red_flags:
+        red_flagged, survivors = [], hypotheses
+    else:
+        red_flagged, survivors = await red_flag_filter(hypotheses)
     front, comparisons = await build_pareto_front(survivors)
     graph = build_domination_graph(hypotheses, red_flagged, front, comparisons)
 
@@ -75,6 +80,7 @@ async def run_analysis(hypotheses: List[Dict[str, Any]]) -> ParetoResult:
             "num_domination_edges": num_domination_edges,
             "num_tradeoff_comparisons": num_tradeoff_comparisons,
             "num_comparisons_total": len(comparisons),
+            "red_flag_filter_enabled": not skip_red_flags,
             "algorithm_note": ALGORITHM_NOTE,
             "tie_break_note": (
                 "pareto_front is ordered by tie_break_score (confidence-weighted "
@@ -177,10 +183,15 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--hypotheses", default=DEFAULT_INPUT)
     parser.add_argument("--out", default=None, help="write JSON here instead of stdout")
+    parser.add_argument(
+        "--skip-red-flags",
+        action="store_true",
+        help="compare every loaded hypothesis directly, without pre-Pareto red-flag removal",
+    )
     args = parser.parse_args()
 
     hypotheses = _load_hypotheses(args.hypotheses)
-    result = asyncio.run(run_analysis(hypotheses))
+    result = asyncio.run(run_analysis(hypotheses, skip_red_flags=args.skip_red_flags))
     out = result.model_dump_json(indent=2)
 
     if args.out:
