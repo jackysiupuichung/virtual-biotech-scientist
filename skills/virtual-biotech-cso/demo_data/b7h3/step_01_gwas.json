@@ -1,6 +1,0 @@
-{
-  "summary": "Weak/absent germline genetic support for CD276 in lung cancer — non-disqualifying for an immuno-oncology surface target.",
-  "lead_associations": [],
-  "interpretation": "No genome-wide-significant germline signal expected for this checkpoint antigen; the CSO treats this as non-disqualifying and weights somatic/stromal evidence instead.",
-  "note": "Illustrative cached value for the demo walkthrough, not a live GWAS query."
-}

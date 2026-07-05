@@ -14,9 +14,7 @@ subagent-capable harness (e.g. Claude Code) runs the prompts in ``prompts/`` —
 ideally one subagent per role/division — using its own session model. No API
 key is required.
 
-Three execution modes, all honest:
-  - ``--demo``  : fully offline from cached, clearly-labelled B7-H3 fixtures in
-                  ``demo_data/<case>/`` — no network, no key.
+Two execution modes, both honest:
   - ``--live``  : executes each routed skill through the ClawBio runtime
                   (deterministic skill composition). Reasoning is still
                   delegated to the agent; unavailable steps are reported, never
@@ -48,7 +46,6 @@ SKILL_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SKILL_DIR.parent.parent
 PROMPTS_DIR = SKILL_DIR / "prompts"
 ROUTING_PATH = SKILL_DIR / "routing.yaml"
-DEMO_DATA_DIR = SKILL_DIR / "demo_data"
 
 ORCHESTRATOR_PROMPT = PROMPTS_DIR / "orchestrator.md"
 CHIEF_OF_STAFF_PROMPT = PROMPTS_DIR / "chief_of_staff.md"
@@ -56,7 +53,6 @@ REVIEWER_PROMPT = PROMPTS_DIR / "reviewer.md"
 DIVISION_SCIENTIST_PROMPT = PROMPTS_DIR / "division_scientist.md"
 
 DEFAULT_QUERY = "Assess B7-H3 potential as a therapeutic target in lung cancer"
-DEMO_SOURCE = "cached demo (illustrative)"
 DELEGATE = "delegate-to-agent"
 DISCLAIMER = (
     "ClawBio is a research and educational tool. It is not a medical device and "
@@ -99,7 +95,6 @@ SOURCE_REGISTRY: dict[str, dict[str, str]] = {
 # Provenance marker + evidence grade derived from how a step was sourced.
 PROVENANCE = {
     "clawbio": ("🔧 live", "real skill output"),
-    DEMO_SOURCE: ("🧪 demo", "illustrative cached fixture"),
     "web": ("🌐 web", "agent literature search"),
     "unavailable": ("⚪ not-run", "absent — backend unavailable"),
     "error": ("⚪ error", "absent — skill error"),
@@ -134,7 +129,7 @@ class Subtask:
 # Pure helpers (no I/O) — importable for tests
 # --------------------------------------------------------------------------- #
 def case_key(query: str) -> str:
-    """Map a free-text query to a case key (``b7h3`` for the demo, else a slug)."""
+    """Map a free-text query to a case key (``b7h3`` for B7-H3, else a slug)."""
     q = query.lower()
     if "b7-h3" in q or "b7h3" in q or "cd276" in q:
         return "b7h3"
@@ -532,31 +527,18 @@ def _agent_task(role: str, prompt_path: Path, context: str) -> dict[str, Any]:
 
 
 # --------------------------------------------------------------------------- #
-# Reasoning roles — delegated to the agent (cached in demo, never an LLM call)
+# Reasoning roles — delegated to the agent (never an LLM call)
 # --------------------------------------------------------------------------- #
-def _load_demo_json(case: str, name: str) -> dict[str, Any] | None:
-    path = DEMO_DATA_DIR / case / f"{name}.json"
-    if not path.exists():
-        return None
-    with path.open("r", encoding="utf-8") as fh:
-        return json.load(fh)
-
-
-def load_briefing(query: str, case: str, demo: bool) -> dict[str, Any]:
+def load_briefing(query: str, case: str) -> dict[str, Any]:
     """STEP A: Chief-of-Staff briefing.
 
-    Cached in --demo. Otherwise an honest delegation stub — the driving agent
-    runs prompts/chief_of_staff.md to fill it. This skill makes no LLM call.
+    An honest delegation stub — the driving agent runs prompts/chief_of_staff.md
+    to fill it. This skill makes no LLM call.
     """
-    if demo:
-        cached = _load_demo_json(case, "briefing")
-        if cached is not None:
-            cached.setdefault("source", DEMO_SOURCE)
-            return cached
     return {
         "context": "[delegate-to-agent] The Chief-of-Staff briefing is produced by the driving "
         "agent running prompts/chief_of_staff.md on the query (e.g. a Claude Code subagent). "
-        "This skill performs no LLM call; run --demo for the cached illustrative briefing.",
+        "This skill performs no LLM call.",
         "data_availability": [],
         "priority_questions": [],
         "feasibility_flags": [],
@@ -746,6 +728,19 @@ def _run_skill_live(skill: str, target: str | None = None,
     external clawbio.py run_skill runtime. Any failure returns an honest envelope
     rather than a fabricated result.
     """
+    # Predefined-tool backend FIRST: if this axis maps to a real ToolUniverse /
+    # clawbio tool (tool_router.yaml), answer with that — executed in-process when
+    # the tooluniverse package is importable, else a descriptor for the driving
+    # agent/frontend to run. Only fall through to the old in-repo skills / literature
+    # proxy when there is no predefined-tool mapping for this axis.
+    try:
+        import tool_backend
+        predefined = tool_backend.run_predefined_tool(skill, target or "")
+    except Exception:  # pragma: no cover - backend import/parse must never crash the run
+        predefined = None
+    if predefined is not None and predefined.get("source") in ("tooluniverse", "tool-descriptor"):
+        return predefined
+
     local = _run_local_skill(skill, live=True, target=target, focus=focus)
     if local is not None:
         return local
@@ -808,15 +803,16 @@ def _run_clawbio_skill(routing_name: str, clawbio_name: str) -> dict[str, Any]:
         return {"status": "not executed", "reason": f"{type(exc).__name__}: {exc}"}
 
 
-def execute_skill(task: Subtask, case: str, demo: bool, live: bool,
+def execute_skill(task: Subtask, case: str, live: bool,
                   target: str | None = None, focus: str | None = None) -> dict[str, Any]:
     """STEP C: produce a result envelope for a routed skill.
 
-    Resolution order: cached demo fixture → live ClawBio run → honest stub.
-    ``target`` (the query's "<gene> in <disease>") is passed to skills that take it
-    live — notably lit-synthesizer's real-time Tavily search. ``focus`` is an optional
-    reviewer follow-up that steers a *deeper* re-route's live search toward the specific
-    missing evidence. No LLM is involved.
+    Always attempts the live path — the routed skill is executed through the
+    ClawBio runtime; any unavailable step returns an honest stub, never a
+    fabricated result. ``target`` (the query's "<gene> in <disease>") is passed
+    to skills that take it live — notably lit-synthesizer's real-time Tavily
+    search. ``focus`` is an optional reviewer follow-up that steers a *deeper*
+    re-route's live search toward the specific missing evidence. No LLM is involved.
     """
     envelope = {
         "step": task.step,
@@ -824,41 +820,18 @@ def execute_skill(task: Subtask, case: str, demo: bool, live: bool,
         "skill": task.skill,
         "question": task.question,
     }
-    if demo:
-        cached = _load_demo_json(case, task.step)
-        if cached is not None:
-            envelope["result"] = cached
-            envelope["source"] = DEMO_SOURCE
-            return envelope
-        envelope["result"] = {"status": "no fixture",
-                              "reason": f"no cached demo fixture for {task.step}."}
-        envelope["source"] = "unavailable"
-        return envelope
-    if live:
-        envelope["result"] = _run_skill_live(task.skill, target=target, focus=focus)
-        envelope["source"] = "clawbio" if envelope["result"].get("status") == "ok" else "unavailable"
-        return envelope
-    envelope["result"] = {
-        "status": "not executed",
-        "reason": "default mode: pass --live to execute routed skills through the "
-        "ClawBio runtime, or --demo for the cached illustrative walkthrough.",
-    }
-    envelope["source"] = "unavailable"
+    envelope["result"] = _run_skill_live(task.skill, target=target, focus=focus)
+    envelope["source"] = "clawbio" if envelope["result"].get("status") == "ok" else "unavailable"
     return envelope
 
 
-def load_review(query: str, case: str, results: list[dict[str, Any]], demo: bool) -> dict[str, Any]:
+def load_review(query: str, case: str, results: list[dict[str, Any]]) -> dict[str, Any]:
     """STEP D: Scientific-Reviewer verdict.
 
-    Cached in --demo. Otherwise a delegation stub defaulting to 'synthesize'
-    (no re-route) — the driving agent runs prompts/reviewer.md to audit the
-    evidence and may set verdict 're-route'. This skill makes no LLM call.
+    A delegation stub defaulting to 'synthesize' (no re-route) — the driving
+    agent runs prompts/reviewer.md to audit the evidence and may set verdict
+    're-route'. This skill makes no LLM call.
     """
-    if demo:
-        cached = _load_demo_json(case, "review")
-        if cached is not None:
-            cached.setdefault("source", DEMO_SOURCE)
-            return cached
     return {
         "verdict": "synthesize", "scores": {}, "gaps": [],
         "note": "[delegate-to-agent] The Scientific-Reviewer audit is produced by the driving "
@@ -869,16 +842,13 @@ def load_review(query: str, case: str, results: list[dict[str, Any]], demo: bool
     }
 
 
-def load_synthesis(query: str, case: str, results: list[dict[str, Any]],
-                   demo: bool) -> dict[str, Any] | None:
+def load_synthesis(query: str, case: str, results: list[dict[str, Any]]) -> dict[str, Any] | None:
     """STEP E input: the CSO recommendation + liabilities.
 
-    Cached in --demo. Otherwise None — the recommendation is written by the
-    driving agent (prompts/orchestrator.md) over the evidence; this skill emits
-    the routed evidence, not a generated recommendation.
+    Always None — the recommendation is written by the driving agent
+    (prompts/orchestrator.md) over the evidence; this skill emits the routed
+    evidence, not a generated recommendation.
     """
-    if demo:
-        return _load_demo_json(case, "synthesis")
     return None
 
 
@@ -910,8 +880,7 @@ def _provenance(env: dict[str, Any]) -> tuple[str, str]:
 
 def _evidence_grade(env: dict[str, Any]) -> str:
     src = env.get("source", "")
-    return {"clawbio": "strong", DEMO_SOURCE: "illustrative", "web": "supporting"}.get(
-        src, "absent")
+    return {"clawbio": "strong", "web": "supporting"}.get(src, "absent")
 
 
 _NCT_RE = re.compile(r"\bNCT\d{8}\b", re.IGNORECASE)
@@ -967,20 +936,16 @@ def _norm_liabilities(synthesis: dict[str, Any] | None) -> list[str]:
 
 def synthesize_report(query: str, case: str, briefing: dict[str, Any],
                       results: list[dict[str, Any]], review: dict[str, Any],
-                      synthesis: dict[str, Any] | None, demo: bool,
+                      synthesis: dict[str, Any] | None,
                       decision_engine: dict[str, Any] | None = None,
                       ranking: list[dict[str, Any]] | None = None) -> str:
     """Build a structured target-identification dossier from the assembled evidence."""
     syn = synthesis or {}
     symbol = (case or "target").upper()
-    executed = [e for e in results if e.get("source") in ("clawbio", DEMO_SOURCE)]
+    executed = [e for e in results if e.get("source") == "clawbio"]
     L: list[str] = [f"# Target Assessment — {symbol} · {query}", ""]
-    mode = "demo" if demo else "live/agent-driven"
-    L += [f"*Virtual-Biotech CSO v{VERSION} · mode: {mode} · the skill makes no LLM call; "
+    L += [f"*Virtual-Biotech CSO v{VERSION} · mode: live/agent-driven · the skill makes no LLM call; "
           "reasoning is delegated to the driving agent via `prompts/`.*", ""]
-    if demo:
-        L += ["> **Demo run** — skill results, briefing, review and synthesis are **cached "
-              "illustrative fixtures** (B7-H3 walkthrough), not live results.", ""]
 
     # 1 — Executive summary (decision + confidence + recommendation)
     # The Prometheux decision layer derives the tier deductively from per-axis
@@ -1105,7 +1070,7 @@ def synthesize_report(query: str, case: str, briefing: dict[str, Any],
     # 9 — Reproducibility + disclaimer
     L += ["## Reproducibility", "",
           "- Bundle: `reproducibility/{commands.sh, environment.yml, checksums.sha256}`; "
-          "per-step provenance markers above (🔧 live · 🧪 demo · 🌐 web · ⚪ absent).", "",
+          "per-step provenance markers above (🔧 live · 🌐 web · ⚪ absent).", "",
           "---",
           "*Trial-success priors are correlational (Zhang et al. 2026); not a guarantee of "
           "clinical success.*", "", f"*{DISCLAIMER}*", ""]
@@ -1160,22 +1125,22 @@ def _write_reproducibility(repro_dir: Path, argv: list[str], output_files: list[
 # --------------------------------------------------------------------------- #
 # Orchestration loop
 # --------------------------------------------------------------------------- #
-def run(query: str, out_dir: Path, demo: bool, live: bool, argv: list[str]) -> dict[str, Any]:
+def run(query: str, out_dir: Path, live: bool, argv: list[str]) -> dict[str, Any]:
     case = case_key(query)
     routing = load_routing()
 
-    briefing = load_briefing(query, case, demo)
+    briefing = load_briefing(query, case)
     subtasks = decompose_and_route(query, case, routing)
 
-    results: list[dict[str, Any]] = [execute_skill(t, case, demo, live) for t in subtasks]
+    results: list[dict[str, Any]] = [execute_skill(t, case, live) for t in subtasks]
 
-    review = load_review(query, case, results, demo)
+    review = load_review(query, case, results)
     if review.get("verdict") == "re-route":
         gap = (review.get("gaps") or [{}])[0]
-        results.append(execute_skill(_reroute_task(gap), case, demo, live))
+        results.append(execute_skill(_reroute_task(gap), case, live))
 
-    synthesis = load_synthesis(query, case, results, demo)
-    report_md = synthesize_report(query, case, briefing, results, review, synthesis, demo)
+    synthesis = load_synthesis(query, case, results)
+    report_md = synthesize_report(query, case, briefing, results, review, synthesis)
 
     out_dir.mkdir(parents=True, exist_ok=True)
     report_path = out_dir / "report.md"
@@ -1207,10 +1172,10 @@ def run(query: str, out_dir: Path, demo: bool, live: bool, argv: list[str]) -> d
     summary = {
         "query": query,
         "case": case,
-        "mode": "demo" if demo else ("live" if live else "default"),
+        "mode": "live" if live else "default",
         "n_steps": len(results),
         "reviewer_verdict": review.get("verdict", "synthesize"),
-        "n_executed": len([e for e in results if e.get("source") in ("clawbio", DEMO_SOURCE)]),
+        "n_executed": len([e for e in results if e.get("source") == "clawbio"]),
         "decision": syn.get("decision", "REVIEW"),
         "confidence": syn.get("confidence", "n/a"),
         "calls_llm": False,
@@ -1243,8 +1208,6 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument("--query", type=str, default=None,
                    help=f"Target-assessment query (default: {DEFAULT_QUERY!r})")
-    p.add_argument("--demo", action="store_true",
-                   help="Run offline from cached illustrative B7-H3 fixtures")
     p.add_argument("--live", action="store_true",
                    help="Execute routed skills via the ClawBio runtime (deterministic; reasoning delegated to the agent)")
     p.add_argument("--output", "--out", dest="out", type=str, default="./output",
@@ -1257,7 +1220,7 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     query = args.query or DEFAULT_QUERY
     out_dir = Path(args.out).expanduser().resolve()
-    summary = run(query, out_dir, demo=args.demo, live=args.live, argv=argv)
+    summary = run(query, out_dir, live=args.live, argv=argv)
     print(json.dumps(summary, indent=2))
     return 0
 

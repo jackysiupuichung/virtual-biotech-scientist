@@ -20,8 +20,6 @@ configured it degrades to cso.py's honest stubs (never fabricates) and says so.
 Usage:
     python harness.py --query "Assess B7-H3 ... in lung cancer" [--out ./output]
                       [--backend auto|anthropic|openai] [--model NAME]
-                      [--demo]   # use cached fixtures for the routed DATA steps,
-                                 # but still run the three roles as live agents
 """
 from __future__ import annotations
 
@@ -134,7 +132,7 @@ def _evidence_context(results: list[dict[str, Any]]) -> str:
 
 
 class Trace:
-    """Prints a per-step trace so the multi-agent loop is visible in the demo.
+    """Prints a per-step trace so the multi-agent loop is visible in the console.
 
     Also carries an optional structured ``emit(event, payload)`` callback. The CLI
     leaves it None (console only); the frontend passes one so the SAME loop streams
@@ -456,7 +454,7 @@ def _apply_gate(gate: "Gate | None", trace: Trace, *, verdict: str,
 
 def _review_loop(trace: Trace, runner: runners.Runner, query: str, case: str,
                  routing: dict[str, Any], results: list[dict[str, Any]],
-                 demo: bool, live: bool, rec: TraceRecorder,
+                 live: bool, rec: TraceRecorder,
                  token_budget: int | None = DEFAULT_TOKEN_BUDGET,
                  gate: "Gate | None" = None) -> dict[str, Any]:
     """Run reviewer→reroute until `synthesize`, the budget, or MAX_REROUTES.
@@ -518,7 +516,7 @@ def _review_loop(trace: Trace, runner: runners.Runner, query: str, case: str,
                 review, review_src = _agent_or_stub(
                     trace, "scientific_reviewer", runner, cso.REVIEWER_PROMPT,
                     _evidence_context(results), REVIEW_SCHEMA,
-                    stub=cso.load_review(query, case, results, demo=demo), rec=rec)
+                    stub=cso.load_review(query, case, results), rec=rec)
                 # The Prometheux gap-detector is deterministic — it runs on the stub
                 # path too, and a forcing structural gap re-routes even when no live
                 # reviewer panel is available (the engine is the non-silenceable voter).
@@ -603,11 +601,11 @@ def _review_loop(trace: Trace, runner: runners.Runner, query: str, case: str,
             with rec.span(f"reroute:{followup.skill}", kind="tool", iteration=i + 1,
                           missing=gap.get("missing")):
                 # pass the query as the live target so a reroute to lit-synthesizer
-                # runs a real-time Tavily search for this target, not the cached demo.
+                # runs a real-time Tavily search for this target.
                 # On a *deeper* repeat (same skill, new question) pass the gap's
                 # ``missing`` as ``focus`` so the search chases the specific gap.
                 focus = gap.get("missing") if followup.skill in executed else None
-                env = cso.execute_skill(followup, case, demo, live, target=query, focus=focus)
+                env = cso.execute_skill(followup, case, live, target=query, focus=focus)
                 results.append(env)
             trace.event("evidence", {**_evidence_event(env), "reroute": True})
 
@@ -623,7 +621,7 @@ def _review_loop(trace: Trace, runner: runners.Runner, query: str, case: str,
 
 
 def run(query: str, out_dir: Path | None, *, backend: str, model: str | None,
-        demo: bool, live: bool, argv: list[str], emit: "Emit | None" = None,
+        live: bool, argv: list[str], emit: "Emit | None" = None,
         quiet: bool = False, token_budget: int | None = DEFAULT_TOKEN_BUDGET,
         gate: "Gate | None" = None) -> dict[str, Any]:
     """Run the live multi-agent loop.
@@ -651,7 +649,7 @@ def run(query: str, out_dir: Path | None, *, backend: str, model: str | None,
         "backend": runner.name if calls_llm else "none",
         "model": runner.model if calls_llm else "none",
         "calls_llm": calls_llm,
-        "mode": "demo" if demo else ("live" if live else "default"),
+        "mode": "live" if live else "default",
     })
 
     # 1 — BRIEF (live agent role) ------------------------------------------- #
@@ -661,7 +659,7 @@ def run(query: str, out_dir: Path | None, *, backend: str, model: str | None,
     briefing, brief_src = _agent_or_stub(
         trace, "chief_of_staff", runner, cso.CHIEF_OF_STAFF_PROMPT,
         f"User query: {query}", BRIEFING_SCHEMA,
-        stub=cso.load_briefing(query, case, demo=demo), rec=rec)
+        stub=cso.load_briefing(query, case), rec=rec)
     briefing.setdefault("source", brief_src)
     trace.event("briefing", {"briefing": briefing, "source": brief_src})
 
@@ -677,13 +675,13 @@ def run(query: str, out_dir: Path | None, *, backend: str, model: str | None,
     #     scientist agent, run concurrently. division_findings carry their reasoning.
     with rec.span("execute", kind="tool", n_subtasks=len(subtasks)):
         results, division_findings = _run_divisions(
-            subtasks, runner, query, case, demo, live, trace, rec, target=query)
+            subtasks, runner, query, case, live, trace, rec, target=query)
 
     # 4 — REVIEW → RE-ROUTE loop (change #2: bounded; verdict drives control flow) #
     #     The reviewer re-runs after each re-route until it returns `synthesize` or
     #     MAX_REROUTES is hit. Each re-route target is the reviewer's *chosen* skill,
     #     validated against the catalog (change #3) before execution.
-    review = _review_loop(trace, runner, query, case, routing, results, demo, live, rec,
+    review = _review_loop(trace, runner, query, case, routing, results, live, rec,
                           token_budget=token_budget, gate=gate)
 
     # 4b — DECISION (Prometheux): derive the GO/NO-GO tier deductively from the final
@@ -731,7 +729,7 @@ def run(query: str, out_dir: Path | None, *, backend: str, model: str | None,
 
     # 6 — ASSEMBLE (reuse cso's renderer + output contract) ----------------- #
     report_md = cso.synthesize_report(query, case, briefing, results, review, synthesis,
-                                      demo, decision_engine=decision)
+                                      decision_engine=decision)
     report_path = result_path = None
     if out_dir is not None:
         out_dir.mkdir(parents=True, exist_ok=True)
@@ -739,7 +737,7 @@ def run(query: str, out_dir: Path | None, *, backend: str, model: str | None,
         report_path.write_text(report_md, encoding="utf-8")
 
         summary, data = _build_envelope(query, case, briefing, subtasks, results, review,
-                                        synthesis, runner, backend, demo, live,
+                                        synthesis, runner, backend, live,
                                         division_findings=division_findings,
                                         decision_engine=decision,
                                         plan_experiments=plan_experiments)
@@ -754,7 +752,7 @@ def run(query: str, out_dir: Path | None, *, backend: str, model: str | None,
         _project_decision_facts(trace, decision, _target, out_dir, out_dir.name)
     else:
         summary, data = _build_envelope(query, case, briefing, subtasks, results, review,
-                                        synthesis, runner, backend, demo, live,
+                                        synthesis, runner, backend, live,
                                         division_findings=division_findings,
                                         decision_engine=decision,
                                         plan_experiments=plan_experiments)
@@ -785,7 +783,7 @@ def run(query: str, out_dir: Path | None, *, backend: str, model: str | None,
             "decision_engine": decision}
 
 
-def _execute_steps(subtasks: list[cso.Subtask], case: str, demo: bool, live: bool,
+def _execute_steps(subtasks: list[cso.Subtask], case: str, live: bool,
                    target: str | None) -> dict[str, dict[str, Any]]:
     """Run a division's routed steps respecting depends_on; independent ones parallel.
 
@@ -799,14 +797,14 @@ def _execute_steps(subtasks: list[cso.Subtask], case: str, demo: bool, live: boo
             ready = remaining
         with ThreadPoolExecutor(max_workers=max(1, len(ready))) as pool:
             for task, env in zip(ready, pool.map(
-                    lambda t: cso.execute_skill(t, case, demo, live, target=target), ready)):
+                    lambda t: cso.execute_skill(t, case, live, target=target), ready)):
                 done[task.step] = env
         remaining = [t for t in remaining if t.step not in done]
     return done
 
 
 def _run_divisions(subtasks: list[cso.Subtask], runner: runners.Runner, query: str,
-                   case: str, demo: bool, live: bool, trace: Trace, rec: TraceRecorder,
+                   case: str, live: bool, trace: Trace, rec: TraceRecorder,
                    target: str | None = None
                    ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     """Virtual-Biotech structure: one **division scientist agent** per division.
@@ -835,7 +833,7 @@ def _run_divisions(subtasks: list[cso.Subtask], runner: runners.Runner, query: s
         with rec.span(f"scientist:{division}", kind="agent", backend=runner.name,
                       model=runner.model, n_skills=len(tasks)) as sp:
             t0 = time.perf_counter()
-            done = _execute_steps(tasks, case, demo, live, target)  # the agent's tools
+            done = _execute_steps(tasks, case, live, target)  # the agent's tools
             sp.set(exec_ms=round((time.perf_counter() - t0) * 1000.0, 2))
             evidence_ctx = _evidence_context([done[t.step] for t in tasks])
             ctx = (f"Your division: {division}\nUser query: {query}\n\n"
@@ -895,7 +893,7 @@ def _evidence_event(env: dict[str, Any]) -> dict[str, Any]:
 
 
 def _build_envelope(query, case, briefing, subtasks, results, review, synthesis,
-                    runner, backend, demo, live, division_findings=None,
+                    runner, backend, live, division_findings=None,
                     decision_engine=None, plan_experiments=None
                     ) -> tuple[dict[str, Any], dict[str, Any]]:
     """Mirror cso.run()'s result.json envelope, marking the live-agent loop."""
@@ -919,13 +917,13 @@ def _build_envelope(query, case, briefing, subtasks, results, review, synthesis,
     calls_llm = runner.name != "stub"
     summary = {
         "query": query, "case": case,
-        "mode": "demo" if demo else ("live" if live else "default"),
+        "mode": "live" if live else "default",
         "loop": "live-agent-harness",
         "backend": runner.name if calls_llm else "none",
         "model": runner.model if calls_llm else "none",
         "n_steps": len(results),
         "reviewer_verdict": review.get("verdict", "synthesize"),
-        "n_executed": len([e for e in results if e.get("source") in ("clawbio", cso.DEMO_SOURCE)]),
+        "n_executed": len([e for e in results if e.get("source") == "clawbio"]),
         # Derived tier is the decision of record when the engine ran; the agent's
         # free-text is kept alongside so a divergence is auditable, not erased.
         "decision": (decision_engine or {}).get("tier") or syn.get("decision", "REVIEW"),
@@ -961,8 +959,6 @@ def build_parser() -> argparse.ArgumentParser:
                    default="auto",
                    help="Agent backend (default: auto — Anthropic/OpenAI key, else claude CLI)")
     p.add_argument("--model", type=str, default=None, help="Override the model id")
-    p.add_argument("--demo", action="store_true",
-                   help="Use cached fixtures for routed DATA steps; roles still run live")
     p.add_argument("--live", action="store_true",
                    help="Execute routed skills via the ClawBio runtime")
     p.add_argument("--output", "--out", dest="out", type=str, default="./output",
@@ -975,7 +971,7 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     out_dir = Path(args.out).expanduser().resolve()
     summary = run(args.query, out_dir, backend=args.backend, model=args.model,
-                  demo=args.demo, live=args.live, argv=argv)
+                  live=args.live, argv=argv)
     print("\n" + json.dumps(summary["summary"], indent=2))
     return 0
 

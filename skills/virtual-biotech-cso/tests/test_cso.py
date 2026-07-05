@@ -77,6 +77,7 @@ def _run(args, env_extra=None):
     )
 
 
+@pytest.mark.skip(reason="demo mode removed — CSO is now agent-driven discovery only")
 def test_demo_writes_full_contract(tmp_path):
     out = tmp_path / "demo"
     res = _run(["--demo", "--output", str(out)])
@@ -116,6 +117,7 @@ def test_demo_writes_full_contract(tmp_path):
     assert envelope["data"]["proposed_experiments"]  # non-empty (synthesis + reviewer)
 
 
+@pytest.mark.skip(reason="demo mode removed — CSO is now agent-driven discovery only")
 def test_demo_report_is_deterministic(tmp_path):
     a, b = tmp_path / "a", tmp_path / "b"
     _run(["--demo", "--output", str(a)])
@@ -361,6 +363,6 @@ def test_unavailable_external_skill_stays_honest_without_key(monkeypatch):
     monkeypatch.delenv("TAVILY_API_KEY", raising=False)
     t = Subtask("step_01_gwas", "target_id_and_prioritization",
                 "germline support?", "gwas-lookup")
-    env = execute_skill(t, case="b7h3", demo=False, live=True, target="B7-H3 in lung cancer")
+    env = execute_skill(t, case="b7h3", live=True, target="B7-H3 in lung cancer")
     assert env["source"] == "unavailable"
     assert env["result"]["status"] != "ok"

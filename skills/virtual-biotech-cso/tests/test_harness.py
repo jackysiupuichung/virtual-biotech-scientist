@@ -123,10 +123,10 @@ class FakeRunner:
         raise AssertionError(f"unexpected prompt title: {title!r}")
 
 
-def _run(monkeypatch, runner, tmp_path, demo=True):
+def _run(monkeypatch, runner, tmp_path):
     monkeypatch.setattr(runners, "select_runner", lambda *a, **k: runner)
     return harness.run("Assess B7-H3 in lung cancer", tmp_path,
-                       backend="auto", model=None, demo=demo, live=False, argv=["--demo"])
+                       backend="auto", model=None, live=False, argv=[])
 
 
 # --------------------------- happy path ----------------------------------- #
@@ -342,7 +342,7 @@ def test_synthesize_verdict_has_no_reroute(monkeypatch, tmp_path):
 def _run_gated(monkeypatch, runner, tmp_path, gate):
     monkeypatch.setattr(runners, "select_runner", lambda *a, **k: runner)
     return harness.run("Assess B7-H3 in lung cancer", tmp_path, backend="auto",
-                       model=None, demo=True, live=False, argv=["--demo"], gate=gate)
+                       model=None, live=False, argv=[], gate=gate)
 
 
 def test_no_gate_is_unchanged():

@@ -1,0 +1,87 @@
+# Axis → predefined ToolUniverse / clawbio tool routing.
+#
+# This REPLACES the bespoke ClawBio-skill dispatch as the *first* backend the CSO
+# tries live: each routing.yaml intent that maps to a real, callable tool is listed
+# here. The harness resolves a routed step's `skill` name → this entry → a concrete
+# tool call. Preference order per axis: tooluniverse (predefined, real API) first,
+# then clawbio, then the old in-repo skills / literature proxy as a last resort.
+#
+# Each entry:
+#   backend:  "tooluniverse" | "clawbio"
+#   tool:     the exact predefined tool name (mcp__tooluniverse__execute_tool tool_name)
+#   args:     arg template; {gene}/{gene_symbol}, {disease}, {drug} are filled from the
+#             parsed query ("<gene> in <disease>"). Static values pass through as-is.
+#   summary:  dotted path(s) into the tool's JSON to lift a compact readout for the
+#             evidence row (the raw payload is huge; we keep a digest + provenance).
+#
+# Skill names on the left are the routing.yaml `skill:` values — the CSO already
+# routes to these; here we say which predefined tool actually answers each.
+
+# ---- target ↔ disease association (Open Targets, multi-datasource) ---------- #
+opentargets-association-evidence:
+  backend: tooluniverse
+  tool: OpenTargets_get_evidence_by_datasource
+  args:
+    gene_symbol: "{gene}"
+    disease_name: "{disease}"
+    datasourceIds: [ot_genetics_portal, eva, cancer_gene_census, chembl, expression_atlas, crispr]
+    size: 25
+  summary: [data.disease.name, data.disease.evidences.count]
+
+# ---- somatic driver frequency (IntOGen / EVA somatic via Open Targets) ------ #
+tcga-somatic-profiler:
+  backend: tooluniverse
+  tool: OpenTargets_target_disease_evidence          # IntOGen somatic drivers
+  args:
+    gene_symbol: "{gene}"
+    disease_name: "{disease}"
+  summary: [data.disease.name, data.disease.evidences.count]
+
+# ---- germline genetic support (GWAS Catalog, by gene) ---------------------- #
+gwas-lookup:
+  backend: tooluniverse
+  tool: gwas_get_snps_for_gene
+  args:
+    gene_symbol: "{gene}"
+    size: 20
+  summary: [metadata.pagination.totalElements]       # # of catalogued SNPs near the gene
+
+# ---- target prioritisation factors (Open Targets: constraint, tractability) - #
+opentargets-target-factors:
+  backend: tooluniverse
+  tool: OpenTargets_get_evidence_by_datasource
+  args:
+    gene_symbol: "{gene}"
+    disease_name: "{disease}"
+    datasourceIds: [chembl, crispr, gene_burden]
+    size: 15
+  summary: [data.disease.evidences.count]
+
+# ---- post-market safety: FAERS adverse-event snapshot ---------------------- #
+openfda-safety:
+  backend: tooluniverse
+  tool: OpenFDA_search_drug_events
+  args:
+    drug_name: "{drug}"          # a marketed drug against the target, if known
+    count: "patient.reaction.reactionmeddrapt.exact"
+    limit: 20
+  summary: []                    # count-mode returns a ranked reaction list directly
+
+# ---- boxed warning (FDA label) --------------------------------------------- #
+openfda-boxed-warning:
+  backend: tooluniverse
+  tool: FDA_get_boxed_warning_info_by_drug_name
+  args:
+    drug_name: "{drug}"
+    limit: 1
+  summary: []
+
+# ---- prior trials + outcomes (ClinicalTrials.gov) -------------------------- #
+clinical-trial-finder:
+  backend: tooluniverse
+  tool: search_clinical_trials
+  args:
+    intervention: "{gene}"       # target/drug as intervention; disease narrows it
+    condition: "{disease}"
+    max_results: 15
+  summary: []                    # returns NCT list + brief descriptions

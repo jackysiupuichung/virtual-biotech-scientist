@@ -1,9 +1,0 @@
-{
-  "summary": "CD276 expression in the lung reference is enriched in fibroblasts and endothelium, low in T/B lymphocytes.",
-  "top_cell_types": [
-    {"cell_type": "fibroblast", "mean_expr": 2.4, "pct_expressing": 0.61},
-    {"cell_type": "endothelial cell", "mean_expr": 1.1, "pct_expressing": 0.28},
-    {"cell_type": "T cell", "mean_expr": 0.2, "pct_expressing": 0.05}
-  ],
-  "note": "Illustrative cached value for the demo walkthrough, not a live scrna-embedding run."
-}

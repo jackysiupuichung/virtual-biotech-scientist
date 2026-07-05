@@ -1,9 +1,0 @@
-{
-  "skill": "celltype-specificity-profiler",
-  "gene": "CD276",
-  "tau": 0.78,
-  "bimodality_coefficient": 0.61,
-  "interpretation": "cell-type-specific (tau > 0.7)",
-  "summary": "High tau + bimodality → cell-type-specific expression, a favourable trial-success / safety prior (Zhang et al. 2026).",
-  "note": "Illustrative cached value for the demo walkthrough. Run celltype-specificity-profiler --demo for a real (pbmc3k/MS4A1) computation."
-}

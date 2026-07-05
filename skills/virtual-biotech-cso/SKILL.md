@@ -37,9 +37,6 @@ metadata:
     python: ">=3.10"
     packages:
       - pyyaml
-  demo_data:
-    - path: demo_data/b7h3/synthesis.json
-      description: Cached illustrative B7-H3 fixtures driving the fully-offline --demo walkthrough.
   endpoints:
     cli: python skills/virtual-biotech-cso/cso.py --query {query} --output {output_dir}
   openclaw:
@@ -132,7 +129,7 @@ marks the distinction.
 
 1. **Chief-of-Staff briefing**: structures the pre-analysis briefing (field context, data availability, priority sub-questions); the driving agent fills it from `prompts/chief_of_staff.md`.
 2. **Decompose & route**: split the query into division sub-questions (Target ID, Target Safety, Modality, Clinical) and bind each to a skill via `routing.yaml`.
-3. **Execute (delegate)**: obtain each step's result from a routed ClawBio skill — cached in `--demo`, real `clawbio run` in `--live`.
+3. **Execute (delegate)**: obtain each step's result from a routed ClawBio skill — real `clawbio run` in `--live`, else an honest "not executed" stub.
 4. **Scientific-Reviewer audit**: structures the audit; the agent scores relevance / evidence / thoroughness and, on a gap, sets `re-route` — the skill then runs **one** follow-up step.
 5. **Reviewer panel drives re-routes**: the LLM reviewer lenses vote on whether the evidence chain has a gap worth filling; a re-route verdict sends a follow-up sub-task to the `routing.yaml` skill bound to the missing axis (safety / specificity / genetics / tractability), and the loop converges once the panel is satisfied. *(This lean build omits the Prometheux/Vadalog structural gap-detector that also cast a non-silenceable engine vote; re-add `prometheux_reason.py` and restore the `_engine_gaps`/`_engine_decision` calls in `harness.py` to bring it back.)*
 6. **Synthesis scaffold**: assembles the recommendation/liabilities scaffold for the agent to complete, and writes the `report.md` + `result.json` + `reproducibility/` bundle.
@@ -143,18 +140,15 @@ marks the distinction.
 
 ## Workflow
 
-1. **Brief** *(delegated)*: emit the Chief-of-Staff briefing slot; the driving agent runs `prompts/chief_of_staff.md` (cached fixture in `--demo`).
+1. **Brief** *(delegated)*: emit the Chief-of-Staff briefing slot; the driving agent runs `prompts/chief_of_staff.md`.
 2. **Decompose & route** *(prescriptive)*: build the division sub-questions and resolve each skill from `routing.yaml` — do not invent skills or routes.
-3. **Execute** *(prescriptive)*: obtain each step's result (cached fixture in `--demo`; ClawBio runtime with `--live`; else an honest "not executed" stub).
+3. **Execute** *(prescriptive)*: obtain each step's result (ClawBio runtime with `--live`; else an honest "not executed" stub).
 4. **Review** *(delegated)*: the agent runs `prompts/reviewer.md`; if the verdict is `re-route`, the skill executes exactly one follow-up step from the first gap, then stops looping.
 5. **Synthesize** *(delegated)*: the agent writes the recommendation from `prompts/orchestrator.md`; the skill writes `report.md` + `result.json` (incl. an `agent_tasks` list naming each role + prompt) + a `reproducibility/` bundle.
 
 ## CLI Reference
 
 ```bash
-# Offline demo (cached illustrative B7-H3 walkthrough; no network, no API key)
-python skills/virtual-biotech-cso/cso.py --demo --output <report_dir>
-
 # Assess your own target (default: routed steps left as honest stubs for the agent)
 python skills/virtual-biotech-cso/cso.py --query "Assess MET as a target in NSCLC" --output <report_dir>
 
@@ -162,24 +156,16 @@ python skills/virtual-biotech-cso/cso.py --query "Assess MET as a target in NSCL
 python skills/virtual-biotech-cso/cso.py --query "Assess B7-H3 ..." --live --output <report_dir>
 
 # Via ClawBio runner
-python clawbio.py run virtual-biotech-cso --demo
+python clawbio.py run virtual-biotech-cso --query "Assess B7-H3 ..."
 ```
-
-## Demo
-
-```bash
-python clawbio.py run virtual-biotech-cso --demo
-```
-
-Runs the **B7-H3 lung-cancer ADC nomination** fully offline from cached, clearly-labelled fixtures in `demo_data/b7h3/`. Produces a 6-step evidence chain (5 division steps + one reviewer re-route to spatial validation), verdict `re-route`, and a synthesized ADC recommendation. `report.md` is byte-stable across runs. No API key is used.
 
 ## Algorithm / Methodology
 
-1. `case_key(query)` → `b7h3` for the demo target, else a slug.
+1. `case_key(query)` → `b7h3` for B7-H3, else a slug.
 2. `decompose_and_route` builds five division sub-questions and resolves skills from `routing.yaml`.
-3. Each step is resolved by `execute_skill` in priority order: cached demo fixture → live ClawBio run → honest stub (no LLM).
+3. Each step is resolved by `execute_skill`: live ClawBio run → honest stub (no LLM).
 4. The reviewer verdict gates a single re-route (`_reroute_task` from the first gap).
-5. The briefing / review / synthesis roles are emitted as delegation descriptors (`agent_tasks`) for a subagent-capable harness to execute; cached fixtures stand in under `--demo`.
+5. The briefing / review / synthesis roles are emitted as delegation descriptors (`agent_tasks`) for a subagent-capable harness to execute.
 
 **Key parameters**:
 - Reviewer re-route: at most **one** pass (mirrors the paper's loop; avoids unbounded recursion).
@@ -221,7 +207,7 @@ B7-H3 (CD276) is a credible ADC target ... [step_03] ... advance conditional on 
 3. **celltype-specificity-profiler** [🔧 live] — derived: tau + bimodality on the fetched atlas; atlas=CELLxGENE Census ...
 ```
 
-Provenance markers: 🔧 live skill · 🧪 demo · 🌐 web · ⚪ absent. Every evidence row carries a `[n]`
+Provenance markers: 🔧 live skill · 🌐 web · ⚪ absent. Every evidence row carries a `[n]`
 reference resolved in the References section. *ClawBio is a research and educational tool; not a medical device.*
 
 ## Output Structure
@@ -265,12 +251,11 @@ Absent either key the exporter is a silent no-op (≈0.06 ms overhead); the
 **Required**:
 - `pyyaml` (routing map)
 
-No LLM SDK and **no API key**. The skill is pure routing + report assembly; the Chief-of-Staff / Reviewer / synthesis reasoning is performed by the driving agent (its own session model), not by this skill. `--demo` is fully offline.
+No LLM SDK and **no API key**. The skill is pure routing + report assembly; the Chief-of-Staff / Reviewer / synthesis reasoning is performed by the driving agent (its own session model), not by this skill.
 
 ## Gotchas
 
-- **This skill never calls an LLM.** The model will want to "just call the API" for the briefing/review/synthesis. Do not — those roles are delegated to the driving agent via `prompts/`; the skill emits structured slots (`agent_tasks`) and, in `--demo`, cached fixtures.
-- **The `--demo` data is cached and illustrative, not live.** The model will want to present the B7-H3 numbers (tau 0.78, trial programs) as real findings. Do not — every fixture is labelled `cached demo (illustrative)` and the report says so; for real results run `--live` under an agent.
+- **This skill never calls an LLM.** The model will want to "just call the API" for the briefing/review/synthesis. Do not — those roles are delegated to the driving agent via `prompts/`; the skill emits structured slots (`agent_tasks`).
 - **The reviewer re-routes at most once.** The model will want to keep looping until "complete". Do not — one re-route pass is by design; report residual gaps instead of recursing.
 - **Trial-success priors are correlational.** The model will want to say cell-type specificity *causes* trial success. Do not — the odds ratios (Zhang et al. 2026) are observational; never present them as a guarantee.
 - **This is not the file router.** The model will want to fire this for "annotate my VCF". Do not — that is `bio-orchestrator`; this fires only for target-level assessment.
@@ -280,7 +265,7 @@ No LLM SDK and **no API key**. The skill is pure routing + report assembly; the 
 - **Local-first**: routing + report assembly are local; live data access happens inside the validated ClawBio skills, not here.
 - **No model, no key, no exfiltration**: the skill imports no LLM SDK and reads no API key; it cannot send data anywhere.
 - **Disclaimer**: *ClawBio is a research and educational tool. It is not a medical device and does not provide clinical diagnoses. Consult a healthcare professional before making any medical decisions.*
-- **No fabricated science**: missing backends produce honest `not executed` / `delegate-to-agent` stubs; demo data is explicitly labelled illustrative.
+- **No fabricated science**: missing backends produce honest `not executed` / `delegate-to-agent` stubs; results are never fabricated.
 - **Audit trail**: every run writes a `commands.sh` / `environment.yml` / `checksums.sha256` bundle.
 
 ## Agent Boundary
@@ -300,8 +285,8 @@ Upstream, `bio-orchestrator` routes target-assessment queries into this skill.
 
 ## Maintenance
 
-- **Review cadence**: whenever a routed skill is renamed/added — update `routing.yaml` and the demo fixtures.
-- **Staleness signals**: a `routing.yaml` skill no longer exists in the catalog; the Zhang et al. priors are superseded; a routed skill's CLI/`--demo` contract changes.
+- **Review cadence**: whenever a routed skill is renamed/added — update `routing.yaml`.
+- **Staleness signals**: a `routing.yaml` skill no longer exists in the catalog; the Zhang et al. priors are superseded; a routed skill's CLI contract changes.
 - **Deprecation criteria**: retire if ClawBio adds a native multi-agent assessment loop, or fold the divisions into `bio-orchestrator` if it gains a reviewer stage.
 
 ## Citations
