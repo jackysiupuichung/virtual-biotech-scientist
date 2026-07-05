@@ -37,8 +37,13 @@ ALGORITHM_NOTE = (
 
 async def run_analysis(hypotheses: List[Dict[str, Any]]) -> ParetoResult:
     red_flagged, survivors = await red_flag_filter(hypotheses)
-    front, domination_edges = await build_pareto_front(survivors)
-    graph = build_domination_graph(hypotheses, red_flagged, front, domination_edges)
+    front, comparisons = await build_pareto_front(survivors)
+    graph = build_domination_graph(hypotheses, red_flagged, front, comparisons)
+
+    num_domination_edges = sum(
+        1 for c in comparisons if c.overall_relation != "tradeoff_or_unresolved"
+    )
+    num_tradeoff_comparisons = len(comparisons) - num_domination_edges
 
     return ParetoResult(
         run_metadata={
@@ -46,7 +51,9 @@ async def run_analysis(hypotheses: List[Dict[str, Any]]) -> ParetoResult:
             "num_removed_by_red_flags": len(red_flagged),
             "num_surviving_hypotheses": len(survivors),
             "num_front_hypotheses": len(front),
-            "num_domination_edges": len(domination_edges),
+            "num_domination_edges": num_domination_edges,
+            "num_tradeoff_comparisons": num_tradeoff_comparisons,
+            "num_comparisons_total": len(comparisons),
             "algorithm_note": ALGORITHM_NOTE,
         },
         red_flagged_hypotheses=red_flagged,

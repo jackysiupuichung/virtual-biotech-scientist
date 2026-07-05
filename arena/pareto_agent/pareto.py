@@ -8,13 +8,13 @@ first version.
 
 from __future__ import annotations
 
+import random
 from typing import Any, Dict, List, Tuple
 
 from arena.pareto_agent.axis_agents import compare_all_axes
 from arena.pareto_agent.models import (
     AxisComparison,
     AxisName,
-    DominationEdge,
     OverallRelation,
     PairwiseComparison,
 )
@@ -114,54 +114,39 @@ async def compare_hypotheses(
     )
 
 
-def edge_from_comparison(
-    dominator: str, dominated: str, comparison: PairwiseComparison
-) -> DominationEdge:
-    summary = dict(comparison.comparison_summary)
-    summary["overall_relation"] = f"{dominator}_dominates_{dominated}"
-    return DominationEdge(
-        dominator=dominator,
-        dominated=dominated,
-        comparison_summary=summary,
-        axis_comparisons=comparison.axis_comparisons,
-    )
-
-
 async def build_pareto_front(
     survivors: List[Dict[str, Any]],
-) -> Tuple[List[Dict[str, Any]], List[DominationEdge]]:
+) -> Tuple[List[Dict[str, Any]], List[PairwiseComparison]]:
+    """Returns (front, all_comparisons). all_comparisons records every pairwise
+    comparison performed -- including tradeoff_or_unresolved ones -- not just
+    the ones that produced a domination edge, so no LLM judgement is discarded.
+
+    Each candidate compares against the current front in a freshly shuffled
+    order, so which incumbent is checked first (and thus can short-circuit
+    the rest via the early break below) isn't biased by front insertion order."""
     front: List[Dict[str, Any]] = []
-    domination_edges: List[DominationEdge] = []
+    all_comparisons: List[PairwiseComparison] = []
 
     for candidate in survivors:
         candidate_is_dominated = False
         front_members_to_remove: List[Dict[str, Any]] = []
 
-        for incumbent in list(front):
+        shuffled_front = list(front)
+        random.shuffle(shuffled_front)
+
+        for incumbent in shuffled_front:
             comparison = await compare_hypotheses(candidate, incumbent)
+            all_comparisons.append(comparison)
 
             if comparison.overall_relation == "B_dominates_A":
                 candidate_is_dominated = True
-                domination_edges.append(
-                    edge_from_comparison(
-                        dominator=incumbent["id"],
-                        dominated=candidate["id"],
-                        comparison=comparison,
-                    )
-                )
                 break
 
             if comparison.overall_relation == "A_dominates_B":
                 front_members_to_remove.append(incumbent)
-                domination_edges.append(
-                    edge_from_comparison(
-                        dominator=candidate["id"],
-                        dominated=incumbent["id"],
-                        comparison=comparison,
-                    )
-                )
 
-            # else: tradeoff_or_unresolved -- no domination edge.
+            # else: tradeoff_or_unresolved -- no front mutation, but the
+            # comparison is still recorded in all_comparisons above.
 
         if not candidate_is_dominated:
             for dominated_front_member in front_members_to_remove:
@@ -169,4 +154,4 @@ async def build_pareto_front(
                     front.remove(dominated_front_member)
             front.append(candidate)
 
-    return front, domination_edges
+    return front, all_comparisons
