@@ -1,0 +1,135 @@
+# Axis → predefined ToolUniverse / clawbio tool routing.
+#
+# This REPLACES the bespoke ClawBio-skill dispatch as the *first* backend the CSO
+# tries live: each routing.yaml intent that maps to a real, callable tool is listed
+# here. The harness resolves a routed step's `skill` name → this entry → a concrete
+# tool call. Preference order per axis: tooluniverse (predefined, real API) first,
+# then clawbio, then the old in-repo skills / literature proxy as a last resort.
+#
+# Each entry:
+#   backend:  "tooluniverse" | "clawbio"
+#   tool:     the exact predefined tool name (mcp__tooluniverse__execute_tool tool_name)
+#   args:     arg template; {gene}/{gene_symbol}, {disease}, {drug} are filled from the
+#             parsed query ("<gene> in <disease>"). Static values pass through as-is.
+#   summary:  dotted path(s) into the tool's JSON to lift a compact readout for the
+#             evidence row (the raw payload is huge; we keep a digest + provenance).
+#
+# Skill names on the left are the routing.yaml `skill:` values — the CSO already
+# routes to these; here we say which predefined tool actually answers each.
+
+# ---- target ↔ disease association (Open Targets, multi-datasource) ---------- #
+opentargets-association-evidence:
+  backend: tooluniverse
+  tool: OpenTargets_get_evidence_by_datasource
+  args:
+    gene_symbol: "{gene}"
+    disease_name: "{disease}"
+    datasourceIds: [ot_genetics_portal, eva, cancer_gene_census, chembl, expression_atlas, crispr]
+    size: 25
+  summary: [data.disease.name, data.disease.evidences.count]
+
+# ---- somatic driver frequency (IntOGen / EVA somatic via Open Targets) ------ #
+tcga-somatic-profiler:
+  backend: tooluniverse
+  tool: OpenTargets_target_disease_evidence          # IntOGen somatic drivers
+  args:
+    gene_symbol: "{gene}"
+    disease_name: "{disease}"
+  summary: [data.disease.name, data.disease.evidences.count]
+
+# ---- germline genetic support (GWAS Catalog, by gene) ---------------------- #
+gwas-lookup:
+  backend: tooluniverse
+  tool: gwas_get_snps_for_gene
+  args:
+    gene_symbol: "{gene}"
+    size: 20
+  summary: [metadata.pagination.totalElements]       # # of catalogued SNPs near the gene
+
+# ---- cell-type specificity / off-tumour expression (single-cell) ----------- #
+# CellMarker: which cell types express the gene — cancer vs normal. Answers both the
+# specificity axis (is it tumour-restricted?) and the off-target axis (which normal
+# cells also carry it → toxicity risk). Discovered live earlier; pinned here so the
+# axis runs deterministically instead of falling through to Tool_Finder.
+celltype-specificity-profiler:
+  backend: tooluniverse
+  tool: CellMarker_search_by_gene
+  args:
+    operation: search_by_gene
+    gene_symbol: "{gene}"
+    species: Human
+  # CellMarker returns a `records` list with a cell_type field, not pre-computed
+  # counts — derive the cancer-vs-normal split (the on-target/off-tumour signal).
+  summary:
+    - data.total_records
+    - "count:data.records:cell_type=Cancer cell"
+    - "count:data.records:cell_type=Normal cell"
+
+# ---- target prioritisation factors (Open Targets: constraint, tractability) - #
+opentargets-target-factors:
+  backend: tooluniverse
+  tool: OpenTargets_get_evidence_by_datasource
+  args:
+    gene_symbol: "{gene}"
+    disease_name: "{disease}"
+    datasourceIds: [chembl, crispr, gene_burden]
+    size: 15
+  summary: [data.disease.evidences.count]
+
+# ---- post-market safety: FAERS adverse-event snapshot ---------------------- #
+openfda-safety:
+  backend: tooluniverse
+  tool: OpenFDA_search_drug_events
+  args:
+    drug_name: "{drug}"          # a marketed drug against the target, if known
+    count: "patient.reaction.reactionmeddrapt.exact"
+    limit: 20
+  summary: []                    # count-mode returns a ranked reaction list directly
+
+# ---- boxed warning (FDA label) --------------------------------------------- #
+openfda-boxed-warning:
+  backend: tooluniverse
+  tool: FDA_get_boxed_warning_info_by_drug_name
+  args:
+    drug_name: "{drug}"
+    limit: 1
+  summary: []
+
+# ---- druggability / tractability (Pharos TDL) ------------------------------ #
+# Pharos Target Development Level is the cleanest gene-keyed druggability triage:
+# Tclin (has approved drugs) > Tchem (has potent ligands) > Tbio > Tdark (understudied).
+# Pins the tractability axis so it runs deterministically instead of deferring to the
+# old struct-predictor proxy. Boltz-2/pocket tools (ProteinsPlus, SwissDock) need a PDB
+# ID we don't resolve here, so this gene-keyed TDL readout is the load-bearing signal;
+# OpenTargets_get_target_prioritisation (hasPocket/hasLigand) is Ensembl-keyed and needs
+# a gene->Ensembl resolve step this backend doesn't have yet, so it stays out for now.
+struct-predictor:
+  backend: tooluniverse
+  tool: Pharos_get_target
+  args:
+    gene: "{gene_symbol}"
+  # tdl = Target Development Level; novelty = under-studied score; publicationCount = depth.
+  summary: [data.tdl, data.novelty, data.publicationCount]
+
+# ---- competitive landscape: clinical/approved antibodies vs the target ----- #
+# Thera-SAbDab: every clinical or approved therapeutic antibody against the antigen —
+# a structured, target-keyed competitive readout (count 0 == genuine mAb whitespace).
+# Complements lit-synthesizer (Tavily), which stays the recency/preprint reroute target:
+# TheraSAbDab is antibody-only, so it won't see small-molecule or cell-therapy competitors
+# — pair the structured landscape here with Tavily's current-web sweep for those.
+lit-synthesizer:
+  backend: tooluniverse
+  tool: TheraSAbDab_search_by_target
+  args:
+    target: "{gene_symbol}"
+  summary: [data.count]        # # of clinical/approved antibodies against the target
+
+# ---- prior trials + outcomes (ClinicalTrials.gov) -------------------------- #
+clinical-trial-finder:
+  backend: tooluniverse
+  tool: search_clinical_trials
+  args:
+    intervention: "{gene}"       # target/drug as intervention; disease narrows it
+    condition: "{disease}"
+    max_results: 15
+  summary: [data.total_count]    # # of trials; NCT list + briefs in the raw payload

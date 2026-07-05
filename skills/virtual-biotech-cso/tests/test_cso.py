@@ -1,0 +1,350 @@
+"""Tests for the virtual-biotech-cso skill (offline; no network/LLM)."""
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+SKILL_DIR = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(SKILL_DIR))
+
+import pytest  # noqa: E402
+
+from cso import (  # noqa: E402
+    FUNCTIONAL_SKILLS,
+    PlanValidationError,
+    case_key,
+    decompose_and_route,
+    load_routing,
+    validate_and_bind_plan,
+    _reroute_task,
+    _result_digest,
+)
+
+SCRIPT = SKILL_DIR / "cso.py"
+
+
+# --------------------------- pure helpers --------------------------------- #
+def test_case_key_b7h3_aliases():
+    for q in ("Assess B7-H3 in lung cancer", "what about CD276?", "b7h3 target"):
+        assert case_key(q) == "b7h3"
+
+
+def test_case_key_generic_slug():
+    assert case_key("Evaluate KRAS G12C in colorectal cancer").startswith("evaluate_kras")
+
+
+def test_decompose_routes_from_yaml():
+    routing = load_routing()
+    tasks = decompose_and_route("Assess B7-H3 in lung cancer", "b7h3", routing)
+    # The cell-type-expression step (scrna-embedding) is deferred (no live h5ad atlas),
+    # so the deterministic plan goes straight to the functional specificity profiler.
+    assert [t.step for t in tasks] == [
+        "step_01_gwas",
+        "step_03_celltype_specificity",
+        "step_04_offtarget_safety",
+        "step_05_clinical_trials",
+    ]
+    # every routed skill in the deterministic plan is functional (executes live)
+    assert all(t.skill in FUNCTIONAL_SKILLS for t in tasks), [t.skill for t in tasks]
+    # routing.yaml binds the specificity sub-question to our PR #1 skill
+    spec = next(t for t in tasks if t.step == "step_03_celltype_specificity")
+    assert spec.skill == "celltype-specificity-profiler"
+
+
+def test_reroute_task_uses_gap_route():
+    gap = {"missing": "spatial validation", "route_to": "scrna-orchestrator", "why": "x"}
+    t = _reroute_task(gap)
+    assert t.skill == "scrna-orchestrator"
+    assert t.step == "step_06_reroute"
+
+
+def test_result_digest_specificity_shape():
+    env = {"result": {"tau": 0.78, "interpretation": "cell-type-specific (tau > 0.7)"}}
+    assert "tau=0.78" in _result_digest(env)
+
+
+# --------------------------- end-to-end (CLI) ----------------------------- #
+def _run(args, env_extra=None):
+    env = os.environ.copy()
+    # ensure no LLM/clawbio path is taken even if a key is present in CI
+    env.pop("ANTHROPIC_API_KEY", None)
+    if env_extra:
+        env.update(env_extra)
+    return subprocess.run(
+        [sys.executable, str(SCRIPT)] + args,
+        capture_output=True, text=True, env=env,
+    )
+
+
+def test_default_mode_is_honest_without_backends(tmp_path):
+    # no --live, no API key -> honest 'unavailable'/'not generated', never fabricated
+    out = tmp_path / "default"
+    res = _run(["--output", str(out)])
+    assert res.returncode == 0, res.stderr
+    summary = json.loads(res.stdout)["summary"]
+    assert summary["n_executed"] == 0
+    report = (out / "report.md").read_text()
+    assert "not executed" in report
+    assert "no data-derived recommendation" in report
+
+
+# --------------------- validate_and_bind_plan (change #1) ----------------- #
+ROUTING = load_routing()
+
+
+def test_validate_binds_proposed_plan_to_real_skills():
+    plan = [
+        {"division": "right_target",
+         "intent": "germline_genetic_support", "question": "germline?"},
+        {"division": "right_tissue",
+         "intent": "cell_type_specificity", "question": "specific?",
+         "depends_on": ["step_01_germline_genetic_support"]},
+    ]
+    subtasks = validate_and_bind_plan(plan, ROUTING)
+    assert [s.step for s in subtasks] == [
+        "step_01_germline_genetic_support", "step_02_cell_type_specificity"]
+    assert subtasks[0].skill == "gwas-lookup"
+    assert subtasks[1].skill == "celltype-specificity-profiler"
+    assert subtasks[1].depends_on == ["step_01_germline_genetic_support"]
+
+
+def test_validate_rejects_unknown_division():
+    with pytest.raises(PlanValidationError, match="unknown division"):
+        validate_and_bind_plan([{"division": "nope", "intent": "x"}], ROUTING)
+
+
+def test_validate_rejects_unroutable_intent():
+    with pytest.raises(PlanValidationError, match="not routable"):
+        validate_and_bind_plan(
+            [{"division": "right_patient", "intent": "made_up"}], ROUTING)
+
+
+def test_validate_rejects_forward_dependency():
+    with pytest.raises(PlanValidationError, match="earlier step"):
+        validate_and_bind_plan([
+            {"division": "right_patient", "intent": "prior_trials_and_outcomes",
+             "depends_on": ["step_99_future"]},
+        ], ROUTING)
+
+
+def test_validate_rejects_empty_plan():
+    with pytest.raises(PlanValidationError, match="empty"):
+        validate_and_bind_plan([], ROUTING)
+
+
+# --------------------- catalog_skills + validated reroute (changes #2/#3) -- #
+from cso import catalog_skills, REROUTE_FALLBACK_SKILL  # noqa: E402
+
+
+def test_catalog_skills_includes_primary_and_also():
+    skills = catalog_skills(ROUTING)
+    assert "gwas-lookup" in skills                 # primary skill
+    assert "lit-synthesizer" in skills             # reroute target
+    assert "gwas-catalog-region-fetch" in skills   # from an `also:` list
+    assert "scrna-orchestrator" not in skills       # only a reference, not routable
+
+
+def test_reroute_validates_invented_target():
+    gap = {"missing": "x", "route_to": "made-up-skill", "why": "y"}
+    t = _reroute_task(gap, ROUTING)
+    assert t.skill == REROUTE_FALLBACK_SKILL
+
+
+def test_reroute_keeps_valid_target_and_numbers_step():
+    gap = {"missing": "recency", "route_to": "lit-synthesizer", "why": "stale"}
+    t = _reroute_task(gap, ROUTING, step_n=7)
+    assert t.skill == "lit-synthesizer"
+    assert t.step == "step_07_reroute"
+
+
+def test_reroute_without_routing_is_backward_compatible():
+    # no routing passed → no validation → caller's choice honored (legacy demo path)
+    gap = {"missing": "spatial", "route_to": "scrna-orchestrator", "why": "z"}
+    assert _reroute_task(gap).skill == "scrna-orchestrator"
+
+
+# --------------------- reviewer panel aggregation (multi-agent) ----------- #
+from cso import aggregate_panel_review, REVIEWER_LENSES  # noqa: E402
+
+
+def _rev(verdict, missing=None, route_to="lit-synthesizer", scores=None):
+    return {"verdict": verdict, "scores": scores or {"relevance": 5, "evidence": 4, "thoroughness": 3},
+            "gaps": [{"missing": missing, "route_to": route_to, "why": "w"}] if missing else [],
+            "experiments": []}
+
+
+def test_panel_reroutes_when_min_votes_met():
+    lens = [("safety", _rev("re-route", "off-target")),
+            ("genetics", _rev("re-route", "weak GWAS")),
+            ("specificity", _rev("synthesize")),
+            ("clinical", _rev("synthesize"))]
+    agg = aggregate_panel_review(lens, ROUTING)  # 2 votes, min_votes=2
+    assert agg["verdict"] == "re-route"
+    assert agg["panel"]["reroute_votes"] == 2
+
+
+def test_panel_synthesizes_on_lone_dissent():
+    lens = [("safety", _rev("re-route", "off-target")),
+            ("genetics", _rev("synthesize")),
+            ("specificity", _rev("synthesize")),
+            ("clinical", _rev("synthesize"))]
+    agg = aggregate_panel_review(lens, ROUTING)  # 1 vote < 2
+    assert agg["verdict"] == "synthesize"
+
+
+def test_panel_dedupes_gaps_and_tags_lenses():
+    # two lenses raise the SAME gap → one deduped entry crediting both lenses
+    lens = [("safety", _rev("re-route", "spatial", "lit-synthesizer")),
+            ("specificity", _rev("re-route", "spatial", "lit-synthesizer"))]
+    agg = aggregate_panel_review(lens, ROUTING)
+    spatial = [g for g in agg["gaps"] if g["missing"] == "spatial"]
+    assert len(spatial) == 1
+    assert sorted(spatial[0]["lenses"]) == ["safety", "specificity"]
+
+
+def test_panel_scores_are_skeptical_min():
+    lens = [("safety", _rev("synthesize", scores={"relevance": 5, "evidence": 2, "thoroughness": 4})),
+            ("genetics", _rev("synthesize", scores={"relevance": 3, "evidence": 5, "thoroughness": 4}))]
+    agg = aggregate_panel_review(lens, ROUTING)
+    assert agg["scores"] == {"relevance": 3, "evidence": 2, "thoroughness": 4}
+
+
+def test_panel_most_corroborated_gap_first():
+    lens = [("safety", _rev("re-route", "spatial", "lit-synthesizer")),
+            ("genetics", _rev("re-route", "spatial", "lit-synthesizer")),
+            ("clinical", _rev("re-route", "trials", "clinical-trial-finder"))]
+    agg = aggregate_panel_review(lens, ROUTING)
+    # the 2-lens gap sorts ahead of the 1-lens gap → _review_loop reroutes on it first
+    assert agg["gaps"][0]["missing"] == "spatial"
+
+
+def test_four_lenses_defined():
+    keys = [lens["key"] for lens in REVIEWER_LENSES]
+    assert keys == ["safety", "genetics", "specificity", "clinical"]
+
+
+# --------------------- ToolUniverse-only live backend --------------------- #
+# clawbio / in-repo leaf-skill / literature-proxy backends were dropped; the only
+# live backend is the predefined ToolUniverse tool call (tool_backend).
+from cso import _run_skill_live  # noqa: E402
+
+
+def test_run_skill_live_unmapped_axis_falls_through_to_discovery():
+    # An axis with no tool_router.yaml mapping now runs the dynamic discovery loop
+    # (Tool_Finder → compose → run) over the step's question. With no executor
+    # registered it defers to a `find` descriptor — honest, never a fabrication.
+    env = _run_skill_live("scrna-orchestrator", target="B7-H3 in lung cancer",
+                          question="is CD276 on malignant vs stromal cells?")
+    assert env["status"] == "deferred"
+    assert env["source"] == "tool-descriptor"
+    assert env["discover"]["tool_name"] == "Tool_Finder_Keyword"
+
+
+def test_summarize_count_spec_and_malformed_is_guarded():
+    import tool_backend as tb
+    raw = {"data": {"records": [{"cell_type": "Cancer cell"},
+                                {"cell_type": "Normal cell"},
+                                {"cell_type": "Cancer cell"}]}}
+    # good derived-count spec
+    assert tb._summarize(raw, ["count:data.records:cell_type=Cancer cell"]) == {"cancer cell count": 2}
+    # malformed specs (missing '=' or ':') must NOT raise — recorded as an honest error
+    for bad in ("count:data.records.cell_type", "count:foobar"):
+        out = tb._summarize(raw, [bad])
+        assert "bad count spec" in list(out.values())[0]
+    # plain dotted path unaffected
+    assert tb._summarize(raw, ["data.records"])["data.records"] == raw["data"]["records"]
+
+
+def test_discovery_loop_runs_with_injected_executor():
+    # With an executor registered, the discovery loop runs find → compose → run and
+    # folds the tool result into the evidence row (source 'tooluniverse').
+    import tool_backend as tb
+
+    calls = []
+
+    def fake_exec(verb, payload):
+        calls.append(verb)
+        if verb == "find":
+            return {"tools": [
+                {"name": "Spatial_expression_tool",
+                 "parameter": {"properties": {"gene_symbol": {}, "disease": {}}}},
+                {"name": "Other_tool", "parameter": {"properties": {}}},
+            ]}
+        if verb == "compose":
+            return {"graph": {"nodes": [{"name": "Spatial_expression_tool"},
+                                        {"name": "Other_tool"}]}}
+        if verb == "run":
+            return {"raw": {"data": {"malignant_fraction": 0.71}}}
+        return {"status": "error"}
+
+    tb.set_tool_executor(fake_exec)
+    try:
+        env = _run_skill_live("scrna-orchestrator", target="B7-H3 in lung cancer",
+                              question="is CD276 on malignant vs stromal cells?")
+    finally:
+        tb.set_tool_executor(None)
+    assert calls == ["find", "compose", "run"]          # full loop fired
+    assert env["source"] == "tooluniverse"
+    assert env["discovered"] == "Spatial_expression_tool"
+    assert env["tool_call"]["arguments"] == {"gene_symbol": "CD276", "disease": "lung cancer"}
+
+
+def test_run_skill_live_mapped_axis_routes_to_tooluniverse():
+    # gwas-lookup has a tool_router.yaml mapping → the ToolUniverse backend answers.
+    # Without the tooluniverse package installed it hands back a tool-call descriptor.
+    env = _run_skill_live("gwas-lookup", target="B7-H3 in lung cancer")
+    assert env.get("source") in ("tooluniverse", "tool-descriptor", "unavailable")
+    assert "tool_call" in env or env.get("source") == "unavailable"
+
+
+# --------------------- division grouping (Virtual Biotech structure) ------ #
+from cso import group_by_division, Subtask  # noqa: E402
+
+
+def test_group_by_division_preserves_order_and_groups():
+    tasks = [
+        Subtask("step_01_a", "right_target", "q", "gwas-lookup"),
+        Subtask("step_02_b", "right_patient", "q", "clinical-trial-finder"),
+        Subtask("step_03_c", "right_target", "q", "celltype-specificity-profiler"),
+    ]
+    groups = group_by_division(tasks)
+    assert [d for d, _ in groups] == ["right_target", "right_patient"]
+    # the two right_target steps are grouped under one scientist agent
+    assert [t.step for t in groups[0][1]] == ["step_01_a", "step_03_c"]
+    assert [t.step for t in groups[1][1]] == ["step_02_b"]
+
+
+# --------------------- execute_skill source labelling --------------------- #
+# The clawbio/local-leaf/literature-proxy backends were dropped — ToolUniverse-only.
+# These tests replace the old literature-patch suite: they assert execute_skill honours
+# the ToolUniverse source label and never fabricates a result.
+from cso import execute_skill, EXECUTED_SOURCES  # noqa: E402
+
+
+@pytest.mark.skip(reason="literature-proxy patch dropped — ToolUniverse-only backend")
+def test_literature_proxy_removed():
+    ...
+
+
+def test_execute_skill_unmapped_axis_defers_to_discovery():
+    # An axis with no tool_router.yaml mapping runs the discovery loop; with no
+    # executor registered it defers to a Tool_Finder descriptor (source
+    # 'tool-descriptor'), never a fabricated result.
+    t = Subtask("step_09_x", "right_target",
+                "spatial validation?", "scrna-orchestrator")
+    env = execute_skill(t, case="b7h3", live=True, target="B7-H3 in lung cancer")
+    assert env["source"] == "tool-descriptor"
+    assert env["result"]["status"] == "deferred"
+
+
+def test_execute_skill_mapped_axis_labels_tooluniverse_source():
+    # gwas-lookup maps to a ToolUniverse tool → execute_skill carries the backend's
+    # source label (tool-descriptor when the package is absent, tooluniverse when live).
+    t = Subtask("step_01_gwas", "right_target",
+                "germline support?", "gwas-lookup")
+    env = execute_skill(t, case="b7h3", live=True, target="B7-H3 in lung cancer")
+    assert env["source"] in ("tooluniverse", "tool-descriptor", "unavailable")
+    # a mapped, non-unavailable axis counts as executed evidence
+    if env["source"] != "unavailable":
+        assert env["source"] in EXECUTED_SOURCES

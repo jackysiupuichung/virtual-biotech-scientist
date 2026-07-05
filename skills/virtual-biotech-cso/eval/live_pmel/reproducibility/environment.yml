@@ -1,0 +1,9 @@
+name: virtual-biotech-cso
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python=3.12.13
+  - pip
+  - pip:
+      - pyyaml==6.0.3

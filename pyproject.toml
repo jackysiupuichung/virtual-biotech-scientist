@@ -24,6 +24,13 @@ dependencies = [
 tools = [
     "tooluniverse>=1.0",
 ]
+# LangGraph engine for the CSO loop — used only by
+# skills/virtual-biotech-cso/harness_langgraph.py, an opt-in re-expression of the
+# stdlib-only harness.py as a compiled StateGraph (visualizable, resumable,
+# HITL-native, LangSmith-traceable). harness.py itself has no such dependency.
+langgraph = [
+    "langgraph>=0.2",
+]
 dev = [
     "pytest>=8.0",
     "ruff>=0.6",

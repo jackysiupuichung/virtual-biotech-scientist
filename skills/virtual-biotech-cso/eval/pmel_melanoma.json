@@ -1,0 +1,45 @@
+{
+  "_comment": "Evaluation fixture: real ToolUniverse tool outputs captured for PMEL (gp100) in melanoma, keyed by (tool_name, arg-signature). The replay executor (eval/run_eval.py) serves the `raw` payload for each call so the CSO's tool_router.yaml summary paths dig into it exactly as they would a live response. Captured 2026-07-05 via the MCP ToolUniverse server; raw payloads trimmed to the digested fields + a human note. Live sources linked in the report provenance.",
+  "target": "PMEL (gp100)",
+  "disease": "melanoma",
+  "query": "Assess PMEL (gp100) as a therapeutic target in melanoma",
+  "captured": "2026-07-05",
+  "review": {
+    "_comment": "Drives the review→re-route loop deterministically without an LLM: on the first pass the eval gate forces a 're-route' to fill the named gap (a real one — the initial plan has no target-disease association axis), then approves on the next pass so the loop converges. This exercises the multi-agent control flow the stub reviewer alone can't.",
+    "force_reroute_pass_0": {
+      "route_to": "opentargets-association-evidence",
+      "missing": "target-disease association strength (no association axis in the initial plan)",
+      "why": "germline is weak and expression is shared with normal melanocytes; the go/no-go needs the direct PMEL-melanoma association evidence to weigh against the toxicity liability."
+    }
+  },
+  "tools": {
+    "gwas_get_snps_for_gene:PMEL": {
+      "metadata": {"pagination": {"totalElements": 120}},
+      "data": [{"rsId": "rs773125", "region": "12q13.2", "functionalClass": "intron_variant"}],
+      "_note": "120 catalogued SNPs in the PMEL locus, mostly pigmentation/intronic; PMEL not the closest gene to the lead SNP. Weak germline support — expected, non-disqualifying for a melanocyte differentiation antigen."
+    },
+    "CellMarker_search_by_gene:PMEL": {
+      "data": {
+        "gene_symbol": "PMEL", "species": "Human",
+        "total_records": 22, "cancer_cell_records": 11, "normal_cell_records": 11,
+        "normal_cell_types": ["Melanocyte (skin, eye/choroid)", "Retinal pigment epithelial cell"]
+      },
+      "_note": "PMEL marks BOTH melanoma cancer cells AND normal melanocytes + retinal pigment epithelium. On-target/off-tumour liability: melanocyte + ocular toxicity — the known gp100 safety axis."
+    },
+    "search_clinical_trials:PMEL:melanoma": {
+      "data": {
+        "total_count": 20,
+        "phase3_trials": ["NCT00019682 aldesleukin +/- gp100 vaccine", "NCT00094653 ipilimumab + gp100 (MDX-010/MDX-1379)"],
+        "notable": ["NCT02889861 IMCgp100 rollover (tebentafusp lineage, ImmTAC)", "NCT00610311 anti-gp100 adoptive cells + ALVAC"],
+        "modalities": ["peptide vaccine", "adoptive T-cell", "bispecific TCR (tebentafusp)"]
+      },
+      "_note": "20 gp100 trials across three modalities; the IMCgp100/tebentafusp bispecific-TCR lineage is the validated clinical path (approved in uveal melanoma). Modality de-risked."
+    },
+    "OpenTargets_get_evidence_by_datasource:PMEL:melanoma": {
+      "data": {"disease": {"id": "MONDO_0005105", "name": "melanoma",
+               "evidences": {"count": 2953}},
+               "target": {"id": "ENSG00000185664", "approvedSymbol": "PMEL"}},
+      "_note": "2953 target-disease evidence rows, literature-dominated (europepmc, top score 0.84). Strong but literature-weighted association, not genetic."
+    }
+  }
+}
