@@ -237,11 +237,35 @@ def _execute_in_process(tool_name: str, arguments: dict[str, Any]) -> dict[str, 
                 "reason": f"tooluniverse in-process error: {type(exc).__name__}: {exc}"}
 
 
+def _count_where(raw: Any, list_path: str, field: str, value: str) -> int | None:
+    """Count items in the list at ``list_path`` whose ``field`` equals ``value``.
+
+    Supports summary specs the tool payload can't provide as a direct field — e.g.
+    CellMarker returns a `records` list with a `cell_type` field, not pre-computed
+    cancer/normal counts. None if the list is missing (honest, not a fake 0)."""
+    items = _dig(raw, list_path)
+    if not isinstance(items, list):
+        return None
+    return sum(1 for it in items if isinstance(it, dict) and it.get(field) == value)
+
+
 def _summarize(raw: Any, summary_paths: list[str]) -> dict[str, Any]:
-    """Lift a compact digest from a (large) tool payload for the evidence row."""
+    """Lift a compact digest from a (large) tool payload for the evidence row.
+
+    Each entry is either a dotted path (``data.disease.evidences.count``) or a derived
+    count spec ``count:<list_path>:<field>=<value>`` (e.g.
+    ``count:data.records:cell_type=Cancer cell``) — the digest key drops the ``count:``
+    prefix so it reads cleanly in the report.
+    """
     digest: dict[str, Any] = {}
     for path in summary_paths or []:
-        digest[path] = _dig(raw, path)
+        if path.startswith("count:"):
+            spec = path[len("count:"):]
+            list_path, cond = spec.split(":", 1)
+            field, value = cond.split("=", 1)
+            digest[f"{value.lower()} count"] = _count_where(raw, list_path, field, value)
+        else:
+            digest[path] = _dig(raw, path)
     return digest
 
 

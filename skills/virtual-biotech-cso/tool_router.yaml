@@ -58,7 +58,12 @@ celltype-specificity-profiler:
     operation: search_by_gene
     gene_symbol: "{gene}"
     species: Human
-  summary: [data.total_records, data.cancer_cell_records, data.normal_cell_records]
+  # CellMarker returns a `records` list with a cell_type field, not pre-computed
+  # counts — derive the cancer-vs-normal split (the on-target/off-tumour signal).
+  summary:
+    - data.total_records
+    - "count:data.records:cell_type=Cancer cell"
+    - "count:data.records:cell_type=Normal cell"
 
 # ---- target prioritisation factors (Open Targets: constraint, tractability) - #
 opentargets-target-factors:
