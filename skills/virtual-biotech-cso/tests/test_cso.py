@@ -241,6 +241,21 @@ def test_run_skill_live_unmapped_axis_falls_through_to_discovery():
     assert env["discover"]["tool_name"] == "Tool_Finder_Keyword"
 
 
+def test_summarize_count_spec_and_malformed_is_guarded():
+    import tool_backend as tb
+    raw = {"data": {"records": [{"cell_type": "Cancer cell"},
+                                {"cell_type": "Normal cell"},
+                                {"cell_type": "Cancer cell"}]}}
+    # good derived-count spec
+    assert tb._summarize(raw, ["count:data.records:cell_type=Cancer cell"]) == {"cancer cell count": 2}
+    # malformed specs (missing '=' or ':') must NOT raise — recorded as an honest error
+    for bad in ("count:data.records.cell_type", "count:foobar"):
+        out = tb._summarize(raw, [bad])
+        assert "bad count spec" in list(out.values())[0]
+    # plain dotted path unaffected
+    assert tb._summarize(raw, ["data.records"])["data.records"] == raw["data"]["records"]
+
+
 def test_discovery_loop_runs_with_injected_executor():
     # With an executor registered, the discovery loop runs find → compose → run and
     # folds the tool result into the evidence row (source 'tooluniverse').

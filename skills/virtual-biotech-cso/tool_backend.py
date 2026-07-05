@@ -261,6 +261,11 @@ def _summarize(raw: Any, summary_paths: list[str]) -> dict[str, Any]:
     for path in summary_paths or []:
         if path.startswith("count:"):
             spec = path[len("count:"):]
+            # spec must be "<list_path>:<field>=<value>"; a malformed one (missing ':'
+            # or '=') is a config typo — record it as an honest error, never crash the run.
+            if ":" not in spec or "=" not in spec.split(":", 1)[1]:
+                digest[path] = f"bad count spec: {spec!r}"
+                continue
             list_path, cond = spec.split(":", 1)
             field, value = cond.split("=", 1)
             digest[f"{value.lower()} count"] = _count_where(raw, list_path, field, value)
