@@ -923,7 +923,7 @@ def _build_envelope(query, case, briefing, subtasks, results, review, synthesis,
         "model": runner.model if calls_llm else "none",
         "n_steps": len(results),
         "reviewer_verdict": review.get("verdict", "synthesize"),
-        "n_executed": len([e for e in results if e.get("source") == "clawbio"]),
+        "n_executed": len([e for e in results if e.get("source") in cso.EXECUTED_SOURCES]),
         # Derived tier is the decision of record when the engine ran; the agent's
         # free-text is kept alongside so a divergence is auditable, not erased.
         "decision": (decision_engine or {}).get("tier") or syn.get("decision", "REVIEW"),

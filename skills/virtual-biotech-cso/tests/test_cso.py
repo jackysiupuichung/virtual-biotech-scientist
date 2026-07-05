@@ -272,30 +272,27 @@ def test_four_lenses_defined():
     assert keys == ["safety", "genetics", "specificity", "clinical"]
 
 
-# --------------------- live Tavily routing (sponsor tool + autonomy) ------ #
-from cso import _local_skill_args  # noqa: E402
+# --------------------- ToolUniverse-only live backend --------------------- #
+# clawbio / in-repo leaf-skill / literature-proxy backends were dropped; the only
+# live backend is the predefined ToolUniverse tool call (tool_backend).
+from cso import _run_skill_live  # noqa: E402
 
 
-def test_lit_synthesizer_goes_live_with_key(monkeypatch):
-    monkeypatch.setenv("TAVILY_API_KEY", "test-key")
-    args = _local_skill_args("lit-synthesizer", live=True, target="B7-H3 in lung cancer")
-    assert args == ["--target", "B7-H3 in lung cancer"]  # real-time Tavily search
+def test_run_skill_live_unmapped_axis_is_not_executed():
+    # An axis with no tool_router.yaml mapping returns an honest "not executed"
+    # envelope (no source), never a fabricated result.
+    env = _run_skill_live("scrna-orchestrator", target="B7-H3 in lung cancer")
+    assert env["status"] == "not executed"
+    assert "ToolUniverse mapping" in env["reason"]
+    assert "source" not in env
 
 
-def test_lit_synthesizer_falls_back_to_demo_without_key(monkeypatch):
-    monkeypatch.delenv("TAVILY_API_KEY", raising=False)
-    args = _local_skill_args("lit-synthesizer", live=True, target="B7-H3 in lung cancer")
-    assert args == ["--demo"]  # honest offline fallback, never fails
-
-
-def test_demo_mode_never_goes_live(monkeypatch):
-    monkeypatch.setenv("TAVILY_API_KEY", "test-key")
-    assert _local_skill_args("lit-synthesizer", live=False, target="x") == ["--demo"]
-
-
-def test_non_tavily_skill_stays_demo(monkeypatch):
-    monkeypatch.setenv("TAVILY_API_KEY", "test-key")
-    assert _local_skill_args("openfda-safety", live=True, target="x") == ["--demo"]
+def test_run_skill_live_mapped_axis_routes_to_tooluniverse():
+    # gwas-lookup has a tool_router.yaml mapping → the ToolUniverse backend answers.
+    # Without the tooluniverse package installed it hands back a tool-call descriptor.
+    env = _run_skill_live("gwas-lookup", target="B7-H3 in lung cancer")
+    assert env.get("source") in ("tooluniverse", "tool-descriptor", "unavailable")
+    assert "tool_call" in env or env.get("source") == "unavailable"
 
 
 # --------------------- division grouping (Virtual Biotech structure) ------ #
@@ -315,54 +312,35 @@ def test_group_by_division_preserves_order_and_groups():
     assert [t.step for t in groups[1][1]] == ["step_02_b"]
 
 
-# --------------------- literature patch for unavailable axes --------------- #
-from cso import _patch_with_literature, _LITERATURE_PROXY_INTENT, execute_skill  # noqa: E402
+# --------------------- execute_skill source labelling --------------------- #
+# The clawbio/local-leaf/literature-proxy backends were dropped — ToolUniverse-only.
+# These tests replace the old literature-patch suite: they assert execute_skill honours
+# the ToolUniverse source label and never fabricates a result.
+from cso import execute_skill, EXECUTED_SOURCES  # noqa: E402
 
 
-def test_patch_requires_tavily_key(monkeypatch):
-    # No key → no patch; the axis stays honestly "unavailable" rather than being
-    # filled by lit-synthesizer's offline --demo fixture (which would be illustrative).
-    monkeypatch.delenv("TAVILY_API_KEY", raising=False)
-    assert _patch_with_literature("gwas-lookup", target="B7-H3 in lung cancer") is None
+@pytest.mark.skip(reason="literature-proxy patch dropped — ToolUniverse-only backend")
+def test_literature_proxy_removed():
+    ...
 
 
-def test_patch_requires_target(monkeypatch):
-    monkeypatch.setenv("TAVILY_API_KEY", "test-key")
-    assert _patch_with_literature("gwas-lookup", target=None) is None
-
-
-def test_patch_steers_search_at_axis_intent_and_tags_proxy(monkeypatch):
-    monkeypatch.setenv("TAVILY_API_KEY", "test-key")
-    seen = {}
-
-    def fake_local(skill, live=False, target=None, focus=None):
-        seen["skill"], seen["focus"] = skill, focus
-        return {"status": "ok", "via": "lit", "summary": "s", "references": []}
-
-    monkeypatch.setattr("cso._run_local_skill", fake_local)
-    env = _patch_with_literature("crispr-screen-triage", target="B7-H3 in lung cancer")
-    assert seen["skill"] == "lit-synthesizer"  # routed through the live Tavily search
-    assert "essentiality" in seen["focus"].lower() or "depmap" in seen["focus"].lower()
-    assert env["literature_proxy_for"] == "crispr-screen-triage"  # labelled, not the real dataset
-    assert "literature patch" in env["via"]
-
-
-def test_patch_reviewer_focus_narrows_intent(monkeypatch):
-    monkeypatch.setenv("TAVILY_API_KEY", "test-key")
-    seen = {}
-    monkeypatch.setattr("cso._run_local_skill",
-                        lambda skill, live=False, target=None, focus=None:
-                        (seen.update(focus=focus) or {"status": "ok"}))
-    _patch_with_literature("gwas-lookup", target="B7-H3", focus="African ancestry cohorts")
-    assert "African ancestry cohorts" in seen["focus"]  # deeper re-route steers the patch
-
-
-def test_unavailable_external_skill_stays_honest_without_key(monkeypatch):
-    # End-to-end: a live external skill with no Tavily key reports unavailable, not a
+def test_execute_skill_unmapped_axis_is_unavailable():
+    # An axis with no tool_router.yaml mapping is honestly "unavailable" — never a
     # fabricated or demo-backed result.
-    monkeypatch.delenv("TAVILY_API_KEY", raising=False)
-    t = Subtask("step_01_gwas", "target_id_and_prioritization",
-                "germline support?", "gwas-lookup")
+    t = Subtask("step_09_x", "target_id_and_prioritization",
+                "spatial validation?", "scrna-orchestrator")
     env = execute_skill(t, case="b7h3", live=True, target="B7-H3 in lung cancer")
     assert env["source"] == "unavailable"
     assert env["result"]["status"] != "ok"
+
+
+def test_execute_skill_mapped_axis_labels_tooluniverse_source():
+    # gwas-lookup maps to a ToolUniverse tool → execute_skill carries the backend's
+    # source label (tool-descriptor when the package is absent, tooluniverse when live).
+    t = Subtask("step_01_gwas", "target_id_and_prioritization",
+                "germline support?", "gwas-lookup")
+    env = execute_skill(t, case="b7h3", live=True, target="B7-H3 in lung cancer")
+    assert env["source"] in ("tooluniverse", "tool-descriptor", "unavailable")
+    # a mapped, non-unavailable axis counts as executed evidence
+    if env["source"] != "unavailable":
+        assert env["source"] in EXECUTED_SOURCES

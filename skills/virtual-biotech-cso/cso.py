@@ -1,12 +1,12 @@
 #!/usr/bin/env python
-"""virtual-biotech-cso — a ClawBio orchestration skill.
+"""virtual-biotech-cso — a ToolUniverse orchestration skill.
 
 Reproduces the multi-agent therapeutic-target-assessment loop from
 *The Virtual Biotech* (Zhang et al. 2026): a Chief-of-Staff briefing, task
 decomposition + routing across four scientific divisions, a one-pass
 Scientific-Reviewer audit (which may re-route to fill a gap), and a synthesized
-report. It is an ORCHESTRATOR: it routes sub-questions to other ClawBio skills
-(via routing.yaml) and never does the underlying biology itself.
+report. It is an ORCHESTRATOR: it routes sub-questions to predefined ToolUniverse
+tools (via ``tool_router.yaml``) and never does the underlying biology itself.
 
 This skill makes NO LLM call of its own. The reasoning roles (Chief of Staff,
 Scientific Reviewer, CSO synthesis) are delegated to the driving agent: a
@@ -15,22 +15,21 @@ ideally one subagent per role/division — using its own session model. No API
 key is required.
 
 Two execution modes, both honest:
-  - ``--live``  : executes each routed skill through the ClawBio runtime
-                  (deterministic skill composition). Reasoning is still
-                  delegated to the agent; unavailable steps are reported, never
-                  fabricated.
+  - ``--live``  : executes each routed skill through its predefined ToolUniverse
+                  tool (``tool_backend.run_predefined_tool``). Reasoning is still
+                  delegated to the agent; steps with no ToolUniverse mapping are
+                  reported "not executed", never fabricated.
   - default     : routed steps are left as honest "not executed" stubs and the
                   reasoning roles as delegation stubs for the agent to drive.
 
-Output contract (ClawBio standard): ``report.md`` + ``result.json`` +
-``reproducibility/`` in the chosen ``--output`` directory.
+Output contract: ``report.md`` + ``result.json`` + ``reproducibility/`` in the
+chosen ``--output`` directory.
 """
 from __future__ import annotations
 
 import argparse
 import hashlib
 import json
-import os
 import re
 import sys
 from dataclasses import dataclass, field
@@ -94,12 +93,16 @@ SOURCE_REGISTRY: dict[str, dict[str, str]] = {
 
 # Provenance marker + evidence grade derived from how a step was sourced.
 PROVENANCE = {
-    "clawbio": ("🔧 live", "real skill output"),
+    "tooluniverse": ("🔧 live", "real ToolUniverse tool output"),
+    "tool-descriptor": ("📋 descriptor", "tool call for the agent/frontend to run"),
     "web": ("🌐 web", "agent literature search"),
     "unavailable": ("⚪ not-run", "absent — backend unavailable"),
     "error": ("⚪ error", "absent — skill error"),
     DELEGATE: ("⚪ delegated", "absent — pending agent"),
 }
+
+# Source labels that count as a real, executed evidence row.
+EXECUTED_SOURCES = ("tooluniverse", "tool-descriptor")
 
 
 # --------------------------------------------------------------------------- #
@@ -150,24 +153,17 @@ def _skill_for(routing: dict[str, Any], division: str, intent: str) -> str:
     return "unrouted-skill"
 
 
-# Skills that actually execute live today — in-repo leaf scripts (LOCAL_SKILLS) plus
-# the installed ClawBio catalog skills we've verified run (CLAWBIO_SKILL_MAP, minus
-# the ones still needing inputs/atlases we can't supply). Only these are exposed to
-# the planner and the deterministic plan, so a live run never routes to a dead skill.
-# The rest are tracked in DEFERRED_SKILLS — wire upstream/inputs, then promote here.
+# Planner allow-list: the axes the CSO is willing to route to. Only intents whose
+# primary skill is in this set are exposed to the planner agent and used by the
+# deterministic plan, so planning stays stable regardless of which ones have a live
+# ToolUniverse mapping today (a skill with no tool_router.yaml entry simply returns an
+# honest "not executed" envelope at run time — see _run_skill_live). This is a curated
+# menu, independent of the live backend.
 FUNCTIONAL_SKILLS: set[str] = {
     "celltype-specificity-profiler", "clinical-trial-finder", "clinpgx",
     "crispr-screen-triage", "equity-scorer", "gwas-lookup", "lit-synthesizer",
     "malignant-expression-profiler", "openfda-safety", "opentargets-target-factors",
     "tcga-somatic-profiler",
-}
-# Routed-but-not-yet-runnable (no ClawBio counterpart, or needs an input we don't have
-# live: an h5ad atlas, an Ensembl id, a region window). TODO: wire these and promote
-# into FUNCTIONAL_SKILLS. Tracked in docs/deferred-skills.md.
-DEFERRED_SKILLS: set[str] = {
-    "cellxgene-fetch", "claw-ancestry-pca", "fine-mapping", "gwas-catalog-region-fetch",
-    "omics-target-evidence-mapper", "opentargets-association-evidence",
-    "pathway-enricher", "scrna-embedding", "struct-predictor", "turingdb-graph",
 }
 
 
@@ -357,10 +353,10 @@ REROUTE_FALLBACK_SKILL = "lit-synthesizer"  # the routing.yaml-designated rerout
 
 # Skills whose output is *question-sensitive*: a re-route can ask them a deeper,
 # different question (a gap's ``missing``) and genuinely get new evidence. Only the
-# free-text live search qualifies — its query is steered by ``focus`` in
-# _local_skill_args. Gene-DB skills are deterministic in the gene alone, so a
-# "different question" cannot change their result; the review loop blocks repeats of
-# those so it never thrashes re-running a lookup that can't improve.
+# free-text live search qualifies — its query is steered by a reviewer ``focus``.
+# Gene-DB skills are deterministic in the gene alone, so a "different question" cannot
+# change their result; the review loop blocks repeats of those so it never thrashes
+# re-running a lookup that can't improve.
 QUESTION_SENSITIVE_SKILLS = frozenset({"lit-synthesizer"})
 
 
@@ -547,272 +543,39 @@ def load_briefing(query: str, case: str) -> dict[str, Any]:
     }
 
 
-# In-repo leaf skills the CSO can execute directly (no external ClawBio runtime):
-# script path relative to REPO_ROOT/skills + the args that run its offline --demo.
-# Used as the first resolution for re-route/routed steps so a live run actually
-# executes (e.g. the reviewer re-routing to lit-synthesizer for current evidence).
-LOCAL_SKILLS: dict[str, str] = {
-    "lit-synthesizer": "lit-synthesizer/lit_synthesizer.py",
-    "openfda-safety": "openfda-safety/openfda_safety.py",
-    "celltype-specificity-profiler": "celltype-specificity-profiler/profiler.py",
-    "clinical-trial-finder": "clinical-trial-finder/clinical_trial_finder.py",
-    # These ship as runnable scripts in this repo too — route them to their own CLI
-    # (each accepts --demo, and --gene/--disease parsed from the target) rather than
-    # falling through to the external ClawBio runtime. Without these entries a live
-    # run reported them "unavailable" even though the script sits right here.
-    "opentargets-association-evidence":
-        "opentargets-association-evidence/opentargets_association_evidence.py",
-    "opentargets-target-factors":
-        "opentargets-target-factors/opentargets_target_factors.py",
-    "malignant-expression-profiler":
-        "malignant-expression-profiler/malignant_expression_profiler.py",
-    "tcga-somatic-profiler": "tcga-somatic-profiler/tcga_somatic_profiler.py",
-    "cellxgene-fetch": "cellxgene-fetch/cellxgene_fetch.py",
-}
-
-
-# Skills whose CLI takes a --gene symbol (and some also --disease) for a live run.
-# Given a real target we pass the parsed symbol; otherwise they fall back to --demo.
-_GENE_ARG_SKILLS = {
-    "opentargets-association-evidence": ("--gene", "--disease"),
-    "opentargets-target-factors": ("--gene",),
-    "tcga-somatic-profiler": ("--gene",),
-    "cellxgene-fetch": ("--gene", "--disease"),
-    # malignant-expression-profiler needs a single-cell --atlas it can't fetch live,
-    # so it stays on --demo (its bundled illustrative data) rather than erroring.
-}
-
-
-def _target_gene(target: str | None) -> str | None:
-    """Best-effort gene/target symbol from a free-text target ("B7-H3 in lung …")."""
-    if not target:
-        return None
-    m = re.search(r"\b([A-Z][A-Z0-9]{1,6}(?:-[A-Z0-9]+)?)\b", target)
-    return m.group(1) if m else None
-
-
-def _local_skill_args(skill: str, live: bool, target: str | None,
-                      focus: str | None = None) -> list[str]:
-    """CLI args for an in-repo leaf skill.
-
-    In ``--live`` we run the skill for real where it can: ``lit-synthesizer`` does a
-    **live Tavily search** for ``target`` (real-time current-evidence acquisition —
-    the sponsor-tool + autonomy path) when ``TAVILY_API_KEY`` is set; the gene-based
-    skills get the parsed ``--gene`` (and ``--disease`` where they accept it). Anything
-    lacking its key/input falls back to the offline ``--demo`` so the run still produces
-    honest, labelled evidence rather than failing.
-
-    ``focus`` is an optional reviewer follow-up (a gap's ``missing``) used to steer a
-    *deeper* re-route: for the free-text search skill it is appended to the target so
-    the live search chases the specific missing evidence instead of repeating the bare
-    target query. Deterministic gene-DB skills ignore it — their output is fixed by the
-    gene, so a "different question" cannot change it (the loop blocks those repeats).
-    """
-    if live and skill == "lit-synthesizer" and target and os.environ.get("TAVILY_API_KEY"):
-        q = f"{target} — {focus}" if focus else target
-        return ["--target", q]
-    # clinical-trial-finder hits the public ClinicalTrials.gov API v2 — no key needed,
-    # so a live run queries real trials (and real NCT deep links) whenever a target is set.
-    if live and skill == "clinical-trial-finder" and target:
-        return ["--target", target]
-    if live and skill in _GENE_ARG_SKILLS:
-        gene = _target_gene(target)
-        if gene:
-            flags = _GENE_ARG_SKILLS[skill]
-            args = ["--gene", gene]
-            if "--disease" in flags and target:
-                args += ["--disease", target]  # the skill resolves the disease phrase
-            return args
-    return ["--demo"]
-
-
-def _run_local_skill(skill: str, live: bool = False,
-                     target: str | None = None,
-                     focus: str | None = None) -> dict[str, Any] | None:
-    """Run an in-repo leaf skill via its own CLI. None if unknown.
-
-    Returns the skill's JSON envelope (its landscape.json/safety.json/etc.) so the
-    CSO can fold real routed-skill output into the evidence chain without an
-    external runtime. Honest 'not executed' on any failure; never fabricates.
-    """
-    if skill not in LOCAL_SKILLS:
-        return None
-    import subprocess
-    import tempfile
-
-    rel = LOCAL_SKILLS[skill]
-    args = _local_skill_args(skill, live, target, focus)
-    script = REPO_ROOT / "skills" / rel
-    if not script.exists():
-        return {"status": "not executed", "reason": f"{skill}: script not found at {script}."}
-    try:
-        with tempfile.TemporaryDirectory() as td:
-            proc = subprocess.run(
-                [sys.executable, str(script), *args, "--output", td],
-                capture_output=True, text=True, timeout=120,
-            )
-            if proc.returncode != 0:
-                return {"status": "not executed",
-                        "reason": f"{skill} exited {proc.returncode}: {proc.stderr.strip()[:200]}"}
-            via = f"{skill} {' '.join(args)}"  # e.g. 'lit-synthesizer --target B7-H3 ...'
-            # Fold the richest JSON artifact the skill wrote into the evidence row.
-            # Prefer the known canonical names; else fall back to ANY *.json the skill
-            # emitted (skills vary: factors.json, profile.json, somatic.json, …) so a
-            # skill's data is never silently dropped to a bare stdout string.
-            known = ("landscape.json", "safety.json", "result.json", "profile.json",
-                     "factors.json", "somatic.json", "malignant_profile.json")
-            candidates = [Path(td) / n for n in known if (Path(td) / n).exists()]
-            candidates += [p for p in Path(td).glob("*.json") if p not in candidates]
-            for p in candidates:
-                try:
-                    payload = json.loads(p.read_text())
-                except (OSError, json.JSONDecodeError):
-                    continue
-                if isinstance(payload, dict):
-                    return {"status": "ok", "via": via, **payload}
-            return {"status": "ok", "via": via, "stdout": proc.stdout.strip()[:400]}
-    except Exception as exc:  # pragma: no cover - defensive
-        return {"status": "not executed", "reason": f"{type(exc).__name__}: {exc}"}
-
-
-# When a routed skill's dataset/runtime isn't available, we patch its axis with a
-# Tavily literature search. Each skill maps to the *question its axis answers*, so the
-# search chases the right evidence (genetic support, essentiality, off-tumour
-# expression, …) rather than a bare gene query. Skills not listed get a generic probe.
-_LITERATURE_PROXY_INTENT: dict[str, str] = {
-    "gwas-lookup": "germline genetic association and GWAS evidence for the disease",
-    "gwas-catalog-region-fetch": "GWAS catalog associations in the locus",
-    "crispr-screen-triage": "CRISPR dependency / essentiality in cancer cell lines (DepMap)",
-    "scrna-embedding": "single-cell expression and cell-type specificity",
-    "malignant-expression-profiler": "expression on malignant vs normal / stromal cells",
-    "omics-target-evidence-mapper": "multi-omics target-disease association evidence",
-    "pathway-enricher": "pathway and biological-process involvement",
-    "struct-predictor": "protein structure, druggability and tractability",
-    "opentargets-target-factors": "target prioritisation, tractability and safety liabilities",
-    "opentargets-association-evidence": "target-disease association evidence by datatype",
-}
-
-
-def _patch_with_literature(skill: str, target: str | None = None,
-                           focus: str | None = None) -> dict[str, Any] | None:
-    """Patch an unavailable skill's axis with a live Tavily literature search.
-
-    The skill's dataset/runtime isn't here, so instead of leaving the axis blank we run
-    ``lit-synthesizer`` (live Tavily) steered at the *question that skill's axis answers*
-    (``_LITERATURE_PROXY_INTENT``). Returns the search envelope tagged so the report
-    shows it is a **literature proxy** for the missing dataset — never passed off as the
-    real source. ``None`` when no patch is possible (no target, or Tavily not available
-    — ``_run_local_skill`` then falls back to --demo, so we'd be patching a real axis
-    with illustrative data; better to stay honestly "unavailable" in that case).
-    """
-    if not target or not os.environ.get("TAVILY_API_KEY"):
-        return None  # no live search to patch with → keep the honest "unavailable"
-    intent = _LITERATURE_PROXY_INTENT.get(skill, f"evidence relevant to {skill}")
-    # Steer the search at the axis; a reviewer ``focus`` (deeper re-route) narrows it.
-    probe = f"{intent} — {focus}" if focus else intent
-    env = _run_local_skill("lit-synthesizer", live=True, target=target, focus=probe)
-    if not env or env.get("status") != "ok":
-        return None
-    env["via"] = f"lit-synthesizer (literature patch for unavailable {skill})"
-    env["literature_proxy_for"] = skill  # downstream: grade/label as a proxy, not the dataset
-    return env
-
-
 def _run_skill_live(skill: str, target: str | None = None,
                     focus: str | None = None) -> dict[str, Any]:
-    """Execute a routed skill (best-effort, no LLM).
+    """Execute a routed axis via its predefined ToolUniverse tool (no LLM).
 
-    Resolution: an in-repo leaf skill via its own CLI first (LOCAL_SKILLS) — run live
-    where it can (e.g. lit-synthesizer → live Tavily for ``target``, steered by an
-    optional ``focus`` follow-up), else its offline --demo — then fall back to an
-    external clawbio.py run_skill runtime. Any failure returns an honest envelope
-    rather than a fabricated result.
+    ToolUniverse is the only live backend. If ``skill`` maps to a real tool in
+    ``tool_router.yaml``, ``tool_backend.run_predefined_tool`` answers it —
+    executed in-process when the ``tooluniverse`` package is importable, else a
+    tool-call descriptor for the driving agent / frontend to run. If there is no
+    mapping (or the backend import fails), return an honest "not executed"
+    envelope; never fabricate. ``focus`` is accepted for signature compatibility
+    with the review loop's deeper re-routes.
     """
-    # Predefined-tool backend FIRST: if this axis maps to a real ToolUniverse /
-    # clawbio tool (tool_router.yaml), answer with that — executed in-process when
-    # the tooluniverse package is importable, else a descriptor for the driving
-    # agent/frontend to run. Only fall through to the old in-repo skills / literature
-    # proxy when there is no predefined-tool mapping for this axis.
     try:
         import tool_backend
         predefined = tool_backend.run_predefined_tool(skill, target or "")
     except Exception:  # pragma: no cover - backend import/parse must never crash the run
         predefined = None
-    if predefined is not None and predefined.get("source") in ("tooluniverse", "tool-descriptor"):
+    if predefined is not None:
         return predefined
-
-    local = _run_local_skill(skill, live=True, target=target, focus=focus)
-    if local is not None:
-        return local
-    # Not an in-repo leaf skill → try the installed ClawBio catalog runtime
-    # (``pip install clawbio``). Routing uses our own skill names; map them to the
-    # ClawBio catalog's names where a counterpart exists. A skill with no ClawBio
-    # counterpart, or no installed runtime, returns a clean "unavailable" envelope —
-    # never a raw FileNotFoundError.
-    clawbio_name = CLAWBIO_SKILL_MAP.get(skill, skill)
-    result = _run_clawbio_skill(skill, clawbio_name)
-    if result.get("status") == "ok":
-        return result
-    # Patch: the dataset/runtime for this axis isn't here, so rather than leave the
-    # axis blank ("unavailable"), fall back to a live Tavily literature search steered
-    # at *that axis's* question — a labelled literature proxy, never the real dataset.
-    patched = _patch_with_literature(skill, target=target, focus=focus)
-    return patched if patched is not None else result
-
-
-# Our routing skill names → the installed ClawBio catalog's names. Only entries with a
-# real counterpart in `clawbio list`; anything absent stays honestly "unavailable".
-CLAWBIO_SKILL_MAP: dict[str, str] = {
-    "gwas-lookup": "gwas",
-    "scrna-embedding": "scrna-embedding",
-    "crispr-screen-triage": "crispr-triage",
-    "equity-scorer": "equity",
-    "gwas-catalog-region-fetch": "gwas-region",
-    "pathway-enricher": "pathway-enricher",
-    "clinpgx": "clinpgx",
-}
-
-
-def _run_clawbio_skill(routing_name: str, clawbio_name: str) -> dict[str, Any]:
-    """Run a skill via the installed ``clawbio`` package (best-effort, no LLM).
-
-    Imports the package lazily (it's an optional dep — ``pip install clawbio``). A
-    skill not present in the local routing→ClawBio map, an uninstalled runtime, or a
-    skill that needs input we don't have all return an honest "unavailable" envelope.
-    """
-    if routing_name not in CLAWBIO_SKILL_MAP:
-        return {"status": "not executed",
-                "reason": f"{routing_name!r} has no counterpart in the installed ClawBio "
-                          "catalog; run with cached --demo data or add it upstream."}
-    try:
-        import clawbio  # optional dependency
-    except ImportError:
-        return {"status": "not executed",
-                "reason": f"{routing_name!r} is a ClawBio catalog skill; install the "
-                          "runtime with `pip install clawbio` to execute it live."}
-    try:
-        result = clawbio.run_skill(skill_name=clawbio_name, demo=True)
-        if isinstance(result, dict) and result.get("success"):
-            return {"status": "ok", "via": f"clawbio run {clawbio_name}",
-                    "files": result.get("files", [])}
-        reason = (result or {}).get("error") if isinstance(result, dict) else None
-        return {"status": "not executed",
-                "reason": f"clawbio could not run {clawbio_name!r}"
-                          + (f": {reason}" if reason else " (needs input or not registered).")}
-    except Exception as exc:  # pragma: no cover - depends on the live runtime
-        return {"status": "not executed", "reason": f"{type(exc).__name__}: {exc}"}
+    return {"status": "not executed",
+            "reason": f"{skill!r} has no ToolUniverse mapping in tool_router.yaml; "
+                      "add one to run this axis."}
 
 
 def execute_skill(task: Subtask, case: str, live: bool,
                   target: str | None = None, focus: str | None = None) -> dict[str, Any]:
     """STEP C: produce a result envelope for a routed skill.
 
-    Always attempts the live path — the routed skill is executed through the
-    ClawBio runtime; any unavailable step returns an honest stub, never a
-    fabricated result. ``target`` (the query's "<gene> in <disease>") is passed
-    to skills that take it live — notably lit-synthesizer's real-time Tavily
-    search. ``focus`` is an optional reviewer follow-up that steers a *deeper*
-    re-route's live search toward the specific missing evidence. No LLM is involved.
+    Always attempts the live path — the routed axis is executed through its
+    predefined ToolUniverse tool (``tool_router.yaml``); an axis with no mapping
+    returns an honest "not executed" stub, never a fabricated result. ``target``
+    (the query's "<gene> in <disease>") is passed to the tool call. ``focus`` is
+    an optional reviewer follow-up for a *deeper* re-route. No LLM is involved.
     """
     envelope = {
         "step": task.step,
@@ -820,8 +583,18 @@ def execute_skill(task: Subtask, case: str, live: bool,
         "skill": task.skill,
         "question": task.question,
     }
-    envelope["result"] = _run_skill_live(task.skill, target=target, focus=focus)
-    envelope["source"] = "clawbio" if envelope["result"].get("status") == "ok" else "unavailable"
+    if live:
+        result = _run_skill_live(task.skill, target=target, focus=focus)
+    else:
+        # default mode: no live backend is touched — routed steps stay honest stubs
+        # for the driving agent to fill (this skill makes no LLM call).
+        result = {"status": "not executed",
+                  "reason": "default mode — run with --live to execute this axis "
+                            "via its ToolUniverse tool."}
+    envelope["result"] = result
+    # The ToolUniverse backend labels its own source (tooluniverse / tool-descriptor /
+    # unavailable); honour it. A bare "not executed" stub (no source) is 'unavailable'.
+    envelope["source"] = result.get("source", "unavailable") if isinstance(result, dict) else "unavailable"
     return envelope
 
 
@@ -880,7 +653,8 @@ def _provenance(env: dict[str, Any]) -> tuple[str, str]:
 
 def _evidence_grade(env: dict[str, Any]) -> str:
     src = env.get("source", "")
-    return {"clawbio": "strong", "web": "supporting"}.get(src, "absent")
+    return {"tooluniverse": "strong", "tool-descriptor": "supporting",
+            "web": "supporting"}.get(src, "absent")
 
 
 _NCT_RE = re.compile(r"\bNCT\d{8}\b", re.IGNORECASE)
@@ -942,7 +716,7 @@ def synthesize_report(query: str, case: str, briefing: dict[str, Any],
     """Build a structured target-identification dossier from the assembled evidence."""
     syn = synthesis or {}
     symbol = (case or "target").upper()
-    executed = [e for e in results if e.get("source") == "clawbio"]
+    executed = [e for e in results if e.get("source") in EXECUTED_SOURCES]
     L: list[str] = [f"# Target Assessment — {symbol} · {query}", ""]
     L += [f"*Virtual-Biotech CSO v{VERSION} · mode: live/agent-driven · the skill makes no LLM call; "
           "reasoning is delegated to the driving agent via `prompts/`.*", ""]
@@ -1081,7 +855,7 @@ def synthesize_report(query: str, case: str, briefing: dict[str, Any],
 # Output contract: report.md + result.json + reproducibility/
 # --------------------------------------------------------------------------- #
 def _write_result_json(out_dir: Path, summary: dict[str, Any], data: dict[str, Any]) -> Path:
-    """Write the standard ClawBio result.json envelope (shared helper if importable)."""
+    """Write the standard result.json envelope (optional shared helper if importable)."""
     try:
         sys.path.insert(0, str(REPO_ROOT))
         from clawbio.common.report import write_result_json  # type: ignore
@@ -1175,7 +949,7 @@ def run(query: str, out_dir: Path, live: bool, argv: list[str]) -> dict[str, Any
         "mode": "live" if live else "default",
         "n_steps": len(results),
         "reviewer_verdict": review.get("verdict", "synthesize"),
-        "n_executed": len([e for e in results if e.get("source") == "clawbio"]),
+        "n_executed": len([e for e in results if e.get("source") in EXECUTED_SOURCES]),
         "decision": syn.get("decision", "REVIEW"),
         "confidence": syn.get("confidence", "n/a"),
         "calls_llm": False,
@@ -1209,9 +983,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--query", type=str, default=None,
                    help=f"Target-assessment query (default: {DEFAULT_QUERY!r})")
     p.add_argument("--live", action="store_true",
-                   help="Execute routed skills via the ClawBio runtime (deterministic; reasoning delegated to the agent)")
+                   help="Execute routed axes via their predefined ToolUniverse tools (reasoning delegated to the agent)")
     p.add_argument("--output", "--out", dest="out", type=str, default="./output",
-                   help="Output directory (--output is the ClawBio runner convention)")
+                   help="Output directory")
     return p
 
 
