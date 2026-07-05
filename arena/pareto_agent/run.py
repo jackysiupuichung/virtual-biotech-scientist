@@ -34,6 +34,10 @@ from arena.pareto_agent.graph import build_domination_graph  # noqa: E402
 from arena.pareto_agent.models import ParetoResult  # noqa: E402
 from arena.pareto_agent.pareto import build_pareto_front  # noqa: E402
 from arena.pareto_agent.red_flags import red_flag_filter  # noqa: E402
+from arena.pareto_agent.tiebreak import (  # noqa: E402
+    compute_voi_recommendations,
+    rank_front_by_confidence_weighted_axis_wins,
+)
 
 DEFAULT_INPUT = os.path.join(_ROOT, "arena/fixtures/melanoma.hypotheses.json")
 
@@ -46,8 +50,21 @@ ALGORITHM_NOTE = (
 
 async def run_analysis(hypotheses: List[Dict[str, Any]]) -> ParetoResult:
     red_flagged, survivors = await red_flag_filter(hypotheses)
-    front, domination_edges = await build_pareto_front(survivors)
-    graph = build_domination_graph(hypotheses, red_flagged, front, domination_edges)
+    front, comparisons = await build_pareto_front(survivors)
+    graph = build_domination_graph(hypotheses, red_flagged, front, comparisons)
+
+    num_domination_edges = sum(
+        1 for c in comparisons if c.overall_relation != "tradeoff_or_unresolved"
+    )
+    num_tradeoff_comparisons = len(comparisons) - num_domination_edges
+
+    # Front membership is a dominance verdict; the two below are post-front,
+    # tie-break-only analyses over comparisons already computed above (no new
+    # LLM calls) -- see pareto_agent_design.md SS2.4 / SS3.
+    tie_break_ranking = rank_front_by_confidence_weighted_axis_wins(front, comparisons)
+    voi_recommendations = compute_voi_recommendations(front, comparisons)
+
+    tie_break_score_by_id = {r["hypothesis_id"]: r["tie_break_score"] for r in tie_break_ranking}
 
     return ParetoResult(
         run_metadata={
@@ -55,21 +72,38 @@ async def run_analysis(hypotheses: List[Dict[str, Any]]) -> ParetoResult:
             "num_removed_by_red_flags": len(red_flagged),
             "num_surviving_hypotheses": len(survivors),
             "num_front_hypotheses": len(front),
-            "num_domination_edges": len(domination_edges),
+            "num_domination_edges": num_domination_edges,
+            "num_tradeoff_comparisons": num_tradeoff_comparisons,
+            "num_comparisons_total": len(comparisons),
             "algorithm_note": ALGORITHM_NOTE,
+            "tie_break_note": (
+                "pareto_front is ordered by tie_break_score (confidence-weighted "
+                "axis-win tally over front-vs-front comparisons); it is a "
+                "presentational tie-break, not a dominance claim -- front members "
+                "remain mutually non-dominated. See tie_break_ranking for the "
+                "per-axis breakdown and voi_recommendations for which axis is "
+                "most worth resolving next."
+            ),
         },
         red_flagged_hypotheses=red_flagged,
-        pareto_front=[
-            {
-                "hypothesis_id": h["id"],
-                "target": h.get("target", {}).get("symbol"),
-                "disease": h.get("disease", {}).get("name"),
-                "modality": h.get("modality"),
-                "front_status": "non_dominated",
-            }
-            for h in front
-        ],
+        pareto_front=sorted(
+            (
+                {
+                    "hypothesis_id": h["id"],
+                    "target": h.get("target", {}).get("symbol"),
+                    "disease": h.get("disease", {}).get("name"),
+                    "modality": h.get("modality"),
+                    "front_status": "non_dominated",
+                    "tie_break_score": tie_break_score_by_id[h["id"]],
+                }
+                for h in front
+            ),
+            key=lambda entry: entry["tie_break_score"],
+            reverse=True,
+        ),
         domination_graph=graph,
+        tie_break_ranking=tie_break_ranking,
+        voi_recommendations=voi_recommendations,
     )
 
 

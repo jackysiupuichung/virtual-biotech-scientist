@@ -89,15 +89,10 @@ class PairwiseComparison(BaseModel):
     axis_comparisons: Dict[AxisName, AxisComparison]
 
 
-class DominationEdge(BaseModel):
-    dominator: str
-    dominated: str
-    comparison_summary: Dict[str, Any]
-    axis_comparisons: Dict[AxisName, AxisComparison]
-
-
 class ParetoResult(BaseModel):
     run_metadata: Dict[str, Any]
     red_flagged_hypotheses: List[RedFlagResult]
     pareto_front: List[Dict[str, Any]]
     domination_graph: Dict[str, Any]
+    tie_break_ranking: List[Dict[str, Any]] = Field(default_factory=list)
+    voi_recommendations: List[Dict[str, Any]] = Field(default_factory=list)
