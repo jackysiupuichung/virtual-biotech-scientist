@@ -53,6 +53,15 @@ This activates the **in-process** tool path: routed axes call ToolUniverse direc
 no MCP server or agent needed. (Embedding discovery `Tool_Finder` also wants ML deps —
 `uv sync --extra tools` pulls the base package; the keyword finder works without them.)
 
+**Compact by default.** In-process ToolUniverse loads a *restricted* tool surface —
+only the tools the CSO's `tool_router.yaml` maps plus the discovery finders (~10 tools)
+— instead of all 2599. This is fast and is the intended posture. To load the full
+catalogue (needed only if live discovery must reach tools outside the pinned set):
+
+```bash
+export VBIO_TU_FULL=1        # load all 2599 tools instead of the compact ~10
+```
+
 ### 3. Point the LLM backend at your local server and run
 
 ```bash
@@ -125,12 +134,14 @@ deterministic, no LLM (reasoning roles are stubs).
 
 ## Status / caveats
 
-- **LLM reasoning**: works today with any of the backends above, local GGUF included.
-- **Live tools in-process**: the path calls `ToolUniverse().load_tools()` +
-  `run_one_tool(name, args)`. This was written against the MCP tool schema; **verify
-  it against your installed `tooluniverse` version** on first run — if the package API
-  differs, the step returns an honest `not executed`, never a fabricated result.
-- **Discovery** (`find → compose → run` for an unmapped axis) uses
-  `Tool_Finder_Keyword` by default (no ML deps). Embedding `Tool_Finder` needs
-  `tooluniverse[embedding]`.
+- **LLM reasoning**: ✅ works with any backend above (local GGUF, Anthropic, Gemini,
+  Claude CLI). Verified end-to-end: a live run planned a 10-axis assessment and filled
+  every reasoning role (chief-of-staff, planner, division scientists, reviewer panel).
+- **Live tools in-process**: ✅ verified against `tooluniverse` 1.3.1 —
+  `tu.run({"name", "arguments"})` returns real Open Targets / GWAS / CellMarker /
+  ClinicalTrials data. Loads a compact tool set by default (see above).
+- **Discovery** (`find → compose → run` for an *unmapped* axis): partial. In-process
+  execution of a *pinned* axis works; the discovery `find`/`compose` step still needs
+  the ML deps (`tooluniverse[embedding]`) or an injected executor, else the axis
+  returns an honest `tool-descriptor` (deferred), never a fabricated result.
 - Nothing is ever fabricated: a missing backend or tool yields an honest stub.

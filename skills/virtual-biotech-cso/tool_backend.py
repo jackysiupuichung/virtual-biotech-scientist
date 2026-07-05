@@ -174,20 +174,62 @@ def _exec(verb: str, payload: dict[str, Any]) -> dict[str, Any] | None:
         return {"status": "error", "reason": f"executor {verb} failed: {exc}"}
 
 
+_TU_INSTANCE = None  # cached ToolUniverse (loading all 2599 tools is slow; do it once)
+
+# COMPACT loading: only load the tool names the CSO actually calls, instead of all
+# 2599. This is the standard practice — a restricted, purpose-built tool surface —
+# and it makes in-process runs fast. The set is every `tool:` in tool_router.yaml
+# plus the finders used by discovery. Override with VBIO_TU_FULL=1 to load everything
+# (needed if discovery must reach tools outside the pinned set).
+def _compact_tool_names(router: dict[str, Any] | None = None) -> list[str]:
+    router = router if router is not None else load_tool_router()
+    names = {e["tool"] for e in router.values()
+             if isinstance(e, dict) and e.get("tool")}
+    names.update({DEFAULT_FINDER, "Tool_Finder", "ToolGraphGenerationPipeline"})
+    return sorted(names)
+
+
+def _get_tooluniverse():
+    """Lazily build + cache a loaded ToolUniverse; None if the package is absent.
+
+    Loads a COMPACT tool set (only what the router + discovery call) unless
+    VBIO_TU_FULL=1, so an in-process run doesn't pay for all 2599 tools.
+    """
+    global _TU_INSTANCE
+    if _TU_INSTANCE is not None:
+        return _TU_INSTANCE
+    try:
+        from tooluniverse import ToolUniverse  # type: ignore
+    except Exception:
+        return None
+    import os
+    tu = ToolUniverse()
+    if os.environ.get("VBIO_TU_FULL") == "1":
+        tu.load_tools()
+    else:
+        # restrict to the CSO's tool surface — fast, and the compact posture you want
+        tu.load_tools(include_tools=_compact_tool_names(), quiet=True)
+    _TU_INSTANCE = tu
+    return tu
+
+
 def _execute_in_process(tool_name: str, arguments: dict[str, Any]) -> dict[str, Any] | None:
     """Execute a ToolUniverse tool in-process if the package is importable.
 
     None when the package is absent (the caller keeps the descriptor for an agent
     to run). A ToolUniverse-side error is returned as an honest envelope, not raised.
+
+    Uses the real ToolUniverse API (v1.3.1): ``tu.run({"name", "arguments"})``.
     """
-    try:
-        from tooluniverse import ToolUniverse  # type: ignore
-    except Exception:
+    tu = _get_tooluniverse()
+    if tu is None:
         return None
     try:
-        tu = ToolUniverse()
-        tu.load_tools()
-        result = tu.run_one_tool(tool_name, arguments)
+        result = tu.run({"name": tool_name, "arguments": arguments})
+        # ToolUniverse returns {"status": "success"/"error", "data"/"error": ...}
+        if isinstance(result, dict) and result.get("status") == "error":
+            return {"status": "not executed",
+                    "reason": f"tooluniverse: {result.get('error', 'tool error')}"}
         return {"status": "ok", "via": f"tooluniverse:{tool_name} (in-process)",
                 "raw": result}
     except Exception as exc:  # pragma: no cover - depends on live TU runtime
