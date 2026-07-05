@@ -1,0 +1,10 @@
+{
+  "skill": "clinical-trial-finder",
+  "summary": "Multiple active B7-H3 ADC programs in solid tumours including NSCLC — validates the modality and target, but the space is competitive.",
+  "example_programs": [
+    {"name": "Ifinatamab deruxtecan (DS-7300/I-DXd), solid tumours incl. NSCLC", "nct": "NCT04145622", "url": "https://clinicaltrials.gov/study/NCT04145622"},
+    {"name": "HS-20093 (B7-H3 ADC), advanced solid tumours", "nct": "NCT05276609", "url": "https://clinicaltrials.gov/study/NCT05276609"}
+  ],
+  "source": "https://clinicaltrials.gov/study/NCT04145622",
+  "note": "Illustrative cached value for the demo walkthrough, not a live ClinicalTrials.gov query."
+}

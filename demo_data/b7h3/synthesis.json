@@ -1,0 +1,20 @@
+{
+  "decision": "CONDITIONAL_GO",
+  "confidence": "medium",
+  "recommendation": "B7-H3 (CD276) is a credible antibody-drug-conjugate target in lung cancer: germline genetics are weak (expected and non-disqualifying for an IO surface antigen) [step_01], expression is cell-type-specific (high tau + bimodality — a favourable trial-success/safety prior) [step_03], and prior ADC programs validate the modality [step_05]. Advance an ADC strategy conditional on resolving the stromal-vs-malignant expression split.",
+  "target_overview": "B7-H3 / CD276 is an immune-checkpoint surface glycoprotein over-expressed across solid tumours including lung cancer; it is an active antibody-drug-conjugate target with no small-molecule tractability.",
+  "liabilities": [
+    {"risk": "expression is partly stromal (fibroblast), not malignant-cell-intrinsic [step_02, step_03]", "mitigation": "confirm tumour-cell expression fraction before committing payload strategy"},
+    {"risk": "trial-success / safety priors are correlational (Zhang et al. 2026), not causal", "mitigation": "treat as a prior, not a guarantee; weight against direct evidence"},
+    {"risk": "competitive B7-H3 ADC landscape [step_05]", "mitigation": "differentiate on payload / linker / indication"}
+  ],
+  "evidence_gaps": [
+    "malignant-cell expression fraction not measured (specificity was stromal)",
+    "normal-tissue cross-tissue specificity not quantified (therapeutic window)"
+  ],
+  "proposed_experiments": [
+    {"experiment": "spatial / tumour-cell single-cell profiling", "expected_readout": "B7-H3 on malignant vs stromal cells", "rationale": "resolves the efficacy-critical stromal-vs-malignant question"},
+    {"experiment": "multi-tissue normal-atlas specificity profiling", "expected_readout": "cross-tissue tau", "rationale": "bounds on-target/off-tumour toxicity for the ADC window"}
+  ],
+  "note": "Illustrative cached synthesis for the demo walkthrough; live runs generate this from real skill outputs via the driving agent (prompts/orchestrator.md)."
+}

@@ -1,0 +1,7 @@
+{
+  "skill": "celltype-specificity-profiler",
+  "gene": "CD276",
+  "summary": "Cell-type-specific expression implies lower broad-tissue off-target risk; main liability is shared fibroblast/stromal expression in normal tissue.",
+  "broad_tissue_risk": "moderate-low",
+  "note": "Illustrative cached value (specificity re-used for off-target read-out), not a live run."
+}
