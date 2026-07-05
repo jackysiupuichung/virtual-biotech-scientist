@@ -78,7 +78,9 @@ def _wrap_into_rows(ordered_ids: List[str], max_per_row: int) -> List[List[str]]
 
 
 def _layout(
-    nodes: List[Dict[str, Any]], edges: List[Dict[str, Any]]
+    nodes: List[Dict[str, Any]],
+    edges: List[Dict[str, Any]],
+    tie_break_ranking: List[Dict[str, Any]],
 ) -> Tuple[Dict[str, Dict[str, float]], Dict[str, float]]:
     """Front band on top, dominated band below (ordered near their dominator to
     reduce edge crossings), red-flagged band at the bottom. Each band wraps
@@ -93,7 +95,16 @@ def _layout(
     dominated = by_status.get("dominated", [])
     red_flagged = by_status.get("red_flagged", [])
 
-    front_order = {n["hypothesis_id"]: i for i, n in enumerate(front)}
+    ranked_front_ids = [
+        r["hypothesis_id"]
+        for r in tie_break_ranking
+        if any(n["hypothesis_id"] == r["hypothesis_id"] for n in front)
+    ]
+    ranked_front_seen = set(ranked_front_ids)
+    front_ids = ranked_front_ids + [
+        n["hypothesis_id"] for n in front if n["hypothesis_id"] not in ranked_front_seen
+    ]
+    front_order = {hid: i for i, hid in enumerate(front_ids)}
     dominators_of: Dict[str, List[str]] = defaultdict(list)
     for e in edges:
         if e["dominator"] and e["dominated"]:
@@ -105,7 +116,6 @@ def _layout(
         return min(ranked) if ranked else len(front) + 1
 
     dominated_sorted = [n["hypothesis_id"] for n in sorted(dominated, key=sort_key)]
-    front_ids = [n["hypothesis_id"] for n in front]
     red_flagged_ids = [n["hypothesis_id"] for n in red_flagged]
 
     bands = [
@@ -155,7 +165,17 @@ def render_html(result: Dict[str, Any], labels: Dict[str, Dict[str, str]]) -> st
     graph = result["domination_graph"]
     nodes = graph["nodes"]
     edges = graph["edges"]
-    positions, bbox = _layout(nodes, edges)
+    tie_break_ranking = result.get("tie_break_ranking", [])
+    voi_recommendations = result.get("voi_recommendations", [])
+    positions, bbox = _layout(nodes, edges, tie_break_ranking)
+    rank_by_id = {
+        row["hypothesis_id"]: {
+            "rank": i + 1,
+            "tie_break_score": row.get("tie_break_score"),
+            "axis_breakdown": row.get("axis_breakdown", {}),
+        }
+        for i, row in enumerate(tie_break_ranking)
+    }
 
     payload = {
         "nodes": nodes,
@@ -163,6 +183,10 @@ def render_html(result: Dict[str, Any], labels: Dict[str, Dict[str, str]]) -> st
         "positions": positions,
         "labels": labels,
         "run_metadata": result.get("run_metadata", {}),
+        "pareto_front": result.get("pareto_front", []),
+        "tie_break_ranking": tie_break_ranking,
+        "voi_recommendations": voi_recommendations,
+        "rank_by_id": rank_by_id,
         "bbox": bbox,
     }
     payload_json = _escape_for_script_tag(json.dumps(payload))
@@ -273,6 +297,11 @@ def render_html(result: Dict[str, Any], labels: Dict[str, Dict[str, str]]) -> st
   .node text {{ fill: #fff; font-size: 11px; font-weight: 600; text-anchor: middle; pointer-events: none; }}
   .node .sublabel-bg {{ fill: var(--bg); opacity: 0.82; pointer-events: none; }}
   .node .sublabel {{ fill: var(--muted); font-size: 10.5px; font-weight: 500; text-anchor: middle; pointer-events: none; }}
+  .node .rank-badge {{
+    fill: var(--accent); stroke: var(--bg); stroke-width: 2px; pointer-events: none;
+    filter: drop-shadow(0 1px 2px rgba(11,11,11,0.22));
+  }}
+  .node .rank-text {{ fill: #fff; font-size: 9.5px; font-weight: 700; pointer-events: none; }}
   .node:hover circle {{
     filter: drop-shadow(0 3px 8px rgba(11,11,11,0.32)) brightness(1.1);
     transform: scale(1.08); transform-origin: center; transform-box: fill-box;
@@ -325,6 +354,30 @@ def render_html(result: Dict[str, Any], labels: Dict[str, Dict[str, str]]) -> st
   .chip {{
     font-size: 11.5px; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--border);
     background: var(--bg);
+  }}
+  .panel-section {{ margin: 0 0 18px; }}
+  .panel-section h3 {{
+    font-size: 12px; margin: 0 0 8px; color: var(--muted); font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }}
+  .rank-list {{ display: grid; gap: 8px; }}
+  .rank-row {{
+    display: grid; grid-template-columns: 34px 1fr auto; align-items: center; gap: 9px;
+    padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px;
+    background: var(--bg); box-shadow: var(--shadow-sm);
+  }}
+  .rank-num {{ color: var(--accent); font-weight: 800; font-size: 12px; }}
+  .rank-id {{ font-weight: 650; }}
+  .rank-sub {{ color: var(--muted); font-size: 11.5px; margin-top: 1px; }}
+  .rank-score {{ font-variant-numeric: tabular-nums; font-weight: 700; }}
+  .axis-metric {{
+    display: grid; grid-template-columns: 1fr auto; gap: 6px; margin-top: 6px;
+    font-size: 12.5px;
+  }}
+  .axis-metric span:last-child {{ font-variant-numeric: tabular-nums; color: var(--muted); }}
+  .voi-card {{
+    border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px;
+    background: var(--bg); box-shadow: var(--shadow-sm);
   }}
 </style>
 </head>
@@ -388,6 +441,15 @@ function labelFor(id) {{
   let sub = l.target || '';
   if (sub.length > 16) sub = sub.slice(0, 15) + '\\u2026';
   return {{ sub, full: full || id }};
+}}
+
+function formatAxis(axis) {{
+  return String(axis || '').replace(/_/g, ' ');
+}}
+
+function formatScore(value) {{
+  if (value === undefined || value === null) return 'n/a';
+  return Number(value).toLocaleString(undefined, {{ maximumFractionDigits: 3 }});
 }}
 
 function elWithAttrs(tag, attrs) {{
@@ -456,9 +518,18 @@ DATA.nodes.forEach(n => {{
   g.appendChild(circle);
   g.appendChild(text);
 
+  const rank = DATA.rank_by_id[n.hypothesis_id];
+  if (rank) {{
+    const badge = elWithAttrs('circle', {{ class: 'rank-badge', cx: NODE_R - 3, cy: -NODE_R + 3, r: 10 }});
+    const rankText = elWithAttrs('text', {{ class: 'rank-text', x: NODE_R - 3, y: -NODE_R + 6 }});
+    rankText.textContent = rank.rank;
+    g.appendChild(badge);
+    g.appendChild(rankText);
+  }}
+
   const lbl = labelFor(n.hypothesis_id);
   const title = elWithAttrs('title', {{}});
-  title.textContent = lbl.full;
+  title.textContent = rank ? `${{lbl.full}} | rank #${{rank.rank}}, score ${{formatScore(rank.tie_break_score)}}` : lbl.full;
   g.appendChild(title);
 
   if (lbl.sub) {{
@@ -519,6 +590,72 @@ function escapeHtml(s) {{
   return String(s).replace(/[&<>"']/g, c => ({{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}}[c]));
 }}
 
+function renderRankingRows() {{
+  const rows = DATA.tie_break_ranking || [];
+  if (!rows.length) return '<p class="empty-hint">No front tie-break ranking was included in this result.</p>';
+  return `<div class="rank-list">${{
+    rows.map((r, i) => {{
+      const lbl = labelFor(r.hypothesis_id);
+      return `<div class="rank-row">
+        <div class="rank-num">#${{i + 1}}</div>
+        <div>
+          <div class="rank-id">${{escapeHtml(r.hypothesis_id)}}</div>
+          <div class="rank-sub">${{escapeHtml(lbl.full === r.hypothesis_id ? '' : lbl.full)}}</div>
+        </div>
+        <div class="rank-score">${{formatScore(r.tie_break_score)}}</div>
+      </div>`;
+    }}).join('')
+  }}</div>`;
+}}
+
+function renderVoiCards(limit = 3) {{
+  const recs = DATA.voi_recommendations || [];
+  if (!recs.length) return '<p class="empty-hint">No swing-axis VOI recommendation was produced.</p>';
+  return recs.slice(0, limit).map((r, i) => `
+    <div class="voi-card">
+      <div class="axis-head">
+        <span class="axis-name">${{escapeHtml(formatAxis(r.axis))}}</span>
+        <span class="axis-tag ${{i === 0 ? 'A_better' : 'tie'}}">VoI ${{formatScore(r.voi_score)}}</span>
+      </div>
+      <div class="axis-metric"><span>swing pairs</span><span>${{formatScore(r.swing_pairs)}}</span></div>
+      <div class="axis-metric"><span>average cost tier</span><span>${{formatScore(r.avg_cost)}}</span></div>
+    </div>
+  `).join('');
+}}
+
+function renderAxisBreakdown(axisBreakdown) {{
+  const entries = Object.entries(axisBreakdown || {{}})
+    .sort((a, b) => Math.abs(b[1].net_weighted || 0) - Math.abs(a[1].net_weighted || 0));
+  if (!entries.length) return '<p class="empty-hint">No per-axis tie-break contributions were recorded.</p>';
+  return entries.map(([axis, counts]) => `
+    <div class="axis-block">
+      <div class="axis-head">
+        <span class="axis-name">${{escapeHtml(formatAxis(axis))}}</span>
+        <span class="axis-tag ${{(counts.net_weighted || 0) >= 0 ? 'A_better' : 'incomparable'}}">${{formatScore(counts.net_weighted)}}</span>
+      </div>
+      <div class="axis-metric"><span>wins</span><span>${{counts.wins || 0}}</span></div>
+      <div class="axis-metric"><span>losses</span><span>${{counts.losses || 0}}</span></div>
+    </div>
+  `).join('');
+}}
+
+function renderOverview() {{
+  const note = md.tie_break_note ? `<p class="empty-hint">${{escapeHtml(md.tie_break_note)}}</p>` : '';
+  panel.innerHTML = `
+    <h2>Pareto front tie-break</h2>
+    <div class="rel">Front rank is a confidence-weighted axis-win tally, not a dominance claim.</div>
+    <div class="panel-section">
+      <h3>Ranked front</h3>
+      ${{renderRankingRows()}}
+    </div>
+    <div class="panel-section">
+      <h3>VOI recommendation</h3>
+      ${{renderVoiCards()}}
+    </div>
+    ${{note}}
+  `;
+}}
+
 function selectEdge(i, g) {{
   clearSelection();
   g.classList.add('selected');
@@ -550,7 +687,7 @@ function selectEdge(i, g) {{
     const c = edge.axis_comparisons[a];
     return `<div class="axis-block">
       <div class="axis-head">
-        <span class="axis-name">${{a.replace(/_/g, ' ')}}</span>
+        <span class="axis-name">${{formatAxis(a)}}</span>
         <span class="axis-tag ${{c.relation}}">${{axisTagText(c.relation, edge)}}</span>
       </div>
       <div class="confidence">confidence: ${{c.confidence}}</div>
@@ -590,10 +727,12 @@ function renderRedFlagDetail(detail) {{
 function selectNode(n) {{
   clearSelection();
   const lbl = DATA.labels[n.hypothesis_id] || {{}};
+  const rank = DATA.rank_by_id[n.hypothesis_id];
   const chips = `
       ${{lbl.target ? `<span class="chip">target: ${{escapeHtml(lbl.target)}}</span>` : ''}}
       ${{lbl.disease ? `<span class="chip">disease: ${{escapeHtml(lbl.disease)}}</span>` : ''}}
       ${{lbl.modality ? `<span class="chip">modality: ${{escapeHtml(lbl.modality)}}</span>` : ''}}
+      ${{rank ? `<span class="chip">front rank: #${{rank.rank}}</span><span class="chip">tie-break score: ${{formatScore(rank.tie_break_score)}}</span>` : ''}}
   `;
 
   if (n.status === 'red_flagged') {{
@@ -610,9 +749,12 @@ function selectNode(n) {{
     <h2>${{n.hypothesis_id}}</h2>
     <div class="rel">status: ${{n.status}}</div>
     <div class="summary-row">${{chips}}</div>
+    ${{rank ? `<div class="panel-section"><h3>Tie-break breakdown</h3>${{renderAxisBreakdown(rank.axis_breakdown)}}</div>` : ''}}
     <p class="empty-hint">Click an edge touching this node to see the comparison behind it.</p>
   `;
 }}
+
+renderOverview();
 
 // --- zoom / pan (SVG viewBox-based) ---
 const bbox = DATA.bbox;
