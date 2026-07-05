@@ -12,9 +12,18 @@ import asyncio
 import json
 import os
 import re
+import sys
 from typing import Optional, Protocol, Type, TypeVar
 
 from pydantic import BaseModel, ValidationError
+
+try:
+    from common.llm_backend import resolve_backend
+except ImportError:  # ensure repo root is importable
+    _REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    if _REPO_ROOT not in sys.path:
+        sys.path.insert(0, _REPO_ROOT)
+    from common.llm_backend import resolve_backend
 
 ModelT = TypeVar("ModelT", bound=BaseModel)
 
@@ -104,13 +113,18 @@ class ClaudeCLIBackend:
 
 
 def select_backend() -> LLMBackend:
-    if os.environ.get("ANTHROPIC_API_KEY"):
-        return AnthropicBackend()
-    if os.environ.get("OPENAI_API_KEY"):
-        return OpenAIBackend()
-    if os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY"):
-        return GeminiBackend()
-    return ClaudeCLIBackend()
+    # Delegate the selection *decision* to the shared single-source ladder; map the
+    # resolved name to this module's async Backend classes. The arena has no stub,
+    # so "stub" (no key + no CLI) maps to ClaudeCLIBackend, preserving the prior
+    # no-key fallback behavior.
+    name, _model = resolve_backend()
+    return {
+        "anthropic": AnthropicBackend,
+        "openai": OpenAIBackend,
+        "gemini": GeminiBackend,
+        "claude-cli": ClaudeCLIBackend,
+        "stub": ClaudeCLIBackend,
+    }[name]()
 
 
 _backend: Optional[LLMBackend] = None

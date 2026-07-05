@@ -30,7 +30,16 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 from typing import Any, Protocol
+
+try:
+    from common.llm_backend import resolve_backend
+except ImportError:  # imported as a top-level module without repo root on path
+    _REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    if _REPO_ROOT not in sys.path:
+        sys.path.insert(0, _REPO_ROOT)
+    from common.llm_backend import resolve_backend
 
 
 def load_dotenv(start: str | None = None) -> None:
@@ -311,35 +320,29 @@ def select_runner(backend: str = "auto", model: str | None = None) -> Runner:
     NoBackendError on use.
     """
     backend = (backend or "auto").lower()
-    has_anthropic = bool(os.environ.get("ANTHROPIC_API_KEY"))
-    has_openai = bool(os.environ.get("OPENAI_API_KEY"))
-    has_gemini = bool(os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY"))
+    _RUNNERS = {
+        "anthropic": AnthropicRunner,
+        "openai": OpenAIRunner,
+        "gemini": GeminiRunner,
+        "claude-cli": ClaudeCLIRunner,
+        "stub": StubRunner,
+    }
 
-    if backend == "anthropic":
-        return AnthropicRunner(model)
-    if backend == "openai":
-        return OpenAIRunner(model)
-    if backend == "gemini":
-        return GeminiRunner(model)
-    if backend == "claude-cli":
-        return ClaudeCLIRunner(model)
-    if backend == "stub":
-        # Explicit offline path: honest, deterministic, no LLM call. The frontend's
-        # "live agents" toggle selects this when unchecked (instant demo).
+    if backend != "auto":
+        if backend not in _RUNNERS:
+            raise ValueError(
+                f"unknown backend {backend!r} (use auto|anthropic|openai|gemini|claude-cli|stub)")
+        if backend == "stub":
+            # Explicit offline path: honest, deterministic, no LLM call. The frontend's
+            # "live agents" toggle selects this when unchecked (instant demo).
+            return StubRunner()
+        return _RUNNERS[backend](model)
+
+    # auto: delegate the selection decision to the shared, single-source ladder.
+    name, _resolved_model = resolve_backend("auto")
+    if name == "stub":
         return StubRunner()
-    if backend not in ("auto",):
-        raise ValueError(
-            f"unknown backend {backend!r} (use auto|anthropic|openai|gemini|claude-cli|stub)")
-
-    if has_anthropic:
-        return AnthropicRunner(model)
-    if has_openai:
-        return OpenAIRunner(model)
-    if has_gemini:
-        return GeminiRunner(model)
-    if shutil.which("claude"):
-        return ClaudeCLIRunner(model)
-    return StubRunner()
+    return _RUNNERS[name](model)
 
 
 def run_with_retry(runner: Runner, prompt: str, context: str,
