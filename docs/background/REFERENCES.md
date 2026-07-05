@@ -18,7 +18,7 @@ endpoints) at build time — the ecosystem moves fast.
   analysis.
 - **Key limitation we address:** its assessment is **absolute and per-hypothesis** — each candidate
   gets a narrative evidence dossier weighed in isolation; **there is no head-to-head comparison or
-  reproducible ranking.** Our [prioritisation arena](ARENA.md) supplies exactly that.
+  reproducible ranking.** Our [prioritisation arena](../design/ARENA.md) supplies exactly that.
 - **From:** Zhang, Eckmann, Miao, Mahon, Zou — Stanford (James Zou lab).
 - **Cite:** Zhang H.G., Eckmann P., Miao J., Mahon A.B., Zou J. "The Virtual Biotech: A Multi-Agent AI
   Framework for Therapeutic Discovery and Development." bioRxiv 2026, doi:10.64898/2026.02.23.707551.
@@ -120,4 +120,4 @@ which is precisely the surface this project extends.
 None of the foundation tools generate **wet-lab** data; they retrieve knowledge or run in-silico
 predictions. Our closed loop therefore treats a **readout source** as pluggable — a simulated
 oracle, an in-silico prediction (Boltz-2 / ADMET-AI) used *as* a result, or a projected real
-dataset. See [DESIGN.md §4](DESIGN.md#4-closing-the-loop-with-experiments).
+dataset. See [DESIGN.md §4](../design/DESIGN.md#4-closing-the-loop-with-experiments).

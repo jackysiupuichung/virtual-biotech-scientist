@@ -25,3 +25,6 @@ kg.json
 
 # macOS
 .DS_Store
+
+# Third-party paper PDFs (keep locally, cite by DOI/URL — do not commit binaries)
+docs/**/papers/*.pdf

@@ -156,3 +156,47 @@ def ground_truth(efo: str) -> dict[str, str]:
                 if sym not in best or phase_rank(phase) < phase_rank(best[sym]):
                     best[sym] = phase
     return best
+
+
+# --------------------------------------------------------------------------- #
+# Per-target evidence fields (for building descriptive hypothesis cards)
+# --------------------------------------------------------------------------- #
+
+_TARGET = """
+query($id:String!){
+  target(ensemblId:$id){
+    approvedSymbol approvedName functionDescriptions
+    tractability{ modality value label }
+    geneticConstraint{ constraintType score upperBin oe }
+    safetyLiabilities{ event datasource }
+    mousePhenotypes{ modelPhenotypeLabel }
+    pathways{ pathway }
+  }
+}
+"""
+
+
+def target_evidence(ensembl_id: str) -> dict:
+    """Real per-target fields from Open Targets, grouped for card assembly.
+
+    Returns the raw material the axis builders summarise into findings:
+      - tractability buckets (SM/AB/PROTAC) -> Tractability axis
+      - geneticConstraint (LOEUF) -> Right Target
+      - safetyLiabilities + mousePhenotypes -> Right Safety
+      - functionDescriptions/pathways -> narrative overview
+    Fields not carried here (single-cell tau, malignant fraction, patient stratum,
+    competitive whitespace) are NOT in OT and must be synthesised downstream.
+    """
+    t = _gql(_TARGET, {"id": ensembl_id})["target"]
+    if t is None:
+        raise ValueError(f"no target for ensemblId={ensembl_id!r}")
+    return {
+        "symbol": t["approvedSymbol"],
+        "name": t.get("approvedName"),
+        "function": (t.get("functionDescriptions") or [None])[0],
+        "tractability": t.get("tractability") or [],
+        "genetic_constraint": t.get("geneticConstraint") or [],
+        "safety_liabilities": [s["event"] for s in (t.get("safetyLiabilities") or [])],
+        "mouse_phenotypes": [m["modelPhenotypeLabel"] for m in (t.get("mousePhenotypes") or [])],
+        "pathways": [p["pathway"] for p in (t.get("pathways") or [])],
+    }

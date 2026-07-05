@@ -58,7 +58,7 @@ The experiment backends are frontier scientific models, interchangeable behind o
 ## The self-improving layer
 
 On top of the experiment loop, the system improves along three axes it can defend (and names a fourth
-it can't) — see [SELF_IMPROVING.md](SELF_IMPROVING.md):
+it can't) — see [SELF_IMPROVING.md](../design/SELF_IMPROVING.md):
 
 - **answer** (the VoI loop — have it), **hypotheses** (mutate the losers — build a slice), **toolkit**
   (compose new tools on a gap — one scripted instance);

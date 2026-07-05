@@ -90,5 +90,5 @@ scope). Without it, any "our AI learns to judge better" claim is unfounded.
 > that lose — and its **toolkit** — composing new tools when it hits its own limits. The only thing it
 > can't yet improve is its **judgement**, because that needs real-world outcomes; that's the roadmap.*
 
-See [DIFFERENTIATION.md](DIFFERENTIATION.md) for how this layers onto the experiment loop, and
-[DIRECTIONS.md](DIRECTIONS.md) for the evolving-hypotheses and tool-composition entries.
+See [DIFFERENTIATION.md](../background/DIFFERENTIATION.md) for how this layers onto the experiment loop, and
+[DIRECTIONS.md](../background/DIRECTIONS.md) for the evolving-hypotheses and tool-composition entries.
