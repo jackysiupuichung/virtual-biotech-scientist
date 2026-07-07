@@ -751,6 +751,19 @@ def synthesize_report(query: str, case: str, briefing: dict[str, Any],
     syn = synthesis or {}
     symbol = (case or "target").upper()
     executed = [e for e in results if e.get("source") in EXECUTED_SOURCES]
+    # Report grounding: the logic engine (logic/) may downgrade an ungrounded 'strong'
+    # grade or reject a fabricated 'strong' row (a strong grade with no executed
+    # source). It rides in on the already-wired decision_engine arg under `_grounding`,
+    # so no signature changes; absent engine → empty map → behaviour unchanged.
+    grounding = (decision_engine or {}).get("_grounding") or {}
+
+    def _grounded_grade(env: dict[str, Any]) -> str:
+        return grounding.get(env.get("step", ""), {}).get("grade") or _evidence_grade(env)
+
+    def _rejected(env: dict[str, Any]) -> bool:
+        return bool(grounding.get(env.get("step", ""), {}).get("reject"))
+
+    rows = [e for e in results if not _rejected(e)]
     L: list[str] = [f"# Target Assessment — {symbol} · {query}", ""]
     L += [f"*Virtual-Biotech CSO v{VERSION} · mode: live/agent-driven · the skill makes no LLM call; "
           "reasoning is delegated to the driving agent via `prompts/`.*", ""]
@@ -808,20 +821,20 @@ def synthesize_report(query: str, case: str, briefing: dict[str, Any],
     L += ["## Evidence by division", "",
           "| # | Division | Sub-question | Skill | Provenance | Grade | Key result | Ref |",
           "|---|----------|--------------|-------|------------|-------|------------|-----|"]
-    for i, env in enumerate(results, 1):
+    for i, env in enumerate(rows, 1):
         marker, _ = _provenance(env)
         L.append(
             f"| {i} | {env['division']} | {_md_escape(env['question'])} | `{env['skill']}` | "
-            f"{marker} | {_evidence_grade(env)} | {_result_digest(env)} | [{i}] |"
+            f"{marker} | {_grounded_grade(env)} | {_result_digest(env)} | [{i}] |"
         )
     L.append("")
 
     # 4 — Evidence strength
     scores = review.get("scores", {})
-    n_strong = sum(1 for e in results if _evidence_grade(e) == "strong")
+    n_strong = sum(1 for e in rows if _grounded_grade(e) == "strong")
     L += ["## Evidence strength", "",
-          f"- {n_strong}/{len(results)} steps graded **strong** (live skill data); "
-          f"{len(executed)} executed, {len(results) - len(executed)} absent.",
+          f"- {n_strong}/{len(rows)} steps graded **strong** (live skill data); "
+          f"{len(executed)} executed, {len(rows) - len(executed)} absent.",
           f"- Reviewer scores — relevance: {scores.get('relevance', '?')}, "
           f"evidence: {scores.get('evidence', '?')}, thoroughness: {scores.get('thoroughness', '?')} (1–5).", ""]
 
@@ -868,9 +881,11 @@ def synthesize_report(query: str, case: str, briefing: dict[str, Any],
                              f"`{gap.get('route_to', 'the relevant skill')}`.")
     L += (exp_lines or ["- _None proposed._"]) + [""]
 
-    # 8 — References & data sources (numbered, per evidence step)
+    # 8 — References & data sources (numbered, per evidence step; aligned with the
+    # evidence table above — both iterate `rows`, so a grounding-rejected row drops
+    # from both and the [i] links stay consistent)
     L += ["## References & data sources", ""]
-    for i, env in enumerate(results, 1):
+    for i, env in enumerate(rows, 1):
         marker, _ = _provenance(env)
         L.append(f"{i}. **{env['skill']}** [{marker}] — {_evidence_reference(env)}")
     L.append("")

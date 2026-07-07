@@ -16,6 +16,7 @@ from cso import (  # noqa: E402
     case_key,
     decompose_and_route,
     load_routing,
+    synthesize_report,
     validate_and_bind_plan,
     _reroute_task,
     _result_digest,
@@ -62,6 +63,52 @@ def test_reroute_task_uses_gap_route():
 def test_result_digest_specificity_shape():
     env = {"result": {"tau": 0.78, "interpretation": "cell-type-specific (tau > 0.7)"}}
     assert "tau=0.78" in _result_digest(env)
+
+
+# --------------------------- report grounding ----------------------------- #
+def _row(step, division, source, result):
+    return {"step": step, "division": division, "skill": f"skill-{division}",
+            "question": "q?", "result": result, "source": source}
+
+
+def test_synthesize_downgrades_ungrounded_strong():
+    """A tooluniverse row with an empty result grades 'strong' by source, but the
+    logic layer downgrades it to 'supporting' via _grounding on decision_engine."""
+    results = [_row("s1", "right_target", "tooluniverse", {})]  # executed but empty
+    # engine carries the grounding verdict (as _engine_decision would)
+    decision_engine = {"tier": "REVIEW", "score": 0, "max_score": 12,
+                       "explanation": "test", "absent_axes": [],
+                       "_grounding": {"s1": {"grade": "supporting", "reject": False}}}
+    md = synthesize_report("q", "generic", {}, results, {"scores": {}}, None,
+                           decision_engine=decision_engine)
+    # the evidence table row shows the downgraded grade, not raw 'strong'
+    table = md.split("Evidence by division")[1].split("##")[0]
+    assert "supporting" in table
+    assert "| strong |" not in table
+
+
+def test_synthesize_rejects_fabricated_strong_row():
+    """A rejected row is dropped from the evidence table and references entirely."""
+    results = [_row("s1", "right_target", "tooluniverse", {"hit": 1}),
+               _row("s2", "right_tissue", "tooluniverse", {"tau": 0.9})]
+    decision_engine = {"tier": "REVIEW", "score": 0, "max_score": 12,
+                       "explanation": "test", "absent_axes": [],
+                       "_grounding": {"s2": {"grade": None, "reject": True}}}
+    md = synthesize_report("q", "generic", {}, results, {"scores": {}}, None,
+                           decision_engine=decision_engine)
+    table = md.split("Evidence by division")[1].split("## Evidence strength")[0]
+    assert "skill-right_target" in table
+    assert "skill-right_tissue" not in table  # rejected row absent
+    # strength line counts the surviving row set, not the raw results
+    assert "/1 steps graded" in md
+
+
+def test_synthesize_unchanged_without_engine():
+    """No decision_engine → no grounding → raw source-derived grade is used."""
+    results = [_row("s1", "right_target", "tooluniverse", {})]
+    md = synthesize_report("q", "generic", {}, results, {"scores": {}}, None)
+    table = md.split("Evidence by division")[1].split("##")[0]
+    assert "| strong |" in table  # ungrounded behaviour preserved
 
 
 # --------------------------- end-to-end (CLI) ----------------------------- #

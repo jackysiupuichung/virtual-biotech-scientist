@@ -324,19 +324,27 @@ def _engine_gaps(trace: Trace, results: list[dict[str, Any]],
                  rec: TraceRecorder, query: str = "") -> list[dict[str, Any]]:
     """Prometheux gap-detector: derive *structural* gaps as a non-silenceable vote.
 
-    The reviewer panel's LLM lenses catch semantic gaps; the Vadalog engine catches
+    The reviewer panel's LLM lenses catch semantic gaps; the logic engine catches
     structural ones — a required prioritization axis with no graded evidence at all —
     as a derived fact with a replayable explanation. Such a gap carries
     ``forces_reroute`` so it re-routes on its own (the engine is load-bearing here).
-    NOTE: the Prometheux/Vadalog engine is stripped from this lean CSO build, so
-    this returns no structural gaps — the reviewer panel's LLM lenses are the sole
-    gap source. Re-add ``prometheux_reason`` (and restore the engine call here) to
-    bring back the structural-gap vote.
+    Backed by the in-repo stratified-Datalog engine (``logic/``); the import is guarded
+    so a missing/broken engine degrades to "no structural gaps" instead of breaking the
+    loop (the reviewer lenses remain the semantic-gap source).
     """
     with rec.span("prometheux_gaps", kind="agent", backend="prometheux") as sp:
-        sp.status = "stub"
-        sp.set(degraded="engine-stripped", reason="prometheux_reason not bundled")
-        return []
+        try:
+            import logic  # sibling package on sys.path
+            engine = logic.default_engine()
+            facts = engine.derive_facts(results)
+            gaps = engine.gaps(facts)
+        except Exception as exc:  # noqa: BLE001 — engine must never break the loop
+            sp.status = "stub"
+            sp.set(degraded="engine-unavailable", reason=str(exc))
+            return []
+        sp.status = "ok"
+        sp.set(n_gaps=len(gaps), forced=any(g.get("forces_reroute") for g in gaps))
+        return gaps
 
 
 def _engine_decision(trace: Trace, results: list[dict[str, Any]],
@@ -349,15 +357,27 @@ def _engine_decision(trace: Trace, results: list[dict[str, Any]],
     agent's free-text becomes rationale (logic decides, the agent explains). Import
     is local + guarded so a missing module never breaks synthesis — returns None.
 
-    NOTE: stripped in this lean CSO build — returns None, so ``decision_source``
-    falls back to ``"agent"`` and the synthesis agent's free-text is authoritative
-    for the report's Decision field. Re-add ``prometheux_reason`` to restore the
-    quantitative GO/NO-GO tier.
+    Also carries the report-grounding verdicts (``_grounding``: per-step grade
+    downgrades / row rejections) on the returned dict, so ``synthesize_report`` can
+    ground the evidence table off the same fact base without a new parameter. Backed
+    by the in-repo stratified-Datalog engine (``logic/``); a missing/broken engine
+    degrades to ``None`` (agent decision authoritative, no grounding).
     """
     with rec.span("prometheux_decision", kind="agent", backend="prometheux") as sp:
-        sp.status = "stub"
-        sp.set(degraded="engine-stripped", reason="prometheux_reason not bundled")
-        return None
+        try:
+            import logic  # sibling package on sys.path
+            engine = logic.default_engine()
+            facts = engine.derive_facts(results)
+            decision = engine.decision(facts)
+            decision["_grounding"] = engine.validate_report(facts, results)
+        except Exception as exc:  # noqa: BLE001 — engine must never break synthesis
+            sp.status = "stub"
+            sp.set(degraded="engine-unavailable", reason=str(exc))
+            return None
+        sp.status = "ok"
+        sp.set(tier=decision["tier"], score=decision["score"],
+               floor_nogo=decision.get("floor_nogo", False))
+        return decision
 
 
 def _project_decision_facts(trace: Trace, decision: dict[str, Any] | None,

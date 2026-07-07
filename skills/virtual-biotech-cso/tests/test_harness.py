@@ -130,9 +130,6 @@ def _run(monkeypatch, runner, tmp_path):
 
 
 # --------------------------- happy path ----------------------------------- #
-@pytest.mark.skip(reason="asserts the Prometheux engine tier (REVIEW); engine "
-                         "stripped from the lean CSO build — decision falls back "
-                         "to the agent's proposal")
 def test_live_loop_writes_contract_and_marks_llm(monkeypatch, tmp_path):
     out = _run(monkeypatch, FakeRunner("synthesize"), tmp_path)
     assert Path(out["report"]).exists()
@@ -149,8 +146,6 @@ def test_live_loop_writes_contract_and_marks_llm(monkeypatch, tmp_path):
     assert "rec [step_03]" in Path(out["report"]).read_text()
 
 
-@pytest.mark.skip(reason="Prometheux decision engine stripped from the lean CSO "
-                         "build; no engine tier to override the agent")
 def test_engine_decision_overrides_agent_and_flags_divergence(monkeypatch, tmp_path):
     """The derived tier is authoritative; when it disagrees with the agent's
     proposal the report surfaces the divergence rather than silently overriding."""
@@ -163,6 +158,40 @@ def test_engine_decision_overrides_agent_and_flags_divergence(monkeypatch, tmp_p
     report = Path(out["report"]).read_text()
     assert "Divergence" in report
     assert "CONDITIONAL_GO" in report  # the agent's proposal is still shown
+
+
+def test_engine_nogo_floor_overrides_agent(monkeypatch, tmp_path):
+    """The non-silenceable NO_GO floor end-to-end: a serious safety signal in the
+    evidence clamps the decision to NO_GO even though the agent proposes CONDITIONAL_GO
+    and no LLM lens votes to block. Proves the floor beats LLM judgment through the
+    full harness wiring (decision_source == prometheux, divergence rendered)."""
+    import logic
+
+    # Inject a boxed-warning safety signal into whatever evidence the loop produced,
+    # so the real engine derives floor_nogo. We wrap the real engine's derive_facts.
+    real_default = logic.default_engine
+
+    def _spiked_engine():
+        eng = real_default()
+        _orig = eng.derive_facts
+
+        def derive(results):
+            spiked = list(results) + [{
+                "step": "s_safety_spike", "division": "right_safety",
+                "skill": "openfda-safety", "question": "AE?",
+                "result": {"boxed_warning": True}, "source": "tooluniverse"}]
+            return _orig(spiked)
+
+        eng.derive_facts = derive
+        return eng
+
+    monkeypatch.setattr(logic, "default_engine", _spiked_engine)
+    out = _run(monkeypatch, FakeRunner("synthesize"), tmp_path)
+    summary = out["summary"]
+    assert summary["decision"] == "NO_GO"
+    assert summary["decision_source"] == "prometheux"
+    assert summary["agent_decision"] == "CONDITIONAL_GO"
+    assert "Divergence" in Path(out["report"]).read_text()
 
 
 # --------------------- agent-proposed plan (change #1) -------------------- #
@@ -413,8 +442,6 @@ def test_gate_redirect_changes_reroute_target(monkeypatch, tmp_path):
 
 
 # --------------------- Prometheux gap-detector forces re-route ------------- #
-@pytest.mark.skip(reason="Prometheux gap-detector stripped from the lean CSO "
-                         "build; only the LLM reviewer lenses drive re-routes")
 def test_engine_forces_reroute_on_unassessed_axis(monkeypatch, tmp_path):
     """A minimal plan leaves safety + specificity unassessed; the Prometheux
     gap-detector forces re-routes even though every LLM lens says 'synthesize'.
