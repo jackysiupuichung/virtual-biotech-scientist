@@ -1,0 +1,80 @@
+{
+  "tasks": {
+    "melanoma_anyclin": [
+      {
+        "ranker": "pareto_numeric",
+        "labels": "melanoma_anyclin",
+        "augc": 0.4178,
+        "hits_at": {
+          "5": 2,
+          "10": 5,
+          "20": 7
+        },
+        "n_pool": 89,
+        "n_positives": 16
+      },
+      {
+        "ranker": "opentargets_score",
+        "labels": "melanoma_anyclin",
+        "augc": 0.4521,
+        "hits_at": {
+          "5": 4,
+          "10": 6,
+          "20": 8
+        },
+        "n_pool": 89,
+        "n_positives": 16
+      },
+      {
+        "ranker": "claude_priors",
+        "labels": "melanoma_anyclin",
+        "augc": 0.5308,
+        "hits_at": {
+          "5": 4,
+          "10": 7,
+          "20": 9
+        },
+        "n_pool": 89,
+        "n_positives": 16
+      }
+    ],
+    "melanoma_phase2": [
+      {
+        "ranker": "pareto_numeric",
+        "labels": "melanoma_phase2",
+        "augc": 0.6472,
+        "hits_at": {
+          "5": 2,
+          "10": 5,
+          "20": 6
+        },
+        "n_pool": 89,
+        "n_positives": 9
+      },
+      {
+        "ranker": "opentargets_score",
+        "labels": "melanoma_phase2",
+        "augc": 0.5306,
+        "hits_at": {
+          "5": 3,
+          "10": 5,
+          "20": 6
+        },
+        "n_pool": 89,
+        "n_positives": 9
+      },
+      {
+        "ranker": "claude_priors",
+        "labels": "melanoma_phase2",
+        "augc": 0.5056,
+        "hits_at": {
+          "5": 3,
+          "10": 3,
+          "20": 5
+        },
+        "n_pool": 89,
+        "n_positives": 9
+      }
+    ]
+  }
+}
