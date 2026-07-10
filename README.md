@@ -5,6 +5,13 @@
 > with [ToolUniverse](https://github.com/mims-harvard/ToolUniverse) as the tool layer and
 > Claude as the reasoning engine.
 
+![The CSO evidence-collection loop for MAP2K1, drawn from a real LangGraph trace: Chief of Staff → Planner → 6 scientist divisions → review passes with amber re-route arcs → reviewer lenses → Decision → CSO synthesis.](docs/assets/langgraph-agent-trace.png)
+
+> **"Build a card" mode** replays a *real* recorded run as an execution graph — a bare gene
+> becomes a graded card. The amber back-arrows are the reviewer **re-routing** when it finds a
+> gap (MAP2K1 ran 3 review passes; TERT ran 6). Nothing here is staged — it's straight from the
+> trace. Open [`frontend/index.html`](frontend/index.html) to run it yourself.
+
 This project stands on two pieces of prior work and adds one thing they lack:
 
 - **[The Virtual Biotech](https://www.biorxiv.org/content/10.64898/2026.02.23.707551v1)**
@@ -91,6 +98,8 @@ It's a single self-contained page — no build, no dependencies, no network, no 
 ```
 open frontend/index.html      # macOS  (or just double-click it)
 ```
+
+![Arena overview: the 10-target melanoma ranking with global Pareto fronts, a Pareto plot across any two of the six axes, a per-hypothesis dossier with evidence gaps, and the budget-constrained Value-of-Information loop.](docs/assets/arena-overview.png)
 
 It replays **real recorded runs** of the system and lets you explore three views:
 
