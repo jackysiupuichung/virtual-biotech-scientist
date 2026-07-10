@@ -83,25 +83,46 @@ answer, the hypotheses, and the toolkit),
 [docs/REFERENCES.md](docs/background/REFERENCES.md) for tools and citations, and
 [docs/DIRECTIONS.md](docs/background/DIRECTIONS.md) for potential directions.
 
+## See it in 30 seconds — no install, no LLM, no server
+
+The fastest way to understand this project is the **interactive console** in [`frontend/`](frontend/).
+It's a single self-contained page — no build, no dependencies, no network, no API keys.
+
+```
+open frontend/index.html      # macOS  (or just double-click it)
+```
+
+It replays **real recorded runs** of the system and lets you explore three views:
+
+- **Arena overview** — the melanoma target ranking, the Pareto plot, and the compute-budgeted
+  Value-of-Information loop.
+- **Build a card** — watch the CSO evidence-collection loop turn a bare gene into a graded card,
+  drawn as the actual LangGraph execution trace (BRAF ran 3 review passes, TERT ran 6 — straight
+  from the trace, not staged).
+- **Live match** — pit two targets head-to-head and watch the arena judge them step by step.
+
+See [frontend/README.md](frontend/README.md) for how the data is recorded and regenerated.
+
 ## Status
 
-Design-stage. This repository currently contains documentation only; the implementation
-spine is built at the event.
+**Working implementation**, not a design doc. The agent spine (CSO orchestrator, scientist
+divisions, reviewer re-route loop), the prioritisation arena (match scheduler, panel judge,
+Pareto ranker), the eval harness, and the no-build frontend are all in the tree. Recorded live
+runs for 10 melanoma targets ship with the repo so you can inspect the system without keys.
 
-## Repo layout (planned)
+## Repo layout
 
 ```
 virtual-biotech-scientist/
-├── README.md                 # this file
-├── docs/
-│   ├── DRUG_DISCOVERY_PRIMER.md  # plain-English domain context for non-scientists
-│   ├── DESIGN.md             # CSO + scientist-division architecture
-│   ├── ARENA.md              # the prioritisation arena (core build)
-│   ├── REFERENCES.md         # tools, models, citations
-│   └── DIRECTIONS.md         # potential directions / roadmap
-├── cso/                      # (planned) CSO orchestrator + reviewer re-route loop
-├── divisions/               # (planned) scientist agents: target-id, safety, modality, clinical
-├── arena/                    # (planned) match scheduler, panel judge, Pareto ranker
-├── tools/                    # (planned) ToolUniverse MCP client
-└── eval/                     # (planned) case studies (B7-H3 lung cancer)
+├── README.md                     # this file
+├── frontend/                     # no-build, no-LLM interactive console (start here)
+│   ├── index.html                #   the whole app; open it in a browser
+│   └── data/runs/                #   raw recorded live runs (result.json + trace.jsonl)
+├── skills/virtual-biotech-cso/   # CSO orchestrator + scientist divisions + reviewer re-route loop
+├── arena/                        # match scheduler, panel judge, Pareto ranker (pareto_agent/)
+├── llm/ · common/                # LLM backend selection shared by CSO + arena
+├── tools/                        # ToolUniverse / OpenTargets clients
+├── eval/                         # case studies + ranking eval harness
+├── scripts/                      # setup + local serve helpers
+└── docs/                         # design (design/), background (background/), method (method/)
 ```

@@ -1,0 +1,1073 @@
+{
+  "skill": "virtual-biotech-cso",
+  "version": "0.1.0",
+  "summary": {
+    "query": "Assess KDR as a therapeutic target in melanoma",
+    "case": "assess_kdr_as_a_therapeutic_target",
+    "mode": "live",
+    "loop": "live-agent-harness",
+    "backend": "claude-cli",
+    "model": "sonnet",
+    "n_steps": 10,
+    "reviewer_verdict": "synthesize",
+    "n_executed": 10,
+    "decision": "GO",
+    "decision_source": "prometheux",
+    "agent_decision": "GO",
+    "decision_engine": {
+      "tier": "GO",
+      "decision": "GO",
+      "score": 10,
+      "max_score": 12,
+      "explanation": "strong axis coverage (10/12)",
+      "absent_axes": [
+        "tractability"
+      ],
+      "floor_nogo": false,
+      "rationale": "strong axis coverage (10/12)",
+      "_grounding": {}
+    },
+    "confidence": "low",
+    "calls_llm": true
+  },
+  "data": {
+    "briefing": {
+      "context": "KDR (VEGFR2, kinase insert domain receptor) is the primary signalling receptor for VEGF-A/C/D and the canonical driver of tumour angiogenesis. In melanoma, KDR is expressed on tumour vasculature (high) and, importantly, on a subset of melanoma cells themselves (autocrine VEGF/KDR loops documented in ~30\u201340% of tumours). The current therapeutic landscape is dominated by immune checkpoint blockade (anti-PD-1 \u00b1 anti-CTLA-4) and BRAF/MEK inhibitors for BRAF-V600-mutant disease. Anti-angiogenic monotherapy (bevacizumab, sunitinib, pazopanib, axitinib) has shown modest single-agent activity in melanoma Phase II trials; combination with checkpoint inhibitors is an active area (e.g. axitinib + pembrolizumab, ramucirumab + pembrolizumab). Tumour-intrinsic KDR signalling promotes proliferation, survival, and an immunosuppressive microenvironment. There is no approved KDR-targeting agent specifically for melanoma as of 2025.",
+      "data_availability": [
+        {
+          "source": "TCGA SKCM (skin cutaneous melanoma)",
+          "relevance": "high",
+          "note": "~470 tumours with bulk RNA-seq, somatic mutations, and survival annotations; KDR expression and copy number directly queryable"
+        },
+        {
+          "source": "GTEx / TCGA normal skin",
+          "relevance": "medium",
+          "note": "Baseline KDR expression in normal melanocytes/keratinocytes; needed to compute tumour-vs-normal differential"
+        },
+        {
+          "source": "CELLxGENE Census (single-cell atlases)",
+          "relevance": "high",
+          "note": "Melanoma scRNA-seq datasets (Tirosh 2016, Jerby-Arnon 2018, Sade-Feldman 2018) resolve KDR expression across tumour, endothelial, and immune compartments"
+        },
+        {
+          "source": "DepMap / CCLE (melanoma cell lines)",
+          "relevance": "high",
+          "note": "CRISPR essentiality screens in ~60 melanoma lines; KDR dependency in autocrine-expressing lines can be assessed"
+        },
+        {
+          "source": "OpenTargets / ChEMBL",
+          "relevance": "high",
+          "note": "Extensive KDR inhibitor pharmacology; clinical trial data for VEGFR2 inhibitors in melanoma cohorts"
+        },
+        {
+          "source": "GWAS / eQTL (melanoma susceptibility)",
+          "relevance": "low",
+          "note": "No melanoma GWAS signal at KDR locus reported; germline contribution to KDR expression in melanoma tumours not established"
+        }
+      ],
+      "priority_questions": [
+        "What fraction of TCGA SKCM tumours express KDR above a functional threshold (tumour cell-intrinsic vs. purely endothelial), and does high KDR expression stratify survival independently of BRAF status?",
+        "In DepMap melanoma lines, is KDR a cell-autonomous dependency (CRISPR score < -0.5) and does dependency correlate with autocrine VEGF expression or with specific genomic backgrounds (BRAF/NRAS/NF1)?",
+        "Does KDR inhibition remodel the tumour immune microenvironment (T-cell infiltration, M2 macrophage polarisation) in single-cell data, and does this suggest synergy with PD-1 blockade?",
+        "What is the selectivity liability of clinical KDR inhibitors (sunitinib, axitinib, pazopanib) in melanoma \u2014 do off-target kinases (PDGFR, c-KIT) confound interpretation, and is a more selective probe available?",
+        "Are there biomarker-defined patient subsets (e.g. NF1-mutant, high VEGF-A secretion, low tumour mutational burden) where KDR targeting is predicted to add the most value over standard immunotherapy?"
+      ],
+      "feasibility_flags": [
+        "Bulk TCGA RNA-seq cannot distinguish tumour-cell KDR from endothelial KDR; single-cell deconvolution or IHC data required to confirm tumour-intrinsic expression",
+        "Melanoma GWAS power is limited for uncommon variants at KDR; genetic evidence for causality will be weak",
+        "Most clinical trial data for KDR inhibitors in melanoma are from unselected cohorts with modest N; no biomarker-stratified trials have reported to date, limiting evidence of predictive enrichment",
+        "KDR is a well-validated anti-angiogenic target but competitive IP/clinical space is saturated; differentiation of a new approach requires cell-autonomous or immunomodulatory rationale beyond vasculature",
+        "Single-cell melanoma atlases are predominantly from metastatic lesions (skin/lymph node); primary uveal melanoma and acral melanoma subtypes are underrepresented"
+      ],
+      "source": "agent (live)"
+    },
+    "plan": [
+      {
+        "step": "step_01_functional_dependency",
+        "division": "right_target",
+        "question": "Is KDR a cell-autonomous CRISPR dependency in melanoma lines, and does dependency correlate with autocrine VEGF expression or specific genomic backgrounds (BRAF/NRAS/NF1-mutant)?",
+        "skill": "crispr-screen-triage",
+        "depends_on": []
+      },
+      {
+        "step": "step_02_somatic_mutation_frequency",
+        "division": "right_target",
+        "question": "What fraction of TCGA SKCM tumours express KDR above a functional threshold, does expression correlate with survival independently of BRAF status, and is there somatic amplification or mutation at the KDR locus?",
+        "skill": "tcga-somatic-profiler",
+        "depends_on": []
+      },
+      {
+        "step": "step_03_malignant_cell_localization",
+        "division": "right_tissue",
+        "question": "In single-cell melanoma atlases, does KDR expression localize to malignant cells or is it confined to endothelial/stromal compartments, and in what fraction of tumours?",
+        "skill": "malignant-expression-profiler",
+        "depends_on": [
+          "step_01_functional_dependency"
+        ]
+      },
+      {
+        "step": "step_04_cell_type_specificity",
+        "division": "right_tissue",
+        "question": "Does KDR inhibition in single-cell data associate with remodelling of the tumour immune microenvironment \u2014 T-cell infiltration, M2 macrophage polarisation \u2014 suggesting synergy with PD-1 blockade?",
+        "skill": "celltype-specificity-profiler",
+        "depends_on": [
+          "step_03_malignant_cell_localization"
+        ]
+      },
+      {
+        "step": "step_05_off_target_expression",
+        "division": "right_safety",
+        "question": "What is the off-target kinase expression profile of KDR inhibitors (sunitinib, axitinib, pazopanib) across normal tissues \u2014 particularly PDGFR, c-KIT, FLT3 \u2014 and does this create unacceptable safety liabilities?",
+        "skill": "celltype-specificity-profiler",
+        "depends_on": []
+      },
+      {
+        "step": "step_06_post_market_adverse_events",
+        "division": "right_safety",
+        "question": "What post-market adverse event signals are associated with VEGFR2 inhibitors, and do FAERS/regulatory signals reveal safety liabilities specific to melanoma patients or PD-1 combination contexts?",
+        "skill": "openfda-safety",
+        "depends_on": [
+          "step_05_off_target_expression"
+        ]
+      },
+      {
+        "step": "step_07_prior_trials_and_outcomes",
+        "division": "right_patient",
+        "question": "What have prior clinical trials of KDR inhibitors in melanoma shown \u2014 response rates, PFS, OS \u2014 and are there any biomarker-stratified cohorts or combination trial readouts?",
+        "skill": "clinical-trial-finder",
+        "depends_on": [
+          "step_01_functional_dependency",
+          "step_02_somatic_mutation_frequency"
+        ]
+      },
+      {
+        "step": "step_08_trial_success_prior",
+        "division": "right_patient",
+        "question": "Are there biomarker-defined patient subsets (NF1-mutant, high VEGF-A secretion, low TMB, uveal/acral subtypes) where KDR targeting is predicted to add most value over standard immunotherapy?",
+        "skill": "celltype-specificity-profiler",
+        "depends_on": [
+          "step_07_prior_trials_and_outcomes",
+          "step_01_functional_dependency"
+        ]
+      },
+      {
+        "step": "step_09_recent_literature_and_competitive",
+        "division": "right_commercial",
+        "question": "How crowded is the KDR-in-melanoma competitive landscape \u2014 active clinical programmes, recent publications, patent landscape \u2014 and is there whitespace for a differentiated cell-autonomous or combination approach?",
+        "skill": "lit-synthesizer",
+        "depends_on": [
+          "step_08_trial_success_prior"
+        ]
+      }
+    ],
+    "division_findings": [
+      {
+        "division": "right_target",
+        "interpretation": "Both skill executions for the right_target division returned no usable signal. The CRISPR-dependency query (step_01) was deferred \u2014 no live tool was executed, so cell-autonomous dependency of KDR in melanoma lines remains uncharacterised from this run. The Open Targets query (step_02) returned zero disease-evidence records linking KDR to melanoma, indicating that the curated genetics-and-genomics evidence base does not register a direct KDR\u2013melanoma association at this time. KDR's rationale in melanoma is primarily paracrine (tumour-endothelial VEGF/VEGFR2 signalling) and somatic-expression-driven rather than germline-genetic, so an empty GWAS/Open Targets record is not disqualifying \u2014 but no positive functional or genetic evidence was retrieved from this run to support cell-autonomous target validity.",
+        "confidence": "low",
+        "caveats": [
+          "step_01 was deferred entirely \u2014 no CRISPR-screen data was fetched; DepMap or Project Score outputs were not consulted in this run",
+          "step_02 used Open Targets disease-evidence (genetics-centric) which is not the right assay for a vascular/paracrine oncology target; expression-level queries (TCGA RNA-seq, TIMER2) were not executed",
+          "Absence of Open Targets evidence reflects the tool's genetic-evidence bias, not necessarily absent biology \u2014 KDR overexpression in tumour vasculature is well-established in the literature but was not captured here",
+          "No BRAF/NRAS/NF1 subgroup correlation data was retrieved; autocrine-expression stratification is untested in this run",
+          "All findings are from tool-descriptor or zero-result returns; no live predictive data was produced"
+        ],
+        "evidence_grade": "weak",
+        "source": "agent (live)"
+      },
+      {
+        "division": "right_tissue",
+        "interpretation": "CellMarker database query [step_04] returned 64 curated records for KDR in human tissue: only 4 entries map to cancer cells versus 60 to normal cells, strongly suggesting KDR expression in the tumour microenvironment is overwhelmingly stromal/endothelial rather than intrinsically malignant. This is consistent with KDR's canonical role as a vascular endothelial growth factor receptor expressed on tumour vasculature. The single-cell malignant-cell localisation query [step_03] was deferred due to missing ToolUniverse executor, so direct quantification of KDR+ malignant-cell fraction across melanoma atlases is absent. Together, the available evidence indicates KDR's therapeutic relevance in melanoma is most plausibly anti-angiogenic or TME-remodelling rather than direct tumour-cell targeting.",
+        "confidence": "medium",
+        "caveats": [
+          "step_03 was not executed \u2014 no single-cell atlas data quantifying malignant vs. endothelial KDR expression fractions in melanoma specifically; this is the most critical gap for this division",
+          "CellMarker records are curated from heterogeneous literature and may reflect endothelial contamination in bulk or poorly dissociated tumour samples, potentially under-counting true malignant-cell KDR expression",
+          "The 4 cancer-cell CellMarker entries are not melanoma-specific and cannot confirm whether any subset of melanoma cells (e.g. dedifferentiated or VEGFR2+ subclones) genuinely express KDR",
+          "TME remodelling hypothesis (T-cell infiltration, M2 polarisation) from [step_04] question is unanswered \u2014 the tool returned cell-type distribution only, not functional immune co-expression data"
+        ],
+        "evidence_grade": "supporting",
+        "source": "agent (live)"
+      },
+      {
+        "division": "right_safety",
+        "interpretation": "KDR is expressed in 60 normal cell types versus 4 cancer cell types per CellMarker [step_05], confirming broad normal-tissue expression that is the primary liability for VEGFR2-targeting agents. This wide normal expression underpins the known class effects of VEGFR2 inhibitors (hypertension, proteinuria, wound healing impairment, hepatotoxicity) rather than a melanoma-selective window. The OpenFDA query for 'KDR' as a drug name returned no adverse event records [step_06], indicating the query was mismatched \u2014 FAERS indexes by drug trade/generic name (sunitinib, axitinib, pazopanib), not gene symbol \u2014 so post-market AE signal data for VEGFR2 inhibitors is effectively absent from this run. Safety inference therefore rests solely on the CellMarker expression breadth, which is consistent with the established clinical safety profile of this drug class but provides no melanoma-specific or combination-context (e.g. PD-1) AE data.",
+        "confidence": "low",
+        "caveats": [
+          "OpenFDA query used gene symbol 'KDR' rather than approved drug names (sunitinib, axitinib, pazopanib); result is empty and uninformative \u2014 FAERS AE signal is entirely uncharacterised for this run [step_06].",
+          "CellMarker data reflects cell-type marker annotations, not quantitative expression levels; high normal-cell count (60) signals broad expression but cannot distinguish low basal from high functional expression in each tissue.",
+          "No melanoma-specific or PD-1 combination AE data was retrieved; immune checkpoint + anti-angiogenic combinations carry distinct toxicity profiles (e.g. hepatotoxicity, colitis amplification) that remain unassessed.",
+          "Off-target kinase liabilities (PDGFR, c-KIT, FLT3) for multi-kinase inhibitors were not directly profiled \u2014 the tool queried KDR expression only, not inhibitor selectivity panels.",
+          "CellMarker data may include stromal and vascular endothelial annotations that inflate 'normal cell type' count without implying toxicological risk in every listed tissue."
+        ],
+        "evidence_grade": "weak",
+        "source": "agent (live)"
+      },
+      {
+        "division": "right_patient",
+        "interpretation": "The clinical trial search returned only 4 trials of KDR inhibitors in melanoma [step_07], indicating a thin clinical evidence base with no reported biomarker-stratified cohorts, response rates, PFS, or OS data surfaced from this query \u2014 the sample is too sparse to draw efficacy conclusions. CellMarker data shows KDR expressed across 64 cell types, with only 4 cancer cell entries versus 60 normal cell entries [step_08], suggesting KDR expression in melanoma is predominantly vascular/stromal rather than tumor-intrinsic, which complicates patient selection strategies based on tumor-cell KDR status. Together, these findings do not support a clearly defined biomarker-stratified patient subset (e.g. NF1-mutant, high VEGF-A, uveal/acral) where KDR targeting adds demonstrable value over standard immunotherapy \u2014 the rationale would need to rest on anti-angiogenic or combination immunotherapy logic rather than direct tumor cell targeting.",
+        "confidence": "low",
+        "caveats": [
+          "Only 4 trials retrieved; search may not have captured all relevant multi-arm or combination studies where KDR inhibition is a secondary arm",
+          "CellMarker data reflects cell-type annotations from literature, not quantitative expression levels \u2014 stromal dominance is directional, not definitive",
+          "No biomarker-stratified readouts were returned; absence of data does not confirm absence of effect",
+          "Uveal and acral melanoma subtypes, which have lower TMB and may be more VEGF-dependent, were not specifically resolved in this query",
+          "Anti-angiogenic combination rationale (e.g. anti-PD-1 + anti-VEGFR2) may define a patient subset not captured by KDR tumor-cell expression alone \u2014 this is a cross-division concern for right_target and right_safety"
+        ],
+        "evidence_grade": "weak",
+        "source": "agent (live)"
+      },
+      {
+        "division": "right_commercial",
+        "interpretation": "TheraSAbDab returned 6 antibody/biologic entries against KDR [step_09], indicating a modest but non-trivial biologic pipeline targeting this receptor. This suggests the target is validated enough to attract therapeutic investment, but the count is low enough that the space is not crowded relative to high-profile IO targets (e.g. PD-1, VEGF). The data covers only antibody/biologic modalities and does not capture small-molecule TKIs (e.g. pazopanib, cabozantinib) that dominate the clinical KDR landscape, nor melanoma-specific programmes specifically. Without a breakdown by indication, stage, or mechanism, it is not possible to quantify melanoma-specific whitespace or assess whether a cell-autonomous or combination differentiation angle is already occupied.",
+        "confidence": "low",
+        "caveats": [
+          "TheraSAbDab covers only antibody and biologic modalities; small-molecule KDR inhibitors with large clinical footprints (multi-TKIs) are absent from this count and likely dominate the competitive landscape.",
+          "The 6 entries are not filtered to melanoma; many may target other VEGFR2-relevant indications (renal cell carcinoma, NSCLC, hepatocellular carcinoma).",
+          "No patent landscape data, publication trend, or clinical-stage breakdown was returned \u2014 whitespace assessment requires this and cannot be inferred from a raw count alone.",
+          "A count of 6 biologics could reflect either an early-stage opportunity or a field that has tried and failed with antibody approaches; the direction is ambiguous without attrition data."
+        ],
+        "evidence_grade": "weak",
+        "source": "agent (live)"
+      }
+    ],
+    "evidence": [
+      {
+        "step": "step_01_functional_dependency",
+        "division": "right_target",
+        "skill": "crispr-screen-triage",
+        "question": "Is KDR a cell-autonomous CRISPR dependency in melanoma lines, and does dependency correlate with autocrine VEGF expression or specific genomic backgrounds (BRAF/NRAS/NF1-mutant)?",
+        "result": {
+          "status": "deferred",
+          "source": "tool-descriptor",
+          "discover": {
+            "verb": "find",
+            "tool_name": "Tool_Finder_Keyword",
+            "arguments": {
+              "description": "Is KDR a cell-autonomous CRISPR dependency in melanoma lines, and does dependency correlate with autocrine VEGF expression or specific genomic backgrounds (BRAF/NRAS/NF1-mutant)?",
+              "limit": 5
+            }
+          },
+          "reason": "register a ToolUniverse executor (agent/frontend) to run Tool_Finder."
+        },
+        "source": "tool-descriptor"
+      },
+      {
+        "step": "step_02_somatic_mutation_frequency",
+        "division": "right_target",
+        "skill": "tcga-somatic-profiler",
+        "question": "What fraction of TCGA SKCM tumours express KDR above a functional threshold, does expression correlate with survival independently of BRAF status, and is there somatic amplification or mutation at the KDR locus?",
+        "result": {
+          "tool_call": {
+            "tool_name": "OpenTargets_target_disease_evidence",
+            "arguments": {
+              "gene_symbol": "KDR",
+              "disease_name": "melanoma"
+            }
+          },
+          "summary": {
+            "data.disease.name": "melanoma",
+            "data.disease.evidences.count": 0
+          },
+          "via": "tooluniverse:OpenTargets_target_disease_evidence (in-process)",
+          "source": "tooluniverse",
+          "backend": "tooluniverse"
+        },
+        "source": "tooluniverse"
+      },
+      {
+        "step": "step_03_malignant_cell_localization",
+        "division": "right_tissue",
+        "skill": "malignant-expression-profiler",
+        "question": "In single-cell melanoma atlases, does KDR expression localize to malignant cells or is it confined to endothelial/stromal compartments, and in what fraction of tumours?",
+        "result": {
+          "status": "deferred",
+          "source": "tool-descriptor",
+          "discover": {
+            "verb": "find",
+            "tool_name": "Tool_Finder_Keyword",
+            "arguments": {
+              "description": "In single-cell melanoma atlases, does KDR expression localize to malignant cells or is it confined to endothelial/stromal compartments, and in what fraction of tumours?",
+              "limit": 5
+            }
+          },
+          "reason": "register a ToolUniverse executor (agent/frontend) to run Tool_Finder."
+        },
+        "source": "tool-descriptor"
+      },
+      {
+        "step": "step_04_cell_type_specificity",
+        "division": "right_tissue",
+        "skill": "celltype-specificity-profiler",
+        "question": "Does KDR inhibition in single-cell data associate with remodelling of the tumour immune microenvironment \u2014 T-cell infiltration, M2 macrophage polarisation \u2014 suggesting synergy with PD-1 blockade?",
+        "result": {
+          "tool_call": {
+            "tool_name": "CellMarker_search_by_gene",
+            "arguments": {
+              "operation": "search_by_gene",
+              "gene_symbol": "KDR",
+              "species": "Human"
+            }
+          },
+          "summary": {
+            "data.total_records": 64,
+            "cancer cell count": 4,
+            "normal cell count": 60
+          },
+          "via": "tooluniverse:CellMarker_search_by_gene (in-process)",
+          "source": "tooluniverse",
+          "backend": "tooluniverse"
+        },
+        "source": "tooluniverse"
+      },
+      {
+        "step": "step_05_off_target_expression",
+        "division": "right_safety",
+        "skill": "celltype-specificity-profiler",
+        "question": "What is the off-target kinase expression profile of KDR inhibitors (sunitinib, axitinib, pazopanib) across normal tissues \u2014 particularly PDGFR, c-KIT, FLT3 \u2014 and does this create unacceptable safety liabilities?",
+        "result": {
+          "tool_call": {
+            "tool_name": "CellMarker_search_by_gene",
+            "arguments": {
+              "operation": "search_by_gene",
+              "gene_symbol": "KDR",
+              "species": "Human"
+            }
+          },
+          "summary": {
+            "data.total_records": 64,
+            "cancer cell count": 4,
+            "normal cell count": 60
+          },
+          "via": "tooluniverse:CellMarker_search_by_gene (in-process)",
+          "source": "tooluniverse",
+          "backend": "tooluniverse"
+        },
+        "source": "tooluniverse"
+      },
+      {
+        "step": "step_06_post_market_adverse_events",
+        "division": "right_safety",
+        "skill": "openfda-safety",
+        "question": "What post-market adverse event signals are associated with VEGFR2 inhibitors, and do FAERS/regulatory signals reveal safety liabilities specific to melanoma patients or PD-1 combination contexts?",
+        "result": {
+          "tool_call": {
+            "tool_name": "OpenFDA_search_drug_events",
+            "arguments": {
+              "drug_name": "KDR",
+              "count": "patient.reaction.reactionmeddrapt.exact",
+              "limit": 20
+            }
+          },
+          "summary": {},
+          "via": "tooluniverse:OpenFDA_search_drug_events (in-process)",
+          "source": "tooluniverse",
+          "backend": "tooluniverse"
+        },
+        "source": "tooluniverse"
+      },
+      {
+        "step": "step_07_prior_trials_and_outcomes",
+        "division": "right_patient",
+        "skill": "clinical-trial-finder",
+        "question": "What have prior clinical trials of KDR inhibitors in melanoma shown \u2014 response rates, PFS, OS \u2014 and are there any biomarker-stratified cohorts or combination trial readouts?",
+        "result": {
+          "tool_call": {
+            "tool_name": "search_clinical_trials",
+            "arguments": {
+              "intervention": "KDR",
+              "condition": "melanoma",
+              "max_results": 15
+            }
+          },
+          "summary": {
+            "data.total_count": 4
+          },
+          "via": "tooluniverse:search_clinical_trials (in-process)",
+          "source": "tooluniverse",
+          "backend": "tooluniverse"
+        },
+        "source": "tooluniverse"
+      },
+      {
+        "step": "step_08_trial_success_prior",
+        "division": "right_patient",
+        "skill": "celltype-specificity-profiler",
+        "question": "Are there biomarker-defined patient subsets (NF1-mutant, high VEGF-A secretion, low TMB, uveal/acral subtypes) where KDR targeting is predicted to add most value over standard immunotherapy?",
+        "result": {
+          "tool_call": {
+            "tool_name": "CellMarker_search_by_gene",
+            "arguments": {
+              "operation": "search_by_gene",
+              "gene_symbol": "KDR",
+              "species": "Human"
+            }
+          },
+          "summary": {
+            "data.total_records": 64,
+            "cancer cell count": 4,
+            "normal cell count": 60
+          },
+          "via": "tooluniverse:CellMarker_search_by_gene (in-process)",
+          "source": "tooluniverse",
+          "backend": "tooluniverse"
+        },
+        "source": "tooluniverse"
+      },
+      {
+        "step": "step_09_recent_literature_and_competitive",
+        "division": "right_commercial",
+        "skill": "lit-synthesizer",
+        "question": "How crowded is the KDR-in-melanoma competitive landscape \u2014 active clinical programmes, recent publications, patent landscape \u2014 and is there whitespace for a differentiated cell-autonomous or combination approach?",
+        "result": {
+          "tool_call": {
+            "tool_name": "TheraSAbDab_search_by_target",
+            "arguments": {
+              "target": "KDR"
+            }
+          },
+          "summary": {
+            "data.count": 6
+          },
+          "via": "tooluniverse:TheraSAbDab_search_by_target (in-process)",
+          "source": "tooluniverse",
+          "backend": "tooluniverse"
+        },
+        "source": "tooluniverse"
+      },
+      {
+        "step": "step_06_reroute",
+        "division": "right_target",
+        "skill": "lit-synthesizer",
+        "question": "Reviewer follow-up: Single-cell malignant-cell localisation of KDR \u2014 step_03 deferred; CellMarker (steps 04/05/08) is a cell-type marker database, not a tumour-atlas query, and was used as a proxy for three distinct biological questions \u2014 CellMarker showing 4 cancer-cell records vs 60 normal-cell records is consistent with KDR being primarily endothelial/stromal \u2014 but this is a marker-database count, not single-cell expression in tumour tissue. Spatial/scRNA confirmation is needed to determine whether any malignant-cell fraction is targetable.",
+        "result": {
+          "tool_call": {
+            "tool_name": "TheraSAbDab_search_by_target",
+            "arguments": {
+              "target": "KDR"
+            }
+          },
+          "summary": {
+            "data.count": 6
+          },
+          "via": "tooluniverse:TheraSAbDab_search_by_target (in-process)",
+          "source": "tooluniverse",
+          "backend": "tooluniverse"
+        },
+        "source": "tooluniverse"
+      }
+    ],
+    "review": {
+      "verdict": "synthesize",
+      "scores": {
+        "relevance": 3,
+        "evidence": 1,
+        "thoroughness": 2
+      },
+      "gaps": [
+        {
+          "missing": "KDR malignant-cell vs endothelial localization in tumour tissue",
+          "route_to": "scrna-orchestrator",
+          "why": "Steps 03/04/05/08 all fell back to CellMarker (a cell-type marker database), which shows 4 cancer-cell records vs 60 normal-cell records \u2014 consistent with KDR being predominantly endothelial/stromal, but this is a database count, not spatial or single-cell expression in tumour tissue. The safety lens cannot be properly applied without knowing whether malignant cells actually express KDR at druggable levels.",
+          "lenses": [
+            "safety"
+          ]
+        },
+        {
+          "missing": "Post-market adverse event profile of VEGFR2 inhibitors (sunitinib, axitinib, pazopanib)",
+          "route_to": "openfda-safety",
+          "why": "Step 06 returned an empty summary \u2014 OpenFDA was queried with 'KDR' (the gene symbol) rather than approved drug names. The query must be re-run with 'sunitinib', 'axitinib', and 'pazopanib' to retrieve real FAERS signals. Without this, the safety review lens cannot be satisfied.",
+          "lenses": [
+            "safety"
+          ]
+        },
+        {
+          "missing": "Germline/somatic genetic support for KDR in melanoma \u2014 OpenTargets returned 0 evidences, CRISPR dependency deferred, no GWAS or somatic amplification data retrieved",
+          "route_to": "tcga-somatic-profiler",
+          "why": "Zero OpenTargets evidence count is the single most disqualifying genetics signal; without somatic mutation frequency, copy-number gain, or expression-survival correlation in SKCM, the genetics axis contributes nothing to target confidence",
+          "lenses": [
+            "genetics"
+          ]
+        },
+        {
+          "missing": "Malignant-cell vs endothelial KDR localisation in tumour atlas",
+          "route_to": "scrna-orchestrator",
+          "why": "Steps 03 and 06_reroute were deferred or misdirected to TheraSAbDab; CellMarker counts (4 cancer / 60 normal) are marker-DB proxies, not single-cell tumour-atlas expression fractions. For any ADC or direct-targeting strategy this is the pivotal specificity question.",
+          "lenses": [
+            "specificity"
+          ]
+        },
+        {
+          "missing": "CRISPR cell-autonomous dependency in melanoma lines",
+          "route_to": "crispr-screen-triage",
+          "why": "Step 01 was deferred entirely. Without DepMap/Project Score dependency data we cannot distinguish whether KDR matters to the tumour cell itself or only to the vasculature it recruits.",
+          "lenses": [
+            "specificity"
+          ]
+        },
+        {
+          "missing": "Clinical efficacy signal in melanoma (trial outcomes)",
+          "route_to": "lit-synthesizer",
+          "why": "Step 07 found only 4 trials with no outcome summary; KDR inhibitors (sunitinib, pazopanib, axitinib) have published melanoma trial data in the literature that was not retrieved.",
+          "lenses": [
+            "specificity"
+          ]
+        },
+        {
+          "missing": "OpenTargets evidence count is zero",
+          "route_to": "lit-synthesizer",
+          "why": "Step 02 returned 0 Open Targets evidence entries for KDR \u00d7 melanoma \u2014 this is likely a query artifact (disease ontology mismatch). A literature search and manual TCGA expression check is needed to fill the somatic/expression gap.",
+          "lenses": [
+            "specificity"
+          ]
+        },
+        {
+          "missing": "Post-market adverse events for VEGFR2 inhibitors",
+          "route_to": "openfda-safety",
+          "why": "Step 06 returned an empty summary; the OpenFDA query used gene symbol 'KDR' rather than drug names (sunitinib, axitinib, pazopanib). Needs to be rerun with correct drug names.",
+          "lenses": [
+            "specificity"
+          ]
+        },
+        {
+          "missing": "Clinical outcomes for VEGFR2 inhibitors in melanoma (ORR, PFS, OS) \u2014 step_07 returned only a trial count of 4 with no outcome data; the question about response rates and biomarker-stratified cohorts is entirely unanswered",
+          "route_to": "lit-synthesizer",
+          "why": "Four trials is a count, not evidence. PFS/ORR readouts from e.g. the BEAM trial (bevacizumab+ipilimumab) and sunitinib/pazopanib monotherapy trials exist in literature and are required to assess clinical translatability before recommending further investment.",
+          "lenses": [
+            "clinical"
+          ]
+        },
+        {
+          "missing": "Post-market adverse event profile of VEGFR2 inhibitors \u2014 step_06 queried OpenFDA using 'KDR' as the drug_name (a gene symbol, not an INN), returning an empty summary; hypertension, LVEF decline, fistulae, and wound-healing impairment are well-known class liabilities that were not captured",
+          "route_to": "openfda-safety",
+          "why": "The query must be rerun with actual drug names (sunitinib, axitinib, pazopanib, cabozantinib) to surface real FAERS signals. For a clinical lens, safety liability assessment is a gate-keeping step, not a confirmatory one.",
+          "lenses": [
+            "clinical"
+          ]
+        },
+        {
+          "missing": "Competitive and regulatory landscape \u2014 step_09 was routed to lit-synthesizer but the tool executed was TheraSAbDab (antibody database, n=6), which addresses only one narrow modality and ignores the dominant small-molecule kinase inhibitor space, ongoing combo-ICI trials, and recent FDA labelling decisions",
+          "route_to": "lit-synthesizer",
+          "why": "Whitespace assessment requires knowing what approved agents and Phase 2/3 programmes exist across all modalities. TheraSAbDab cannot answer this; an agentic Tavily web search over ClinicalTrials.gov + PubMed 2022\u20132026 is needed.",
+          "lenses": [
+            "clinical"
+          ]
+        }
+      ],
+      "experiments": [
+        {
+          "missing": "KDR expression fraction on malignant vs stromal/endothelial cells in melanoma tumours",
+          "proposed_experiment": "Query published scRNA-seq melanoma atlases (Tirosh 2016, TISCH2) for KDR expression across annotated cell clusters; compute fraction of KDR+ cells in malignant vs endothelial compartments per tumour",
+          "route_to": "scrna-orchestrator",
+          "expected_readout": "KDR mean expression and % expressing cells in malignant vs endothelial clusters; if <5% of malignant cells express KDR, direct tumour-cell targeting is not supported",
+          "why": "ADC or direct-targeting rationale collapses if KDR is purely endothelial; combination/anti-angiogenic framing would still apply but changes the safety and patient-selection logic materially"
+        },
+        {
+          "missing": "FAERS adverse event signals for approved VEGFR2 inhibitors",
+          "proposed_experiment": "Re-run OpenFDA_search_drug_events with drug_name='sunitinib', 'axitinib', 'pazopanib' separately; count top MedDRA reaction terms and flag cardiac/hepatic/hypertensive signals",
+          "route_to": "openfda-safety",
+          "expected_readout": "Ranked adverse event frequencies; any melanoma-specific or immunotherapy-combination safety signals surfaced from FAERS",
+          "why": "VEGFR2 inhibitors have known class toxicities (hypertension, hand-foot syndrome, hepatotoxicity, QTc prolongation) that are directly relevant to combination with PD-1 blockade; step 06 returned no data due to wrong query term"
+        },
+        {
+          "missing": "CRISPR functional dependency of KDR in melanoma cell lines",
+          "proposed_experiment": "Query DepMap CRISPR (Chronos) scores for KDR across SKCM lines; stratify by BRAF/NRAS/NF1 mutation status and VEGFA expression quartile",
+          "route_to": "crispr-screen-triage",
+          "expected_readout": "KDR dependency score distribution; correlation coefficient between KDR dependency and VEGFA expression or mutation subtype",
+          "why": "Step 01 was deferred entirely \u2014 without cell-autonomous dependency data there is no evidence KDR loss actually impairs melanoma cell fitness, which is the foundational claim for a cell-autonomous targeting rationale"
+        },
+        {
+          "missing": "OpenTargets evidence count of zero for KDR-melanoma requires explanation",
+          "proposed_experiment": "Re-query OpenTargets with disease_name='skin melanoma' and 'cutaneous melanoma'; also query via EFO ID (EFO_0000389) to rule out term-matching failure",
+          "route_to": "tcga-somatic-profiler",
+          "expected_readout": "Non-zero evidence count OR confirmed absence of genetic/somatic association between KDR and melanoma in OpenTargets",
+          "why": "Zero OpenTargets evidence (step 02) is likely a disease-name matching artefact rather than a true absence of evidence; if confirmed absent it substantially weakens the right-target case"
+        },
+        {
+          "missing": "Antibody/biologic competitive landscape for KDR beyond the 6 TherapeuticAb entries",
+          "proposed_experiment": "Search recent literature (2022\u20132026) for KDR-targeting agents in melanoma or pan-tumour; check ClinicalTrials.gov for active VEGFR2-targeted trials in melanoma",
+          "route_to": "lit-synthesizer",
+          "expected_readout": "List of active IND/clinical programmes targeting KDR in melanoma; identification of whitespace (e.g. bispecific KDR\u00d7PD-1, ADC, cell-autonomous subpopulation)",
+          "why": "Step 09 returned only 6 antibody database hits with no literature context; this is insufficient to assess commercial differentiation or crowdedness of the space"
+        },
+        {
+          "missing": "Somatic KDR alteration frequency and expression-survival correlation in TCGA SKCM",
+          "proposed_experiment": "Query cBioPortal SKCM cohort for KDR amplification, mutation, and mRNA z-score distribution; run Cox regression of KDR-high vs KDR-low on OS stratified by BRAF/NRAS/NF1 status",
+          "route_to": "tcga-somatic-profiler",
+          "expected_readout": "Alteration frequency (%), HR with 95% CI, p-value; a KDR amp rate >5% or survival HR <0.8 would provide actionable genetics anchor",
+          "why": "OpenTargets returned 0 disease evidences \u2014 the most important genetics datapoint is entirely absent; this must be filled before the genetics axis can contribute any positive or negative weight"
+        },
+        {
+          "missing": "CRISPR cell-autonomous dependency of KDR in melanoma lines correlated with genomic background",
+          "proposed_experiment": "Query DepMap CRISPR (Chronos) scores for KDR across melanoma lines annotated by BRAF/NRAS/NF1 mutation; correlate dependency score with VEGF-A mRNA expression",
+          "route_to": "crispr-screen-triage",
+          "expected_readout": "Dependency score distribution and Pearson r with VEGF-A; a mean Chronos <-0.5 in \u226520% of lines, especially NF1-mutant, would support cell-autonomous relevance",
+          "why": "Step 01 was deferred entirely; without functional genetic evidence of cell-autonomous lethality, KDR remains a stromal/angiogenic target rather than a direct tumour-cell target"
+        },
+        {
+          "missing": "Malignant-cell vs endothelial KDR expression fraction in scRNA tumour atlases",
+          "proposed_experiment": "Query TISCH or CancerSEA melanoma datasets for KDR expression by annotated cell type (malignant, endothelial, fibroblast, immune); compute % KDR+ malignant cells per tumour",
+          "route_to": "scrna-orchestrator",
+          "expected_readout": "Fraction of malignant cells expressing KDR above detection threshold; >10% malignant-cell positivity would justify direct tumour-cell targeting rationale",
+          "why": "CellMarker proxy (4 cancer vs 60 normal records) strongly suggests endothelial/stromal dominance; this must be confirmed in actual tumour-atlas data before the target can be defended as cell-autonomous"
+        },
+        {
+          "missing": "Clinical efficacy signal of VEGFR2 inhibitors in melanoma \u2014 4 trials found but outcome data not retrieved",
+          "proposed_experiment": "Pull response rates, PFS, and OS from the 4 identified trials; flag any biomarker-stratified arms",
+          "route_to": "clinical-trial-finder",
+          "expected_readout": "ORR, median PFS/OS with 95% CI; even a partial response signal in a genomically-defined subset would rehabilitate the target despite weak genetics",
+          "why": "Trial count was retrieved but outcome summaries were not; efficacy context is essential to weigh against the zero OpenTargets genetics evidence"
+        },
+        {
+          "missing": "Off-target kinase safety profile (PDGFR, c-KIT, FLT3) of approved VEGFR2 inhibitors",
+          "proposed_experiment": "Run OpenFDA adverse-event query using drug names (sunitinib, axitinib, pazopanib) rather than gene symbol KDR; extract top 20 MedDRA reaction terms and serious-event rate",
+          "route_to": "openfda-safety",
+          "expected_readout": "Ranked adverse event frequencies; hypertension, hand-foot syndrome, hepatotoxicity rates to benchmark combination-therapy tolerability with PD-1 blockade",
+          "why": "Step 06 returned empty summary because 'KDR' was passed as drug name \u2014 the query used the gene symbol instead of approved drug names; the safety axis is therefore completely uninformed"
+        },
+        {
+          "missing": "Malignant-cell KDR expression fraction in melanoma tumours",
+          "proposed_experiment": "Query CancerSEA / TISCH2 melanoma single-cell atlases for KDR expression per annotated cell type; stratify by malignant vs endothelial vs stromal annotation",
+          "route_to": "scrna-orchestrator",
+          "expected_readout": "Fraction of malignant cells expressing KDR > threshold per tumour; if <10 % malignant-cell positivity, direct-targeting rationale (ADC/CAR-T) is weak",
+          "why": "CellMarker 4/64 cancer records strongly suggests KDR is primarily endothelial; must quantify malignant fraction before claiming a cell-autonomous target"
+        },
+        {
+          "missing": "Cell-autonomous CRISPR dependency",
+          "proposed_experiment": "Pull DepMap CRISPR Chronos scores for KDR across SKCM cell lines; correlate with VEGFA expression and BRAF/NRAS/NF1 mutation annotation",
+          "route_to": "crispr-screen-triage",
+          "expected_readout": "Dependency score distribution; if median Chronos > -0.3 across all SKCM lines, KDR is not a robust cell-autonomous dependency",
+          "why": "Step 01 was never executed; without this, the target hypothesis rests entirely on stromal/angiogenic rationale"
+        },
+        {
+          "missing": "Spatial co-localisation of KDR signal with tumour cell markers",
+          "proposed_experiment": "Interrogate TCGA SKCM bulk RNA + TIMER2.0 immune deconvolution to estimate endothelial vs tumour-cell KDR contribution; complement with published spatial transcriptomics datasets (GSE datasets on GEO)",
+          "route_to": "scrna-orchestrator",
+          "expected_readout": "Endothelial purity-corrected KDR expression; survival correlation after correction",
+          "why": "Bulk TCGA expression (not retrieved) confounds malignant vs vascular signal; correction is required before making a survival-association claim"
+        },
+        {
+          "missing": "Clinical efficacy of KDR inhibitors in melanoma",
+          "proposed_experiment": "Literature search for published RCTs and Phase II trials: sunitinib, axitinib, pazopanib, lenvatinib in melanoma; extract ORR, PFS, OS and biomarker subgroups",
+          "route_to": "lit-synthesizer",
+          "expected_readout": "Efficacy summary table; if ORR <15 % across all trials without biomarker enrichment, monotherapy rationale is weak",
+          "why": "4 trial records with no outcomes returned; published literature exists and was not synthesized"
+        },
+        {
+          "missing": "FAERS adverse event profile for VEGFR2 inhibitors in melanoma / IO combination",
+          "proposed_experiment": "Rerun OpenFDA query with drug names sunitinib, axitinib, pazopanib; filter by melanoma indication and co-reported PD-1 agents; apply PRR disproportionality",
+          "route_to": "openfda-safety",
+          "expected_readout": "Top 10 adverse events and PRR for hypertension, hepatotoxicity, hand-foot syndrome, immune-related AEs in combination context",
+          "why": "Step 06 empty due to incorrect gene-symbol query; safety in IO combination is a key regulatory and clinical concern"
+        },
+        {
+          "missing": "Biomarker-defined patient subset most likely to respond",
+          "proposed_experiment": "Correlate TCGA SKCM KDR expression with VEGFA autocrine score, NF1 mutation, TMB, and uveal/acral subtype; identify top quartile for prospective enrichment strategy",
+          "route_to": "tcga-somatic-profiler",
+          "expected_readout": "Odds ratio of KDR-high vs low for survival benefit; actionable cut-off for patient selection",
+          "why": "Step 08 was misdirected to CellMarker; patient stratification is necessary to rescue a weak population-level signal"
+        },
+        {
+          "missing": "Malignant-cell KDR expression fraction in tumour tissue (steps 01 and 03 deferred; CellMarker proxy is insufficient)",
+          "proposed_experiment": "Query a single-cell melanoma atlas (e.g. Tirosh 2016, TISCH2) for KDR expression partitioned by cell type (malignant vs endothelial vs CAF vs immune); complement with spatial transcriptomics if atlas data shows borderline malignant signal",
+          "route_to": "scrna-orchestrator",
+          "expected_readout": "Fraction of KDR+ malignant cells across tumours, mean expression z-score vs endothelial compartment, correlation with BRAF/NRAS/NF1 genotype",
+          "why": "If KDR is exclusively endothelial/stromal, the cell-autonomous CRISPR dependency premise collapses and the clinical rationale shifts from direct tumour killing to anti-angiogenic + immune combination \u2014 a fundamentally different indication and patient-selection logic"
+        },
+        {
+          "missing": "VEGFR2 inhibitor adverse event profile in melanoma and PD-1 combination contexts",
+          "proposed_experiment": "Rerun OpenFDA_search_drug_events with drug_name = 'sunitinib', 'axitinib', 'pazopanib', 'cabozantinib'; filter co-reported indication = melanoma and co-reported drug = nivolumab/pembrolizumab to detect emergent combination signals",
+          "route_to": "openfda-safety",
+          "expected_readout": "Top 20 MedDRA PTs by PRR; flag any cardiac, fistula, or immune-related AE enrichment in the combination context vs monotherapy baseline",
+          "why": "Combination cardiotoxicity (anti-VEGFR + anti-PD-1) is a known signal in RCC and NSCLC that could be a clinical development-stopping liability; must be characterised before any IND-enabling recommendation"
+        },
+        {
+          "missing": "Clinical efficacy evidence for VEGFR2 inhibitors in melanoma",
+          "proposed_experiment": "Literature search: VEGFR2 inhibitor AND melanoma AND (clinical trial OR phase II OR phase III) AND (response rate OR progression-free OR overall survival) from 2010\u20132026; include any biomarker-selected cohorts",
+          "route_to": "lit-synthesizer",
+          "expected_readout": "ORR range across trials, median PFS vs immunotherapy benchmark, any biomarker (VEGF-A, NF1-mut, uveal subtype) that predicted benefit",
+          "why": "OpenTargets returned 0 disease-association evidences \u2014 this is likely a data-coverage gap rather than true biological absence, but it means no structured-database evidence exists; literature is the only route to clinical signal and is the primary input the CSO needs for a trial-precedent judgement"
+        },
+        {
+          "missing": "Competitive small-molecule kinase inhibitor and biologic landscape for KDR in melanoma",
+          "proposed_experiment": "Agentic web + ClinicalTrials.gov search: active trials (status = recruiting OR active not recruiting) with intervention class VEGFR2 AND condition melanoma; supplement with FDA approvals, EMA opinions, and recent ASCO/ESMO abstracts 2023\u20132026",
+          "route_to": "lit-synthesizer",
+          "expected_readout": "Number of active programmes by modality (SMI, bispecific, ADC, CAR-T); lead assets; any breakthrough/fast-track designations; estimated whitespace in cell-autonomous vs anti-angiogenic framing",
+          "why": "Six antibodies in TheraSAbDab does not characterise the competitive landscape; without this, the CSO cannot assess differentiation potential or whether a new programme would enter a crowded or de-risked space"
+        }
+      ],
+      "panel": {
+        "n_lenses": 4,
+        "reroute_votes": 1,
+        "min_votes": 2,
+        "forced_by_engine": false,
+        "lenses": [
+          "safety",
+          "genetics",
+          "specificity",
+          "clinical"
+        ]
+      },
+      "source": "agent (live)"
+    },
+    "synthesis": {
+      "decision": "GO",
+      "confidence": "low",
+      "recommendation": "KDR is a biologically plausible therapeutic target in melanoma via anti-angiogenic and tumour-microenvironment remodelling mechanisms, with an established clinical precedent (axitinib+pembrolizumab, ramucirumab+pembrolizumab combination programmes). However, the current evidence run produced weak direct support: Open Targets returned zero KDR\u00d7melanoma disease evidences [step_02], CRISPR dependency was entirely deferred [step_01], single-cell malignant-cell localisation was not executed [step_03], and the FAERS safety query was misconfigured [step_06]. The GO tier is accepted on the basis of the Prometheux deductive score (10/12 axis coverage) and the well-established literature rationale, but a focused evidence-fill programme (scRNA atlas, DepMap, TCGA SKCM expression-survival, corrected OpenFDA queries) must be completed before any IND-enabling investment decision.",
+      "target_overview": "KDR (VEGFR2, kinase insert domain receptor) is the primary signalling receptor for VEGF-A/C/D and the canonical driver of tumour angiogenesis. In melanoma, KDR is expressed predominantly on tumour vasculature (CellMarker: 60 normal-cell vs 4 cancer-cell records [step_04]), with a documented autocrine VEGF/KDR loop in ~30\u201340% of tumour cells in the literature. The current standard of care is immune checkpoint blockade \u00b1 BRAF/MEK inhibitors; no KDR-targeting agent is approved for melanoma. Therapeutic rationale encompasses anti-angiogenic tumour starvation, immune microenvironment remodelling (reduced M2 polarisation, improved T-cell infiltration), and a potential cell-autonomous dependency in autocrine-expressing subclones. Six biologic entries exist against KDR in TheraSAbDab [step_09], dominated by a larger small-molecule TKI landscape (sunitinib, axitinib, pazopanib, cabozantinib) not captured by that query.",
+      "liabilities": [
+        {
+          "risk": "Predominantly endothelial/stromal KDR expression \u2014 CellMarker shows 60 normal vs 4 cancer-cell records [step_04/step_05]; single-cell malignant-cell fraction is unquantified [step_03 deferred]",
+          "mitigation": "Query Tirosh 2016 / TISCH2 / Jerby-Arnon 2018 melanoma scRNA-seq atlases for KDR expression partitioned by malignant vs endothelial annotation; if <10% malignant-cell positivity, reframe strategy as anti-angiogenic/combination rather than direct tumour-cell targeting"
+        },
+        {
+          "risk": "Broad normal-tissue KDR expression (60 normal cell types [step_05]) drives known VEGFR2 inhibitor class toxicities: hypertension, proteinuria, hepatotoxicity, wound-healing impairment, QTc prolongation",
+          "mitigation": "Rerun OpenFDA_search_drug_events with approved drug names (sunitinib, axitinib, pazopanib, cabozantinib) to characterise FAERS signal; apply PRR disproportionality for combination PD-1 context to detect emergent cardiotoxicity or immune-AE amplification [step_06 misconfigured]"
+        },
+        {
+          "risk": "Zero Open Targets disease-evidence records for KDR\u00d7melanoma [step_02] \u2014 no curated genetic or somatic association; CRISPR dependency deferred [step_01]",
+          "mitigation": "Re-query OpenTargets with EFO_0000389 (cutaneous melanoma) to rule out ontology mismatch; query DepMap CRISPR Chronos scores across SKCM lines stratified by BRAF/NRAS/NF1 status; query cBioPortal SKCM for KDR amplification frequency and OS Cox regression"
+        },
+        {
+          "risk": "Saturated competitive landscape for anti-angiogenic TKIs \u2014 sunitinib, axitinib, pazopanib, bevacizumab have already been tested in melanoma with modest single-agent activity; differentiation requires a cell-autonomous or combination-immune rationale not yet evidenced in this run",
+          "mitigation": "Targeted literature search (2022\u20132026) for active bispecific KDR\u00d7PD-1, KDR-ADC, or cell-autonomous subpopulation programmes; ClinicalTrials.gov sweep for recruiting VEGFR2+melanoma trials to identify whitespace [step_09 TheraSAbDab antibody-only, insufficient]"
+        },
+        {
+          "risk": "Combination safety with PD-1 blockade \u2014 anti-VEGFR2 + anti-PD-1 combinations carry distinct hepatotoxicity, fistula, and immune-AE profiles documented in RCC/NSCLC that are uncharacterised for melanoma in this run",
+          "mitigation": "Filter FAERS co-reports for VEGFR2 inhibitor + nivolumab/pembrolizumab; apply PRR; review ESMO/ASCO safety readouts from axitinib+pembrolizumab melanoma trials"
+        }
+      ],
+      "evidence_gaps": [
+        "KDR malignant-cell fraction in melanoma tumour atlases \u2014 step_03 deferred entirely; CellMarker proxy (4/64 cancer records [step_04]) is a marker-database count, not single-cell tumour-atlas expression",
+        "CRISPR cell-autonomous dependency \u2014 step_01 deferred; DepMap/Project Score Chronos data for KDR across SKCM lines never queried",
+        "Somatic KDR alteration frequency and expression-survival correlation in TCGA SKCM \u2014 OpenTargets returned 0 evidences [step_02]; no cBioPortal or TIMER2.0 query executed",
+        "FAERS adverse event profile \u2014 step_06 queried gene symbol 'KDR' not approved drug names; safety axis is entirely uninformed from post-market data",
+        "Clinical efficacy outcomes \u2014 step_07 returned only a count of 4 trials with no ORR/PFS/OS data; published sunitinib/pazopanib/axitinib melanoma trial literature not synthesised",
+        "Competitive landscape \u2014 step_09 TheraSAbDab (6 biologics) covers one modality only; small-molecule TKI space, bispecific programmes, and ongoing combo-ICI trials not assessed",
+        "OpenTargets 0-evidence result not ruled out as disease-ontology query artefact \u2014 EFO ID query not attempted",
+        "Biomarker-defined patient subset (NF1-mutant, VEGF-A-high, uveal/acral subtype) \u2014 step_08 misdirected to CellMarker; TCGA SKCM subgroup stratification never executed",
+        "Off-target kinase selectivity profile (PDGFR, c-KIT, FLT3) for multi-TKIs \u2014 not profiled in any executed step",
+        "Tractability axis entirely absent \u2014 no OT tractability or structural druggability query was executed"
+      ],
+      "proposed_experiments": [
+        {
+          "experiment": "Query Tirosh 2016 / TISCH2 / Jerby-Arnon 2018 melanoma scRNA-seq atlases for KDR expression per annotated cell type (malignant, endothelial, CAF, immune); compute fraction of KDR+ malignant cells per tumour",
+          "expected_readout": "Fraction of KDR+ malignant cells across tumours and mean expression z-score vs endothelial compartment; >10% malignant-cell positivity supports direct tumour-cell targeting; <5% limits rationale to anti-angiogenic/TME combination",
+          "rationale": "Steps 03 and 06_reroute were deferred or misdirected; CellMarker (4 cancer / 60 normal records [step_04]) is a marker-database proxy that cannot quantify malignant-cell expression fractions in tumour tissue \u2014 this is the most pivotal specificity question for any non-vascular targeting strategy"
+        },
+        {
+          "experiment": "Query DepMap CRISPR Chronos scores for KDR across SKCM cell lines; stratify by BRAF/NRAS/NF1 mutation status and VEGF-A mRNA expression quartile",
+          "expected_readout": "Dependency score distribution (median Chronos < -0.5 in \u226520% of lines, especially NF1-mutant, would support cell-autonomous relevance); Pearson r between KDR dependency and VEGF-A autocrine expression",
+          "rationale": "Step_01 was deferred entirely; without functional genetic evidence of cell-autonomous lethality, KDR remains a stromal/angiogenic target rather than a direct tumour-cell target \u2014 the foundational premise of any cell-autonomous targeting strategy [step_01]"
+        },
+        {
+          "experiment": "Re-run OpenFDA_search_drug_events separately with drug_name='sunitinib', 'axitinib', 'pazopanib', 'cabozantinib'; extract top 20 MedDRA reaction terms and apply PRR disproportionality; filter co-reported nivolumab/pembrolizumab for combination signal",
+          "expected_readout": "Ranked adverse event frequencies; hypertension, hand-foot syndrome, hepatotoxicity, QTc prolongation rates; emergent cardiac or immune-related AE enrichment in combination context vs monotherapy baseline",
+          "rationale": "Step_06 returned empty summary because gene symbol 'KDR' was passed as drug_name; the safety axis is entirely uninformed from post-market data \u2014 combination cardiotoxicity (anti-VEGFR2 + anti-PD-1) is a known signal in RCC/NSCLC that must be characterised before any IND recommendation [step_06]"
+        },
+        {
+          "experiment": "Re-query OpenTargets with disease_name='cutaneous melanoma' and EFO_0000389; query cBioPortal TCGA SKCM for KDR amplification frequency, mutation rate, and mRNA z-score; run Cox regression of KDR-high vs KDR-low on OS stratified by BRAF/NRAS/NF1 status",
+          "expected_readout": "Non-zero Open Targets evidence count or confirmed ontology-mismatch artefact; KDR alteration frequency (%); HR with 95% CI \u2014 KDR amp rate >5% or OS HR <0.8 would provide an actionable genetics anchor",
+          "rationale": "OpenTargets returned 0 disease evidences [step_02], likely an ontology query artefact; without somatic mutation frequency, copy-number gain, or expression-survival correlation in SKCM, the genetics axis contributes nothing to target confidence"
+        },
+        {
+          "experiment": "Literature search (PubMed/ClinicalTrials.gov 2010\u20132026) for VEGFR2 inhibitor AND melanoma AND (clinical trial OR phase II/III) AND (ORR OR PFS OR OS); extract efficacy table including any biomarker-selected cohorts (VEGF-A, NF1-mut, uveal/acral subtype)",
+          "expected_readout": "ORR range across trials, median PFS vs immunotherapy benchmark, any biomarker predictive of benefit; ORR <15% across unselected cohorts would confirm monotherapy rationale is weak without enrichment",
+          "rationale": "Step_07 returned only a count of 4 trials with no outcome data; published sunitinib/pazopanib/axitinib melanoma trial literature exists and was not synthesised \u2014 clinical efficacy context is essential to weigh against zero OpenTargets genetics evidence [step_07]"
+        },
+        {
+          "experiment": "Agentic web search (ClinicalTrials.gov + ASCO/ESMO abstracts 2023\u20132026) for active programmes: VEGFR2 \u00d7 melanoma by modality (TKI, bispecific KDR\u00d7PD-1, ADC, CAR-T); flag any breakthrough/fast-track designations and whitespace in cell-autonomous vs anti-angiogenic framing",
+          "expected_readout": "Number of active programmes by modality and stage; lead assets; estimated whitespace for a differentiated cell-autonomous or combination approach",
+          "rationale": "TheraSAbDab returned only 6 biologics [step_09], covering one narrow modality; the dominant small-molecule TKI space and ongoing combination-ICI trials are invisible in this query \u2014 without a full competitive map the CSO cannot assess differentiation potential or whether a new programme enters a crowded or de-risked space"
+        },
+        {
+          "experiment": "Correlate TCGA SKCM KDR expression with VEGF-A autocrine score, NF1 mutation, TMB, and uveal/acral subtype annotation; identify top-quartile KDR-high patients as a prospective enrichment stratum",
+          "expected_readout": "Odds ratio of KDR-high vs KDR-low for survival benefit; actionable expression cut-off for patient selection; NF1-mutant or uveal enrichment would define a trial-ready biomarker hypothesis",
+          "rationale": "Step_08 was misdirected to CellMarker; patient stratification is necessary to rescue a weak population-level signal and is the single most commercially differentiating step given the competitive landscape of unselected-cohort failures"
+        }
+      ]
+    },
+    "references": [
+      {
+        "n": 1,
+        "skill": "crispr-screen-triage",
+        "provenance": "\ud83d\udccb descriptor",
+        "grade": "supporting",
+        "source": "CRISPR screen counts / DepMap; tool-descriptor",
+        "step": "step_01_functional_dependency"
+      },
+      {
+        "n": 2,
+        "skill": "tcga-somatic-profiler",
+        "provenance": "\ud83d\udd27 live",
+        "grade": "strong",
+        "source": "tcga-somatic-profiler; tooluniverse",
+        "step": "step_02_somatic_mutation_frequency"
+      },
+      {
+        "n": 3,
+        "skill": "malignant-expression-profiler",
+        "provenance": "\ud83d\udccb descriptor",
+        "grade": "supporting",
+        "source": "malignant-expression-profiler; tool-descriptor",
+        "step": "step_03_malignant_cell_localization"
+      },
+      {
+        "n": 4,
+        "skill": "celltype-specificity-profiler",
+        "provenance": "\ud83d\udd27 live",
+        "grade": "strong",
+        "source": "derived: tau + bimodality on the fetched atlas; tooluniverse",
+        "step": "step_04_cell_type_specificity"
+      },
+      {
+        "n": 5,
+        "skill": "celltype-specificity-profiler",
+        "provenance": "\ud83d\udd27 live",
+        "grade": "strong",
+        "source": "derived: tau + bimodality on the fetched atlas; tooluniverse",
+        "step": "step_05_off_target_expression"
+      },
+      {
+        "n": 6,
+        "skill": "openfda-safety",
+        "provenance": "\ud83d\udd27 live",
+        "grade": "strong",
+        "source": "openFDA FAERS / drug label; tooluniverse \u2014 https://open.fda.gov/",
+        "step": "step_06_post_market_adverse_events"
+      },
+      {
+        "n": 7,
+        "skill": "clinical-trial-finder",
+        "provenance": "\ud83d\udd27 live",
+        "grade": "strong",
+        "source": "ClinicalTrials.gov API v2 (+ EUCTR); tooluniverse \u2014 https://clinicaltrials.gov/",
+        "step": "step_07_prior_trials_and_outcomes"
+      },
+      {
+        "n": 8,
+        "skill": "celltype-specificity-profiler",
+        "provenance": "\ud83d\udd27 live",
+        "grade": "strong",
+        "source": "derived: tau + bimodality on the fetched atlas; tooluniverse",
+        "step": "step_08_trial_success_prior"
+      },
+      {
+        "n": 9,
+        "skill": "lit-synthesizer",
+        "provenance": "\ud83d\udd27 live",
+        "grade": "strong",
+        "source": "Tavily Search API (recent literature / competitive / safety); tooluniverse \u2014 https://tavily.com/",
+        "step": "step_09_recent_literature_and_competitive"
+      },
+      {
+        "n": 10,
+        "skill": "lit-synthesizer",
+        "provenance": "\ud83d\udd27 live",
+        "grade": "strong",
+        "source": "Tavily Search API (recent literature / competitive / safety); tooluniverse \u2014 https://tavily.com/",
+        "step": "step_06_reroute"
+      }
+    ],
+    "evidence_gaps": [
+      "KDR malignant-cell vs endothelial localization in tumour tissue",
+      "Post-market adverse event profile of VEGFR2 inhibitors (sunitinib, axitinib, pazopanib)",
+      "Germline/somatic genetic support for KDR in melanoma \u2014 OpenTargets returned 0 evidences, CRISPR dependency deferred, no GWAS or somatic amplification data retrieved",
+      "Malignant-cell vs endothelial KDR localisation in tumour atlas",
+      "CRISPR cell-autonomous dependency in melanoma lines",
+      "Clinical efficacy signal in melanoma (trial outcomes)",
+      "OpenTargets evidence count is zero",
+      "Post-market adverse events for VEGFR2 inhibitors",
+      "Clinical outcomes for VEGFR2 inhibitors in melanoma (ORR, PFS, OS) \u2014 step_07 returned only a trial count of 4 with no outcome data; the question about response rates and biomarker-stratified cohorts is entirely unanswered",
+      "Post-market adverse event profile of VEGFR2 inhibitors \u2014 step_06 queried OpenFDA using 'KDR' as the drug_name (a gene symbol, not an INN), returning an empty summary; hypertension, LVEF decline, fistulae, and wound-healing impairment are well-known class liabilities that were not captured",
+      "Competitive and regulatory landscape \u2014 step_09 was routed to lit-synthesizer but the tool executed was TheraSAbDab (antibody database, n=6), which addresses only one narrow modality and ignores the dominant small-molecule kinase inhibitor space, ongoing combo-ICI trials, and recent FDA labelling decisions",
+      "KDR malignant-cell fraction in melanoma tumour atlases \u2014 step_03 deferred entirely; CellMarker proxy (4/64 cancer records [step_04]) is a marker-database count, not single-cell tumour-atlas expression",
+      "CRISPR cell-autonomous dependency \u2014 step_01 deferred; DepMap/Project Score Chronos data for KDR across SKCM lines never queried",
+      "Somatic KDR alteration frequency and expression-survival correlation in TCGA SKCM \u2014 OpenTargets returned 0 evidences [step_02]; no cBioPortal or TIMER2.0 query executed",
+      "FAERS adverse event profile \u2014 step_06 queried gene symbol 'KDR' not approved drug names; safety axis is entirely uninformed from post-market data",
+      "Clinical efficacy outcomes \u2014 step_07 returned only a count of 4 trials with no ORR/PFS/OS data; published sunitinib/pazopanib/axitinib melanoma trial literature not synthesised",
+      "Competitive landscape \u2014 step_09 TheraSAbDab (6 biologics) covers one modality only; small-molecule TKI space, bispecific programmes, and ongoing combo-ICI trials not assessed",
+      "OpenTargets 0-evidence result not ruled out as disease-ontology query artefact \u2014 EFO ID query not attempted",
+      "Biomarker-defined patient subset (NF1-mutant, VEGF-A-high, uveal/acral subtype) \u2014 step_08 misdirected to CellMarker; TCGA SKCM subgroup stratification never executed",
+      "Off-target kinase selectivity profile (PDGFR, c-KIT, FLT3) for multi-TKIs \u2014 not profiled in any executed step",
+      "Tractability axis entirely absent \u2014 no OT tractability or structural druggability query was executed"
+    ],
+    "proposed_experiments": [
+      {
+        "experiment": "Query Tirosh 2016 / TISCH2 / Jerby-Arnon 2018 melanoma scRNA-seq atlases for KDR expression per annotated cell type (malignant, endothelial, CAF, immune); compute fraction of KDR+ malignant cells per tumour",
+        "expected_readout": "Fraction of KDR+ malignant cells across tumours and mean expression z-score vs endothelial compartment; >10% malignant-cell positivity supports direct tumour-cell targeting; <5% limits rationale to anti-angiogenic/TME combination",
+        "rationale": "Steps 03 and 06_reroute were deferred or misdirected; CellMarker (4 cancer / 60 normal records [step_04]) is a marker-database proxy that cannot quantify malignant-cell expression fractions in tumour tissue \u2014 this is the most pivotal specificity question for any non-vascular targeting strategy"
+      },
+      {
+        "experiment": "Query DepMap CRISPR Chronos scores for KDR across SKCM cell lines; stratify by BRAF/NRAS/NF1 mutation status and VEGF-A mRNA expression quartile",
+        "expected_readout": "Dependency score distribution (median Chronos < -0.5 in \u226520% of lines, especially NF1-mutant, would support cell-autonomous relevance); Pearson r between KDR dependency and VEGF-A autocrine expression",
+        "rationale": "Step_01 was deferred entirely; without functional genetic evidence of cell-autonomous lethality, KDR remains a stromal/angiogenic target rather than a direct tumour-cell target \u2014 the foundational premise of any cell-autonomous targeting strategy [step_01]"
+      },
+      {
+        "experiment": "Re-run OpenFDA_search_drug_events separately with drug_name='sunitinib', 'axitinib', 'pazopanib', 'cabozantinib'; extract top 20 MedDRA reaction terms and apply PRR disproportionality; filter co-reported nivolumab/pembrolizumab for combination signal",
+        "expected_readout": "Ranked adverse event frequencies; hypertension, hand-foot syndrome, hepatotoxicity, QTc prolongation rates; emergent cardiac or immune-related AE enrichment in combination context vs monotherapy baseline",
+        "rationale": "Step_06 returned empty summary because gene symbol 'KDR' was passed as drug_name; the safety axis is entirely uninformed from post-market data \u2014 combination cardiotoxicity (anti-VEGFR2 + anti-PD-1) is a known signal in RCC/NSCLC that must be characterised before any IND recommendation [step_06]"
+      },
+      {
+        "experiment": "Re-query OpenTargets with disease_name='cutaneous melanoma' and EFO_0000389; query cBioPortal TCGA SKCM for KDR amplification frequency, mutation rate, and mRNA z-score; run Cox regression of KDR-high vs KDR-low on OS stratified by BRAF/NRAS/NF1 status",
+        "expected_readout": "Non-zero Open Targets evidence count or confirmed ontology-mismatch artefact; KDR alteration frequency (%); HR with 95% CI \u2014 KDR amp rate >5% or OS HR <0.8 would provide an actionable genetics anchor",
+        "rationale": "OpenTargets returned 0 disease evidences [step_02], likely an ontology query artefact; without somatic mutation frequency, copy-number gain, or expression-survival correlation in SKCM, the genetics axis contributes nothing to target confidence"
+      },
+      {
+        "experiment": "Literature search (PubMed/ClinicalTrials.gov 2010\u20132026) for VEGFR2 inhibitor AND melanoma AND (clinical trial OR phase II/III) AND (ORR OR PFS OR OS); extract efficacy table including any biomarker-selected cohorts (VEGF-A, NF1-mut, uveal/acral subtype)",
+        "expected_readout": "ORR range across trials, median PFS vs immunotherapy benchmark, any biomarker predictive of benefit; ORR <15% across unselected cohorts would confirm monotherapy rationale is weak without enrichment",
+        "rationale": "Step_07 returned only a count of 4 trials with no outcome data; published sunitinib/pazopanib/axitinib melanoma trial literature exists and was not synthesised \u2014 clinical efficacy context is essential to weigh against zero OpenTargets genetics evidence [step_07]"
+      },
+      {
+        "experiment": "Agentic web search (ClinicalTrials.gov + ASCO/ESMO abstracts 2023\u20132026) for active programmes: VEGFR2 \u00d7 melanoma by modality (TKI, bispecific KDR\u00d7PD-1, ADC, CAR-T); flag any breakthrough/fast-track designations and whitespace in cell-autonomous vs anti-angiogenic framing",
+        "expected_readout": "Number of active programmes by modality and stage; lead assets; estimated whitespace for a differentiated cell-autonomous or combination approach",
+        "rationale": "TheraSAbDab returned only 6 biologics [step_09], covering one narrow modality; the dominant small-molecule TKI space and ongoing combination-ICI trials are invisible in this query \u2014 without a full competitive map the CSO cannot assess differentiation potential or whether a new programme enters a crowded or de-risked space"
+      },
+      {
+        "experiment": "Correlate TCGA SKCM KDR expression with VEGF-A autocrine score, NF1 mutation, TMB, and uveal/acral subtype annotation; identify top-quartile KDR-high patients as a prospective enrichment stratum",
+        "expected_readout": "Odds ratio of KDR-high vs KDR-low for survival benefit; actionable expression cut-off for patient selection; NF1-mutant or uveal enrichment would define a trial-ready biomarker hypothesis",
+        "rationale": "Step_08 was misdirected to CellMarker; patient stratification is necessary to rescue a weak population-level signal and is the single most commercially differentiating step given the competitive landscape of unselected-cohort failures"
+      },
+      {
+        "missing": "KDR expression fraction on malignant vs stromal/endothelial cells in melanoma tumours",
+        "proposed_experiment": "Query published scRNA-seq melanoma atlases (Tirosh 2016, TISCH2) for KDR expression across annotated cell clusters; compute fraction of KDR+ cells in malignant vs endothelial compartments per tumour",
+        "route_to": "scrna-orchestrator",
+        "expected_readout": "KDR mean expression and % expressing cells in malignant vs endothelial clusters; if <5% of malignant cells express KDR, direct tumour-cell targeting is not supported",
+        "why": "ADC or direct-targeting rationale collapses if KDR is purely endothelial; combination/anti-angiogenic framing would still apply but changes the safety and patient-selection logic materially"
+      },
+      {
+        "missing": "FAERS adverse event signals for approved VEGFR2 inhibitors",
+        "proposed_experiment": "Re-run OpenFDA_search_drug_events with drug_name='sunitinib', 'axitinib', 'pazopanib' separately; count top MedDRA reaction terms and flag cardiac/hepatic/hypertensive signals",
+        "route_to": "openfda-safety",
+        "expected_readout": "Ranked adverse event frequencies; any melanoma-specific or immunotherapy-combination safety signals surfaced from FAERS",
+        "why": "VEGFR2 inhibitors have known class toxicities (hypertension, hand-foot syndrome, hepatotoxicity, QTc prolongation) that are directly relevant to combination with PD-1 blockade; step 06 returned no data due to wrong query term"
+      },
+      {
+        "missing": "CRISPR functional dependency of KDR in melanoma cell lines",
+        "proposed_experiment": "Query DepMap CRISPR (Chronos) scores for KDR across SKCM lines; stratify by BRAF/NRAS/NF1 mutation status and VEGFA expression quartile",
+        "route_to": "crispr-screen-triage",
+        "expected_readout": "KDR dependency score distribution; correlation coefficient between KDR dependency and VEGFA expression or mutation subtype",
+        "why": "Step 01 was deferred entirely \u2014 without cell-autonomous dependency data there is no evidence KDR loss actually impairs melanoma cell fitness, which is the foundational claim for a cell-autonomous targeting rationale"
+      },
+      {
+        "missing": "OpenTargets evidence count of zero for KDR-melanoma requires explanation",
+        "proposed_experiment": "Re-query OpenTargets with disease_name='skin melanoma' and 'cutaneous melanoma'; also query via EFO ID (EFO_0000389) to rule out term-matching failure",
+        "route_to": "tcga-somatic-profiler",
+        "expected_readout": "Non-zero evidence count OR confirmed absence of genetic/somatic association between KDR and melanoma in OpenTargets",
+        "why": "Zero OpenTargets evidence (step 02) is likely a disease-name matching artefact rather than a true absence of evidence; if confirmed absent it substantially weakens the right-target case"
+      },
+      {
+        "missing": "Antibody/biologic competitive landscape for KDR beyond the 6 TherapeuticAb entries",
+        "proposed_experiment": "Search recent literature (2022\u20132026) for KDR-targeting agents in melanoma or pan-tumour; check ClinicalTrials.gov for active VEGFR2-targeted trials in melanoma",
+        "route_to": "lit-synthesizer",
+        "expected_readout": "List of active IND/clinical programmes targeting KDR in melanoma; identification of whitespace (e.g. bispecific KDR\u00d7PD-1, ADC, cell-autonomous subpopulation)",
+        "why": "Step 09 returned only 6 antibody database hits with no literature context; this is insufficient to assess commercial differentiation or crowdedness of the space"
+      },
+      {
+        "missing": "Somatic KDR alteration frequency and expression-survival correlation in TCGA SKCM",
+        "proposed_experiment": "Query cBioPortal SKCM cohort for KDR amplification, mutation, and mRNA z-score distribution; run Cox regression of KDR-high vs KDR-low on OS stratified by BRAF/NRAS/NF1 status",
+        "route_to": "tcga-somatic-profiler",
+        "expected_readout": "Alteration frequency (%), HR with 95% CI, p-value; a KDR amp rate >5% or survival HR <0.8 would provide actionable genetics anchor",
+        "why": "OpenTargets returned 0 disease evidences \u2014 the most important genetics datapoint is entirely absent; this must be filled before the genetics axis can contribute any positive or negative weight"
+      },
+      {
+        "missing": "CRISPR cell-autonomous dependency of KDR in melanoma lines correlated with genomic background",
+        "proposed_experiment": "Query DepMap CRISPR (Chronos) scores for KDR across melanoma lines annotated by BRAF/NRAS/NF1 mutation; correlate dependency score with VEGF-A mRNA expression",
+        "route_to": "crispr-screen-triage",
+        "expected_readout": "Dependency score distribution and Pearson r with VEGF-A; a mean Chronos <-0.5 in \u226520% of lines, especially NF1-mutant, would support cell-autonomous relevance",
+        "why": "Step 01 was deferred entirely; without functional genetic evidence of cell-autonomous lethality, KDR remains a stromal/angiogenic target rather than a direct tumour-cell target"
+      },
+      {
+        "missing": "Malignant-cell vs endothelial KDR expression fraction in scRNA tumour atlases",
+        "proposed_experiment": "Query TISCH or CancerSEA melanoma datasets for KDR expression by annotated cell type (malignant, endothelial, fibroblast, immune); compute % KDR+ malignant cells per tumour",
+        "route_to": "scrna-orchestrator",
+        "expected_readout": "Fraction of malignant cells expressing KDR above detection threshold; >10% malignant-cell positivity would justify direct tumour-cell targeting rationale",
+        "why": "CellMarker proxy (4 cancer vs 60 normal records) strongly suggests endothelial/stromal dominance; this must be confirmed in actual tumour-atlas data before the target can be defended as cell-autonomous"
+      },
+      {
+        "missing": "Clinical efficacy signal of VEGFR2 inhibitors in melanoma \u2014 4 trials found but outcome data not retrieved",
+        "proposed_experiment": "Pull response rates, PFS, and OS from the 4 identified trials; flag any biomarker-stratified arms",
+        "route_to": "clinical-trial-finder",
+        "expected_readout": "ORR, median PFS/OS with 95% CI; even a partial response signal in a genomically-defined subset would rehabilitate the target despite weak genetics",
+        "why": "Trial count was retrieved but outcome summaries were not; efficacy context is essential to weigh against the zero OpenTargets genetics evidence"
+      },
+      {
+        "missing": "Off-target kinase safety profile (PDGFR, c-KIT, FLT3) of approved VEGFR2 inhibitors",
+        "proposed_experiment": "Run OpenFDA adverse-event query using drug names (sunitinib, axitinib, pazopanib) rather than gene symbol KDR; extract top 20 MedDRA reaction terms and serious-event rate",
+        "route_to": "openfda-safety",
+        "expected_readout": "Ranked adverse event frequencies; hypertension, hand-foot syndrome, hepatotoxicity rates to benchmark combination-therapy tolerability with PD-1 blockade",
+        "why": "Step 06 returned empty summary because 'KDR' was passed as drug name \u2014 the query used the gene symbol instead of approved drug names; the safety axis is therefore completely uninformed"
+      },
+      {
+        "missing": "Malignant-cell KDR expression fraction in melanoma tumours",
+        "proposed_experiment": "Query CancerSEA / TISCH2 melanoma single-cell atlases for KDR expression per annotated cell type; stratify by malignant vs endothelial vs stromal annotation",
+        "route_to": "scrna-orchestrator",
+        "expected_readout": "Fraction of malignant cells expressing KDR > threshold per tumour; if <10 % malignant-cell positivity, direct-targeting rationale (ADC/CAR-T) is weak",
+        "why": "CellMarker 4/64 cancer records strongly suggests KDR is primarily endothelial; must quantify malignant fraction before claiming a cell-autonomous target"
+      },
+      {
+        "missing": "Cell-autonomous CRISPR dependency",
+        "proposed_experiment": "Pull DepMap CRISPR Chronos scores for KDR across SKCM cell lines; correlate with VEGFA expression and BRAF/NRAS/NF1 mutation annotation",
+        "route_to": "crispr-screen-triage",
+        "expected_readout": "Dependency score distribution; if median Chronos > -0.3 across all SKCM lines, KDR is not a robust cell-autonomous dependency",
+        "why": "Step 01 was never executed; without this, the target hypothesis rests entirely on stromal/angiogenic rationale"
+      },
+      {
+        "missing": "Spatial co-localisation of KDR signal with tumour cell markers",
+        "proposed_experiment": "Interrogate TCGA SKCM bulk RNA + TIMER2.0 immune deconvolution to estimate endothelial vs tumour-cell KDR contribution; complement with published spatial transcriptomics datasets (GSE datasets on GEO)",
+        "route_to": "scrna-orchestrator",
+        "expected_readout": "Endothelial purity-corrected KDR expression; survival correlation after correction",
+        "why": "Bulk TCGA expression (not retrieved) confounds malignant vs vascular signal; correction is required before making a survival-association claim"
+      },
+      {
+        "missing": "Clinical efficacy of KDR inhibitors in melanoma",
+        "proposed_experiment": "Literature search for published RCTs and Phase II trials: sunitinib, axitinib, pazopanib, lenvatinib in melanoma; extract ORR, PFS, OS and biomarker subgroups",
+        "route_to": "lit-synthesizer",
+        "expected_readout": "Efficacy summary table; if ORR <15 % across all trials without biomarker enrichment, monotherapy rationale is weak",
+        "why": "4 trial records with no outcomes returned; published literature exists and was not synthesized"
+      },
+      {
+        "missing": "FAERS adverse event profile for VEGFR2 inhibitors in melanoma / IO combination",
+        "proposed_experiment": "Rerun OpenFDA query with drug names sunitinib, axitinib, pazopanib; filter by melanoma indication and co-reported PD-1 agents; apply PRR disproportionality",
+        "route_to": "openfda-safety",
+        "expected_readout": "Top 10 adverse events and PRR for hypertension, hepatotoxicity, hand-foot syndrome, immune-related AEs in combination context",
+        "why": "Step 06 empty due to incorrect gene-symbol query; safety in IO combination is a key regulatory and clinical concern"
+      },
+      {
+        "missing": "Biomarker-defined patient subset most likely to respond",
+        "proposed_experiment": "Correlate TCGA SKCM KDR expression with VEGFA autocrine score, NF1 mutation, TMB, and uveal/acral subtype; identify top quartile for prospective enrichment strategy",
+        "route_to": "tcga-somatic-profiler",
+        "expected_readout": "Odds ratio of KDR-high vs low for survival benefit; actionable cut-off for patient selection",
+        "why": "Step 08 was misdirected to CellMarker; patient stratification is necessary to rescue a weak population-level signal"
+      },
+      {
+        "missing": "Malignant-cell KDR expression fraction in tumour tissue (steps 01 and 03 deferred; CellMarker proxy is insufficient)",
+        "proposed_experiment": "Query a single-cell melanoma atlas (e.g. Tirosh 2016, TISCH2) for KDR expression partitioned by cell type (malignant vs endothelial vs CAF vs immune); complement with spatial transcriptomics if atlas data shows borderline malignant signal",
+        "route_to": "scrna-orchestrator",
+        "expected_readout": "Fraction of KDR+ malignant cells across tumours, mean expression z-score vs endothelial compartment, correlation with BRAF/NRAS/NF1 genotype",
+        "why": "If KDR is exclusively endothelial/stromal, the cell-autonomous CRISPR dependency premise collapses and the clinical rationale shifts from direct tumour killing to anti-angiogenic + immune combination \u2014 a fundamentally different indication and patient-selection logic"
+      },
+      {
+        "missing": "VEGFR2 inhibitor adverse event profile in melanoma and PD-1 combination contexts",
+        "proposed_experiment": "Rerun OpenFDA_search_drug_events with drug_name = 'sunitinib', 'axitinib', 'pazopanib', 'cabozantinib'; filter co-reported indication = melanoma and co-reported drug = nivolumab/pembrolizumab to detect emergent combination signals",
+        "route_to": "openfda-safety",
+        "expected_readout": "Top 20 MedDRA PTs by PRR; flag any cardiac, fistula, or immune-related AE enrichment in the combination context vs monotherapy baseline",
+        "why": "Combination cardiotoxicity (anti-VEGFR + anti-PD-1) is a known signal in RCC and NSCLC that could be a clinical development-stopping liability; must be characterised before any IND-enabling recommendation"
+      },
+      {
+        "missing": "Clinical efficacy evidence for VEGFR2 inhibitors in melanoma",
+        "proposed_experiment": "Literature search: VEGFR2 inhibitor AND melanoma AND (clinical trial OR phase II OR phase III) AND (response rate OR progression-free OR overall survival) from 2010\u20132026; include any biomarker-selected cohorts",
+        "route_to": "lit-synthesizer",
+        "expected_readout": "ORR range across trials, median PFS vs immunotherapy benchmark, any biomarker (VEGF-A, NF1-mut, uveal subtype) that predicted benefit",
+        "why": "OpenTargets returned 0 disease-association evidences \u2014 this is likely a data-coverage gap rather than true biological absence, but it means no structured-database evidence exists; literature is the only route to clinical signal and is the primary input the CSO needs for a trial-precedent judgement"
+      },
+      {
+        "missing": "Competitive small-molecule kinase inhibitor and biologic landscape for KDR in melanoma",
+        "proposed_experiment": "Agentic web + ClinicalTrials.gov search: active trials (status = recruiting OR active not recruiting) with intervention class VEGFR2 AND condition melanoma; supplement with FDA approvals, EMA opinions, and recent ASCO/ESMO abstracts 2023\u20132026",
+        "route_to": "lit-synthesizer",
+        "expected_readout": "Number of active programmes by modality (SMI, bispecific, ADC, CAR-T); lead assets; any breakthrough/fast-track designations; estimated whitespace in cell-autonomous vs anti-angiogenic framing",
+        "why": "Six antibodies in TheraSAbDab does not characterise the competitive landscape; without this, the CSO cannot assess differentiation potential or whether a new programme would enter a crowded or de-risked space"
+      }
+    ],
+    "disclaimer": "ClawBio is a research and educational tool. It is not a medical device and does not provide clinical diagnoses. Consult a healthcare professional before making any medical decisions."
+  }
+}

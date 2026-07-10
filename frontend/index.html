@@ -1,0 +1,954 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prioritisation Arena · melanoma</title>
+<style>
+:root{
+  --bg:#0e1418; --panel:#141c22; --panel-2:#1a242c; --line:#243139;
+  --ink:#e8eef2; --ink-dim:#93a4b0; --ink-faint:#5f727e;
+  --paper:#f4f7f8; --paper-ink:#16232b; --paper-dim:#546572; --paper-line:#dbe4e8;
+  --signal:#2ec7c0;         /* on-front / winning */
+  --signal-deep:#0f8f8a;
+  --amber:#e6a538;          /* synthetic / needs experiment */
+  --red:#e0655e;            /* red flag / negative */
+  --gt:#7fd8ff;             /* ground-truth ring */
+  --mono:'SF Mono',ui-monospace,'JetBrains Mono',Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;font-size:14px;line-height:1.5}
+body{overflow-x:hidden}
+a{color:var(--signal)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* ---- header ---- */
+header{padding:20px 28px;border-bottom:1px solid var(--line);
+  display:flex;align-items:baseline;gap:20px;flex-wrap:wrap}
+header h1{margin:0;font-size:17px;font-weight:650;letter-spacing:-.01em}
+header .sub{color:var(--ink-dim);font-size:12.5px}
+header .tag{font-family:var(--mono);font-size:11px;color:var(--signal);
+  border:1px solid var(--signal-deep);border-radius:3px;padding:2px 7px;letter-spacing:.02em}
+header .spacer{flex:1}
+header .meta{font-family:var(--mono);font-size:11px;color:var(--ink-faint)}
+
+/* ---- shell ---- */
+.shell{display:grid;grid-template-columns:280px 1fr 340px;gap:1px;background:var(--line);
+  min-height:calc(100vh - 63px)}
+.col{background:var(--bg);overflow:hidden}
+.col-head{font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--ink-faint);padding:14px 18px 8px}
+
+/* ---- leaderboard ---- */
+.board{padding:0 10px 20px}
+.row{display:grid;grid-template-columns:26px 1fr auto;align-items:center;gap:8px;
+  padding:9px 10px;border-radius:7px;cursor:pointer;border:1px solid transparent}
+.row:hover{background:var(--panel)}
+.row.sel{background:var(--panel-2);border-color:var(--line)}
+.row.front1{box-shadow:inset 3px 0 0 var(--signal)}
+.rank{font-family:var(--mono);font-size:12px;color:var(--ink-faint);text-align:right}
+.sym{font-weight:600;font-size:13.5px;display:flex;align-items:center;gap:7px}
+.sym .gt{width:7px;height:7px;border-radius:50%;background:var(--gt);flex:0 0 auto;
+  box-shadow:0 0 0 2px rgba(127,216,255,.18)}
+.sym .mod{font-family:var(--mono);font-size:10px;color:var(--ink-faint);font-weight:400}
+.frontpill{font-family:var(--mono);font-size:10px;padding:1px 6px;border-radius:20px;
+  border:1px solid var(--line);color:var(--ink-dim)}
+.frontpill.f1{color:var(--signal);border-color:var(--signal-deep);background:rgba(46,199,192,.08)}
+
+/* ---- center: plot ---- */
+.stage{padding:16px 20px 8px;display:flex;flex-direction:column;gap:12px}
+.axis-picker{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.axsel{display:flex;flex-direction:column;gap:3px}
+.axsel label{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase}
+.axsel select{background:var(--panel);color:var(--ink);border:1px solid var(--line);
+  border-radius:6px;padding:6px 9px;font-family:var(--mono);font-size:12px}
+.legend{display:flex;gap:14px;margin-left:auto;font-size:11px;color:var(--ink-dim);flex-wrap:wrap}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend i{width:9px;height:9px;border-radius:50%;display:inline-block}
+.plotwrap{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:12px;
+  padding:8px}
+svg{display:block;width:100%;height:auto}
+.pt{cursor:pointer;transition:r .12s}
+.pt-label{font-family:var(--mono);font-size:9.5px;fill:var(--ink-dim);pointer-events:none}
+.frontline{fill:none;stroke:var(--signal);stroke-width:1.4;stroke-dasharray:2 3;opacity:.55}
+.gridline{stroke:var(--line);stroke-width:1}
+.axtitle{font-family:var(--mono);font-size:11px;fill:var(--ink-faint)}
+.tick{font-family:var(--mono);font-size:9px;fill:var(--ink-faint)}
+
+/* ---- loop tracker ---- */
+.loop{padding:14px 20px 22px}
+.timeline{display:flex;gap:0;overflow-x:auto;padding-bottom:6px}
+.tstep{flex:0 0 220px;border-left:1px solid var(--line);padding:0 16px;position:relative}
+.tstep:first-child{border-left:none;padding-left:0}
+.tstep .dot{position:absolute;left:-5px;top:4px;width:9px;height:9px;border-radius:50%;
+  background:var(--ink-faint)}
+.tstep:first-child .dot{left:-4px}
+.tstep.run .dot{background:var(--amber)}
+.tstep .k{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint)}
+.tstep .act{font-family:var(--mono);font-size:12px;margin:3px 0 2px}
+.tstep .act .tgt{color:var(--signal)}
+.tstep .cost{font-family:var(--mono);font-size:10.5px;color:var(--amber)}
+.tstep .rat{font-size:11.5px;color:var(--ink-dim);margin-top:6px;line-height:1.45}
+.tstep .delta{font-family:var(--mono);font-size:10.5px;color:var(--ink);margin-top:6px;
+  padding-top:6px;border-top:1px dashed var(--line)}
+.budgetbar{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-family:var(--mono);font-size:11px;color:var(--ink-dim)}
+.budgetbar .track{flex:1;max-width:280px;height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.budgetbar .fill{height:100%;background:linear-gradient(90deg,var(--signal),var(--amber))}
+
+/* ---- right: dossier / provenance ---- */
+.dossier{padding:6px 18px 40px;height:calc(100vh - 63px);overflow-y:auto}
+.card{background:var(--paper);color:var(--paper-ink);border-radius:12px;padding:16px 16px 18px;margin-top:6px}
+.card h2{margin:0 0 2px;font-size:16px;letter-spacing:-.01em;display:flex;align-items:center;gap:9px}
+.card .badge{font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:20px;font-weight:600}
+.badge.gt{background:#dff2fb;color:#0a6a93}
+.card .ens{font-family:var(--mono);font-size:11px;color:var(--paper-dim)}
+.card .over{font-size:12px;color:var(--paper-dim);margin:10px 0 4px;line-height:1.5}
+.axgrid{margin-top:10px;display:flex;flex-direction:column;gap:1px;background:var(--paper-line);border-radius:8px;overflow:hidden}
+.axrow{background:var(--paper);padding:10px 12px;cursor:pointer}
+.axrow:hover{background:#eef3f5}
+.axrow.open{background:#eef3f5}
+.axtop{display:flex;align-items:center;gap:6px}
+.axname{font-family:var(--mono);font-size:11px;letter-spacing:.02em;flex:1 1 auto;min-width:56px}
+.meter{width:30px;height:5px;background:var(--paper-line);border-radius:3px;overflow:hidden;flex:0 0 auto}
+.meter i{display:block;height:100%}
+.val{font-family:var(--mono);font-size:11.5px;font-weight:600;width:30px;text-align:right;flex:0 0 auto}
+.origin{font-family:var(--mono);font-size:8.5px;padding:1px 4px;border-radius:3px;text-transform:uppercase;letter-spacing:.02em;flex:0 0 auto}
+.origin.opentargets{background:#d7f0ef;color:#0b6b66}
+.origin.hybrid{background:#e6ecf0;color:#4a5b66}
+.origin.synthetic{background:#faeccb;color:#8a5e10}
+.axbody{display:none;margin-top:9px;font-size:11.5px;line-height:1.5;color:var(--paper-dim)}
+.axrow.open .axbody{display:block}
+.axbody .find{color:var(--paper-ink)}
+.axbody .prov{margin-top:8px;font-family:var(--mono);font-size:10px;color:var(--paper-dim);
+  background:#eaf0f2;border-radius:6px;padding:8px 9px;line-height:1.5;word-break:break-word}
+.axbody .prov .lbl{color:var(--signal-deep);font-weight:600}
+.strength{font-family:var(--mono);font-size:8.5px;padding:1px 4px;border-radius:3px;flex:0 0 auto}
+.s-strong{background:#cdeee9;color:#0b6b66}.s-supporting{background:#e6ecf0;color:#4a5b66}
+.s-weak{background:#f3e0de;color:#9a3f39}.s-moderate{background:#faeccb;color:#8a5e10}
+.s-absent{background:#eceff1;color:#7a8894}
+.exp{margin-top:12px}
+.exp h3{font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--paper-dim);margin:0 0 6px}
+.expitem{border:1px solid var(--paper-line);border-left:3px solid var(--amber);border-radius:7px;padding:9px 11px;font-size:11.5px}
+.expitem .cost{font-family:var(--mono);font-size:10px;color:#8a5e10}
+.empty{color:var(--ink-faint);font-size:12px;padding:30px 8px;text-align:center;font-family:var(--mono)}
+
+[hidden]{display:none !important}
+/* ---- mode toggle ---- */
+.modetoggle{display:flex;gap:2px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:2px}
+.modetoggle button{font-family:var(--mono);font-size:11px;color:var(--ink-dim);background:none;border:none;
+  padding:6px 12px;border-radius:6px;cursor:pointer;letter-spacing:.02em}
+.modetoggle button.active{background:var(--panel-2);color:var(--signal)}
+
+/* ---- match view ---- */
+#matchview{padding:18px 28px 60px}
+.matchbar{display:flex;flex-direction:column;gap:10px;margin-bottom:18px}
+.pickers{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
+.pickers .vs{font-family:var(--mono);font-size:12px;color:var(--ink-faint);padding-bottom:7px}
+.pickers select{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:6px;
+  padding:7px 10px;font-family:var(--mono);font-size:13px;min-width:150px}
+.runbtn{font-family:var(--mono);font-size:12.5px;background:var(--signal-deep);color:#eafffe;border:none;
+  border-radius:7px;padding:9px 16px;cursor:pointer;letter-spacing:.02em;font-weight:600}
+.runbtn:hover{background:var(--signal)}
+.runbtn.ghost{background:none;border:1px solid var(--line);color:var(--ink-dim);font-weight:400}
+.runbtn:disabled{opacity:.4;cursor:default}
+.matchnote{font-family:var(--mono);font-size:11.5px;color:var(--amber);min-height:16px}
+
+.matchgrid{display:grid;grid-template-columns:1fr 1.5fr 1fr;gap:16px;align-items:start}
+.mcard{background:var(--paper);color:var(--paper-ink);border-radius:12px;padding:14px 15px}
+.mcard h3{margin:0 0 3px;font-size:15px;display:flex;align-items:center;gap:8px}
+.mcard .ens{font-family:var(--mono);font-size:10.5px;color:var(--paper-dim)}
+.mcard .mini{margin-top:10px;display:flex;flex-direction:column;gap:1px;background:var(--paper-line);border-radius:7px;overflow:hidden}
+.mcard .mrow{background:var(--paper);padding:6px 9px;display:flex;align-items:center;gap:7px;font-size:11px}
+.mcard .mrow.hi{outline:2px solid var(--signal);outline-offset:-2px;z-index:1}
+.mcard .mrow .ax{font-family:var(--mono);font-size:10px;flex:1;color:var(--paper-dim)}
+.mcard .mrow .g{font-family:var(--mono);font-size:9px;padding:1px 5px;border-radius:3px}
+
+.pipeline{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.pipe-head{font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--ink-faint);margin-bottom:12px}
+.axjudges{display:flex;flex-direction:column;gap:8px}
+.judge{border:1px solid var(--line);border-radius:9px;padding:0;overflow:hidden;transition:border-color .2s}
+.judge .jhead{display:flex;align-items:center;gap:9px;padding:10px 12px;cursor:pointer}
+.judge .jname{font-family:var(--mono);font-size:12px;flex:1}
+.judge .spinner{width:12px;height:12px;border:2px solid var(--line);border-top-color:var(--signal);
+  border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.judge.pending{opacity:.55}
+.judge.done{opacity:1}
+.judge.done.A{border-color:var(--signal-deep)}
+.judge.done.B{border-color:#c98a2e}
+.judge.done.tie{border-color:var(--line)}
+.judge.done.unresolved{border-color:var(--red)}
+.rel{font-family:var(--mono);font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600;flex:0 0 auto}
+.rel.A{background:rgba(46,199,192,.15);color:var(--signal)}
+.rel.B{background:rgba(230,165,56,.15);color:var(--amber)}
+.rel.tie{background:var(--panel-2);color:var(--ink-dim)}
+.rel.unresolved{background:rgba(224,101,94,.15);color:var(--red)}
+.conf{font-family:var(--mono);font-size:9px;color:var(--ink-faint)}
+.jbody{display:none;padding:0 12px 12px;font-size:12px;line-height:1.55;color:var(--ink-dim)}
+.judge.open .jbody{display:block}
+.jbody .rat{color:var(--ink)}
+.jbody .ev{margin-top:8px;font-family:var(--mono);font-size:10.5px;line-height:1.6}
+.jbody .ev .lbl{color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;font-size:9px}
+.jbody .ev li{margin-left:0;list-style:none;padding:2px 0}
+.jbody .ev li::before{content:"▪ ";color:var(--signal)}
+.chevron{font-family:var(--mono);font-size:10px;color:var(--ink-faint)}
+
+.verdict{margin-top:14px;border-top:1px dashed var(--line);padding-top:14px;display:none}
+.verdict.show{display:block}
+.verdict .vrule{font-family:var(--mono);font-size:11px;color:var(--ink-dim);line-height:1.6;
+  background:var(--panel-2);border-radius:8px;padding:11px 13px;margin-bottom:10px}
+.verdict .vrule b{color:var(--ink)}
+.verdict .vout{font-size:15px;font-weight:650;display:flex;align-items:center;gap:10px}
+.verdict .vbadge{font-family:var(--mono);font-size:12px;padding:4px 11px;border-radius:7px;font-weight:600}
+.vbadge.dom{background:rgba(46,199,192,.15);color:var(--signal)}
+.vbadge.tradeoff{background:rgba(230,165,56,.15);color:var(--amber)}
+.tally{display:flex;gap:6px;margin:10px 0;font-family:var(--mono);font-size:10.5px;flex-wrap:wrap}
+.tally span{padding:2px 8px;border-radius:20px;border:1px solid var(--line);color:var(--ink-dim)}
+
+/* ---- build-a-card (collection) view ---- */
+#collectview{padding:18px 28px 60px}
+.collectgrid{display:grid;grid-template-columns:300px 1fr;gap:18px;align-items:start}
+.csoside{display:flex;flex-direction:column;gap:14px;position:sticky;top:14px}
+.csobox{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 15px}
+.csobox h4{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--ink-faint);margin:0 0 8px}
+.csobox .ctx{font-size:12px;line-height:1.55;color:var(--ink-dim)}
+.csobox .flag{font-size:11.5px;color:var(--ink-dim);padding:4px 0;border-top:1px dashed var(--line);margin-top:6px}
+.scoregrid{display:flex;gap:8px;margin:8px 0}
+.scorecell{flex:1;text-align:center;background:var(--panel-2);border-radius:7px;padding:8px 4px}
+.scorecell .n{font-family:var(--mono);font-size:18px;font-weight:650}
+.scorecell .l{font-family:var(--mono);font-size:9px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.04em}
+.revverdict{font-family:var(--mono);font-size:12px;margin:8px 0 10px;display:flex;align-items:center;gap:8px}
+.revverdict .vb{padding:3px 9px;border-radius:6px;font-weight:600;font-size:11px}
+.vb.synthesize{background:rgba(46,199,192,.15);color:var(--signal)}
+.vb.reroute{background:rgba(230,165,56,.15);color:var(--amber)}
+.gap{border-left:3px solid var(--amber);background:var(--panel-2);border-radius:0 7px 7px 0;padding:8px 10px;margin-top:8px;font-size:11.5px}
+.gap .miss{color:var(--ink)}
+.gap .route{font-family:var(--mono);font-size:10px;color:var(--amber);margin-top:3px}
+.gap .why{color:var(--ink-faint);margin-top:4px;line-height:1.45;font-size:11px}
+
+.collectmain{min-width:0}
+.graphwrap{display:grid;grid-template-columns:1fr 300px;gap:14px;align-items:start}
+#tracegraph{width:100%;height:auto;background:var(--panel);border:1px solid var(--line);border-radius:12px}
+.gedge{fill:none;stroke:var(--line);stroke-width:1.5;cursor:pointer;transition:stroke .15s,stroke-width .15s}
+.gedge:hover{stroke:var(--ink-dim);stroke-width:2.5}
+.gedge.panel{stroke-dasharray:2 3;opacity:.5}
+.gedge.reroute{stroke:var(--amber);stroke-width:2}
+.gedge.reroute:hover{stroke:#ffc65e}
+.gedge.sel{stroke:var(--signal);stroke-width:3}
+.gnode{cursor:pointer}
+.gnode rect{transition:opacity .3s,stroke .15s;stroke-width:1.5}
+.gnode.pending rect{opacity:.28}
+.gnode.done rect{opacity:1}
+.gnode text{font-family:var(--mono);fill:var(--ink);pointer-events:none}
+.gnode .gsub{fill:var(--ink-faint);font-size:8.5px}
+.gnode.sel rect{stroke:var(--signal) !important;stroke-width:2.5}
+.gnode .gspin{transform-origin:center;animation:spin .7s linear infinite}
+.arrowhead{fill:var(--line)}
+.arrowhead.reroute{fill:var(--amber)}
+
+.nodedetail{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;
+  min-height:200px;position:sticky;top:14px}
+.ndempty{font-family:var(--mono);font-size:11px;color:var(--ink-faint);text-align:center;padding:40px 8px}
+.nd-name{font-family:var(--mono);font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.nd-kind{font-family:var(--mono);font-size:9px;padding:1px 6px;border-radius:4px;background:var(--panel-2);color:var(--ink-dim);text-transform:uppercase}
+.nd-stats{display:flex;gap:6px;margin:10px 0;flex-wrap:wrap}
+.nd-stat{background:var(--panel-2);border-radius:6px;padding:6px 9px;font-family:var(--mono);font-size:10px;color:var(--ink-dim)}
+.nd-stat b{color:var(--ink);font-size:12px;display:block}
+.nd-q{font-size:12px;line-height:1.5;color:var(--ink);margin:8px 0}
+.nd-tool{font-family:var(--mono);font-size:10.5px;background:var(--panel-2);border-radius:7px;padding:9px 10px;line-height:1.6;word-break:break-word;margin:6px 0}
+.nd-tool .tn{color:var(--signal)}
+.nd-tool .res{display:block;margin-top:5px;border-top:1px dashed var(--line);padding-top:5px;color:var(--ink)}
+.nd-interp{font-size:11.5px;line-height:1.5;color:var(--ink-dim);margin-top:8px}
+.nd-edge{font-size:12px;line-height:1.5;color:var(--ink-dim)}
+.nd-edge b{color:var(--ink)}
+.cstep{position:relative;border:1px solid var(--line);border-radius:10px;overflow:hidden;transition:border-color .2s,opacity .2s}
+.cstep .cdot{position:absolute;left:-19px;top:16px;width:11px;height:11px;border-radius:50%;
+  background:var(--bg);border:2px solid var(--ink-faint);z-index:2}
+.cstep.pending{opacity:.5}
+.cstep.done .cdot{border-color:var(--signal)}
+.cstep.reroute .cdot{border-color:var(--amber);background:var(--amber)}
+.cstep.done.reroute{border-color:rgba(230,165,56,.4)}
+.chead{display:flex;align-items:center;gap:10px;padding:11px 13px;cursor:pointer}
+.chead .cdiv{font-family:var(--mono);font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--signal);border:1px solid var(--signal-deep);border-radius:4px;padding:1px 6px;flex:0 0 auto}
+.cstep.reroute .cdiv{color:var(--amber);border-color:#8a5e10}
+.chead .cq{font-size:12px;color:var(--ink);flex:1;line-height:1.4}
+.chead .cspin{width:12px;height:12px;border:2px solid var(--line);border-top-color:var(--signal);border-radius:50%;animation:spin .7s linear infinite;flex:0 0 auto}
+.cgrade{font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:20px;flex:0 0 auto}
+.cbody{display:none;padding:0 13px 13px 13px;font-size:12px;line-height:1.55}
+.cstep.open .cbody{display:block}
+.toolcall{font-family:var(--mono);font-size:11px;background:var(--panel-2);border-radius:7px;padding:9px 11px;margin:2px 0 8px;line-height:1.6;word-break:break-word}
+.toolcall .tn{color:var(--signal)}
+.toolcall .arg{color:var(--ink-dim)}
+.toolcall .res{color:var(--ink);display:block;margin-top:5px;border-top:1px dashed var(--line);padding-top:5px}
+.toolcall .via{color:var(--ink-faint);font-size:9.5px}
+.cinterp{color:var(--ink-dim)}
+.cdep{font-family:var(--mono);font-size:9.5px;color:var(--ink-faint);margin-top:6px}
+
+.cardout{margin-top:20px;padding-top:18px;border-top:1px dashed var(--line);display:none}
+.cardout.show{display:block}
+.cardout h4{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 10px}
+.cardaxes{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.cardax{background:var(--paper);color:var(--paper-ink);border-radius:9px;padding:9px 11px}
+.cardax .an{font-family:var(--mono);font-size:11px;display:flex;justify-content:space-between;align-items:center}
+.cardax .ag{font-family:var(--mono);font-size:9px;padding:1px 6px;border-radius:3px}
+.handoff{font-size:12px;color:var(--ink-dim);margin-top:12px}
+.handoff b{color:var(--signal)}
+
+@media (max-width:1100px){
+  .shell{grid-template-columns:1fr}
+  .dossier{height:auto}
+  .matchgrid{grid-template-columns:1fr}
+  .collectgrid{grid-template-columns:1fr}
+  .csoside{position:static}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Prioritisation Arena</h1>
+  <span class="tag">MELANOMA · MONDO_0005012</span>
+  <span class="sub">10 LLM division cards · 6 AZ-5R axes · ordinal grades · head-to-head, multi-objective</span>
+  <span class="spacer"></span>
+  <div class="modetoggle">
+    <button id="mode-arena" class="active">Arena overview</button>
+    <button id="mode-collect">Build a card ▸</button>
+    <button id="mode-match">Live match ▸</button>
+  </div>
+  <span class="meta" id="hdr-meta"></span>
+</header>
+
+<!-- ============ BUILD-A-CARD (evidence collection) VIEW ============ -->
+<section id="collectview" hidden>
+  <div class="matchbar">
+    <div class="pickers">
+      <div class="axsel"><label>target to assess</label><select id="pickT"></select></div>
+      <button id="runcollect" class="runbtn">▸ Assess target</button>
+      <button id="replaycollect" class="runbtn ghost" hidden>↻ Replay</button>
+    </div>
+    <div class="matchnote" id="collectnote"></div>
+  </div>
+
+  <div class="collectgrid">
+    <!-- left: CSO briefing + reviewer -->
+    <div class="csoside">
+      <div class="csobox" id="briefingbox"></div>
+      <div class="csobox" id="reviewbox"></div>
+    </div>
+    <!-- center: the collection loop steps -->
+    <div class="collectmain">
+      <div class="pipe-head" id="collecthead">CSO loop · Chief-of-Staff briefing → decompose → route each axis to a ToolUniverse skill → collect → grade → Reviewer audit</div>
+      <div class="graphwrap">
+        <svg id="tracegraph" viewBox="0 0 1000 560" preserveAspectRatio="xMidYMid meet"></svg>
+        <div class="nodedetail" id="nodedetail"><div class="ndempty">▸ click any node or arrow to inspect that reasoning step</div></div>
+      </div>
+      <div class="cardout" id="cardout"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ LIVE MATCH VIEW ============ -->
+<section id="matchview" hidden>
+  <div class="matchbar">
+    <div class="pickers">
+      <div class="axsel"><label>hypothesis A</label><select id="pickA"></select></div>
+      <span class="vs">vs</span>
+      <div class="axsel"><label>hypothesis B</label><select id="pickB"></select></div>
+      <button id="runmatch" class="runbtn">▸ Run match</button>
+      <button id="replaymatch" class="runbtn ghost" hidden>↻ Replay</button>
+    </div>
+    <div class="matchnote" id="matchnote"></div>
+  </div>
+
+  <div class="matchgrid">
+    <!-- A card -->
+    <div class="mcard" id="mcardA"></div>
+    <!-- center: pipeline -->
+    <div class="pipeline">
+      <div class="pipe-head">6 axis-judge agents · dispatched concurrently, resolve one-by-one</div>
+      <div class="axjudges" id="axjudges"></div>
+      <div class="verdict" id="verdict"></div>
+    </div>
+    <!-- B card -->
+    <div class="mcard" id="mcardB"></div>
+  </div>
+</section>
+
+<div class="shell" id="arenaview">
+  <!-- LEFT: leaderboard -->
+  <div class="col">
+    <div class="col-head">Ranking · global Pareto front + scalar order</div>
+    <div class="board" id="board"></div>
+  </div>
+
+  <!-- CENTER: hero plot + loop -->
+  <div class="col">
+    <div class="stage">
+      <div class="axis-picker">
+        <div class="axsel">
+          <label>x axis</label>
+          <select id="xsel"></select>
+        </div>
+        <div class="axsel">
+          <label>y axis</label>
+          <select id="ysel"></select>
+        </div>
+        <div class="legend">
+          <span><i style="background:var(--signal)"></i>Non-dominated on these 2 axes</span>
+          <span><i style="background:var(--ink-faint)"></i>Dominated</span>
+          <span><i style="background:var(--gt);box-shadow:0 0 0 2px rgba(127,216,255,.3)"></i>Ground-truth positive</span>
+        </div>
+      </div>
+      <div class="plotwrap"><svg id="plot" viewBox="0 0 720 440"></svg></div>
+    </div>
+
+    <div class="col-head">Value-of-Information loop · budget-constrained</div>
+    <div class="loop">
+      <div class="budgetbar">
+        <span>budget spent</span>
+        <div class="track"><div class="fill" id="budgetfill"></div></div>
+        <span id="budgettxt"></span>
+      </div>
+      <div class="timeline" id="timeline"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT: dossier -->
+  <div class="col">
+    <div class="col-head">Hypothesis dossier · provenance</div>
+    <div class="dossier" id="dossier"><div class="empty">select a hypothesis →</div></div>
+  </div>
+</div>
+
+<script src="_data.js"></script>
+<script src="_pairs.js"></script>
+<script src="_collect.js"></script>
+<script src="_graph.js"></script>
+<script src="_loop.js"></script>
+<script>
+const D = window.ARENA_DATA, LOOP = window.VOI_LOOP;
+const AXES = D.meta.axes;
+const AXLABEL = {right_target:"Target",right_tissue:"Tissue",right_safety:"Safety",
+  right_patient:"Patient",right_commercial:"Commercial",tractability:"Tractability"};
+const GRADES = D.meta.grade_scale;                 // ["absent","weak","moderate","supporting","strong"]
+const GMAX = GRADES.length-1;                       // 4
+const GCOL = {absent:"#8a9aa4",weak:"#e0655e",moderate:"#e6a538",supporting:"#7bbfb2",strong:"#2ec7c0"};
+const C = D.cards;
+C.forEach(c=>c.id=c.symbol);
+const selById = id => C.find(c=>c.id===id);
+
+/* ---------- ordinal Pareto fronts (dominance on grade ranks, maximise all) ---------- */
+function rank(c,a){return c.axes[a].rank;}
+function dominates(a,b){
+  let ge=true, gt=false;
+  for(const ax of AXES){ if(rank(a,ax)<rank(b,ax)) ge=false; if(rank(a,ax)>rank(b,ax)) gt=true; }
+  return ge && gt;
+}
+function computeFronts(items){
+  let rem=[...items], fronts=[], f=1;
+  while(rem.length){
+    const front=rem.filter(p=>!rem.some(q=>q!==p && dominates(q,p)));
+    front.forEach(p=>p._front=f); fronts.push(front);
+    rem=rem.filter(p=>!front.includes(p)); f++;
+  }
+  return fronts;
+}
+const fronts = computeFronts(C);
+function scalar(c){return AXES.reduce((s,x)=>s+rank(c,x),0);}   // within-front ordinal sum
+const ranked=[...C].sort((a,b)=> a._front-b._front || scalar(b)-scalar(a));
+ranked.forEach((c,i)=>c._rank=i+1);
+
+// 2-D ordinal front on the plotted axes (what the cyan points / dashed line mean)
+function frontOn(xa,ya){
+  const dom2=(a,b)=>(rank(a,xa)>=rank(b,xa) && rank(a,ya)>=rank(b,ya))
+    && (rank(a,xa)>rank(b,xa) || rank(a,ya)>rank(b,ya));
+  return new Set(C.filter(p=>!C.some(q=>q!==p && dom2(q,p))).map(p=>p.id));
+}
+
+document.getElementById('hdr-meta').textContent =
+  `${fronts[0].length} on global front 1 · ordinal grades (no confidence) · ${C.filter(c=>c.ground_truth).length} known positives`;
+
+/* ---------- leaderboard ---------- */
+let selected = ranked[0].id;
+const board=document.getElementById('board');
+function renderBoard(){
+  board.innerHTML='';
+  ranked.forEach((c,i)=>{
+    const r=document.createElement('div');
+    r.className='row'+(c._front===1?' front1':'')+(c.id===selected?' sel':'');
+    r.innerHTML=`<div class="rank">${String(i+1).padStart(2,'0')}</div>
+      <div class="sym">${c.ground_truth?'<span class="gt" title="ground-truth positive"></span>':''}
+        ${c.symbol}<span class="mod">Σ grade ${scalar(c)}/${GMAX*AXES.length}</span></div>
+      <div class="frontpill ${c._front===1?'f1':''}">F${c._front}</div>`;
+    r.onclick=()=>{selected=c.id;renderBoard();renderPlot();renderDossier();};
+    board.appendChild(r);
+  });
+}
+
+/* ---------- axis selectors ---------- */
+const xsel=document.getElementById('xsel'), ysel=document.getElementById('ysel');
+AXES.forEach(a=>{ xsel.add(new Option(AXLABEL[a],a)); ysel.add(new Option(AXLABEL[a],a)); });
+xsel.value='tractability'; ysel.value='right_target';   // tractability first-class
+xsel.onchange=ysel.onchange=renderPlot;
+
+/* ---------- hero ordinal Pareto plot ---------- */
+const svg=document.getElementById('plot');
+const W=720,Hh=440,pad={l:70,r:26,t:20,b:64};
+function sx(g){return pad.l + (g/GMAX)*(W-pad.l-pad.r);}
+function sy(g){return (Hh-pad.b) - (g/GMAX)*(Hh-pad.t-pad.b);}
+// deterministic per-symbol jitter so overlapping grade-cells fan out (no Math.random — reproducible)
+function jit(sym,axis){let h=0;const s=sym+axis;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))&255;return (h/255-0.5);}
+function renderPlot(){
+  const xa=xsel.value, ya=ysel.value;
+  if(xa===ya){ysel.value=AXES.find(a=>a!==xa); return renderPlot();}
+  const onFront=frontOn(xa,ya);
+  let s='';
+  // grade grid: 5 columns/rows labelled by grade name
+  for(let g=0;g<=GMAX;g++){
+    s+=`<line class="gridline" x1="${sx(g)}" y1="${pad.t}" x2="${sx(g)}" y2="${Hh-pad.b}" opacity=".4"/>`;
+    s+=`<line class="gridline" x1="${pad.l}" y1="${sy(g)}" x2="${W-pad.r}" y2="${sy(g)}" opacity=".4"/>`;
+    s+=`<text class="tick" x="${sx(g)}" y="${Hh-pad.b+16}" text-anchor="middle">${GRADES[g]}</text>`;
+    s+=`<text class="tick" x="${pad.l-9}" y="${sy(g)+3}" text-anchor="end">${GRADES[g]}</text>`;
+  }
+  s+=`<text class="axtitle" x="${(W+pad.l)/2}" y="${Hh-8}" text-anchor="middle">${AXLABEL[xa]} grade →</text>`;
+  s+=`<text class="axtitle" transform="translate(18,${(Hh-pad.b+pad.t)/2}) rotate(-90)" text-anchor="middle">${AXLABEL[ya]} grade →</text>`;
+  // 2-D front line (jittered positions, sorted by x)
+  const jx=c=>sx(rank(c,xa))+jit(c.symbol,xa)*26;
+  const jy=c=>sy(rank(c,ya))+jit(c.symbol,ya)*26;
+  const f1=C.filter(c=>onFront.has(c.id)).map(c=>({c,x:jx(c),y:jy(c)})).sort((a,b)=>a.x-b.x);
+  if(f1.length>1) s+=`<polyline class="frontline" points="${f1.map(p=>`${p.x},${p.y}`).join(' ')}"/>`;
+  // points: dominated first so front draws on top
+  const order=[...C].sort((a,b)=>(onFront.has(a.id)?1:0)-(onFront.has(b.id)?1:0));
+  order.forEach(c=>{
+    const x=jx(c), y=jy(c);
+    const onf=onFront.has(c.id), isSel=c.id===selected;
+    const col=onf?'var(--signal)':'var(--ink-faint)';
+    const r=isSel?8:(onf?6:4.5);
+    if(c.ground_truth) s+=`<circle cx="${x}" cy="${y}" r="${r+4}" fill="none" stroke="var(--gt)" stroke-width="1.6" opacity=".9"/>`;
+    if(isSel) s+=`<circle cx="${x}" cy="${y}" r="${r+7}" fill="none" stroke="var(--signal)" stroke-width="1" opacity=".5"/>`;
+    s+=`<circle class="pt" data-id="${c.id}" cx="${x}" cy="${y}" r="${r}" fill="${col}" fill-opacity="${onf?0.95:0.6}" stroke="var(--bg)" stroke-width="1.5"/>`;
+    if(onf||isSel||c.ground_truth)
+      s+=`<text class="pt-label" x="${x+r+4}" y="${y+3}" style="fill:${onf||isSel?'var(--ink)':'var(--ink-dim)'}">${c.symbol}</text>`;
+  });
+  svg.innerHTML=s;
+  svg.querySelectorAll('.pt').forEach(el=>el.onclick=()=>{selected=el.getAttribute('data-id');renderBoard();renderPlot();renderDossier();});
+}
+
+/* ---------- VoI loop timeline ---------- */
+(function renderLoop(){
+  const tl=document.getElementById('timeline'); tl.innerHTML='';
+  const total=LOOP[0].budget_left, spent=total-LOOP[LOOP.length-1].budget_left;
+  document.getElementById('budgetfill').style.width=(spent/total*100)+'%';
+  document.getElementById('budgettxt').textContent=`${spent} / ${total} cost units`;
+  LOOP.forEach(st=>{
+    const d=document.createElement('div');
+    d.className='tstep'+(st.action==='run_experiment'?' run':'');
+    const head = st.action==='init'
+      ? `<div class="act">initialise front</div>`
+      : `<div class="act">run_experiment · <span class="tgt">${st.target}</span></div>
+         <div class="k" style="margin-top:2px">${AXLABEL[st.axis]||st.axis} axis</div>`;
+    d.innerHTML=`<div class="dot"></div>
+      <div class="k">step ${st.step}${st.cost?` · <span class="cost">cost ${st.cost}</span>`:''}</div>
+      ${head}
+      ${st.experiment?`<div class="rat"><b>${st.experiment}</b></div>`:''}
+      <div class="rat">${st.rationale}</div>
+      <div class="delta">Δ ${st.rank_delta}</div>`;
+    if(st.target){d.style.cursor='pointer';d.onclick=()=>{const c=selById(st.target);if(c){selected=c.id;renderBoard();renderPlot();renderDossier();}};}
+    tl.appendChild(d);
+  });
+})();
+
+/* ---------- dossier / provenance ---------- */
+function renderDossier(){
+  const c=selById(selected);
+  const dz=document.getElementById('dossier');
+  let ax='';
+  AXES.forEach(a=>{
+    const o=c.axes[a];
+    const pct=Math.round(o.rank/GMAX*100);
+    const col=GCOL[o.grade]||'#8a9aa4';
+    ax+=`<div class="axrow" data-ax="${a}">
+      <div class="axtop">
+        <span class="axname">${AXLABEL[a]}</span>
+        <span class="strength s-${o.grade}">${o.grade}</span>
+        <span class="meter"><i style="width:${pct}%;background:${col}"></i></span>
+        <span class="val">${o.rank}/${GMAX}</span>
+      </div>
+      <div class="axbody">
+        <div class="find">${o.finding||'<i>no finding recorded</i>'}</div>
+        <div class="prov"><span class="lbl">provenance</span><br>${o.provenance||'—'}</div>
+      </div>
+    </div>`;
+  });
+  // evidence gaps = weakest axes (rank<=1), the real VoI targets
+  const gaps=AXES.filter(a=>c.axes[a].rank<=1).map(a=>AXLABEL[a]+' ('+c.axes[a].grade+')');
+  const gapHtml = gaps.length
+    ? `<div class="exp"><h3>Evidence gaps · highest VoI to resolve</h3>
+        <div class="expitem"><b>${gaps.join(' · ')}</b>
+        <div style="color:var(--paper-dim);margin-top:4px">Lowest-graded axes for ${c.symbol}. These are where the next experiment most changes the ranking.</div></div></div>`
+    : '';
+  dz.innerHTML=`<div class="card">
+    <h2>${c.symbol}
+      ${c.ground_truth?'<span class="badge gt">known positive</span>':''}
+      <span class="frontpill ${c._front===1?'f1':''}" style="font-size:10px">Front ${c._front}</span></h2>
+    <div class="ens">${c.ensembl} · ${c.disease} · ordinal grades, no confidence score</div>
+    <div class="over">${c.note||''}</div>
+    <div class="axgrid">${ax}</div>
+    ${gapHtml}
+  </div>`;
+  dz.querySelectorAll('.axrow').forEach(r=>r.onclick=()=>r.classList.toggle('open'));
+}
+
+renderBoard(); renderPlot(); renderDossier();
+
+/* ============================================================
+   LIVE MATCH VIEW — scripted replay of a real recorded pair run
+   ============================================================ */
+const PAIRS = window.RECORDED_PAIRS || {};
+const REL_META = {
+  A_better:{cls:"A",short:"A better"}, B_better:{cls:"B",short:"B better"},
+  tie:{cls:"tie",short:"tie"}, incomparable:{cls:"unresolved",short:"incomparable"},
+  insufficient_evidence:{cls:"unresolved",short:"insufficient evidence"}
+};
+const GCOL2={absent:"#8a9aa4",weak:"#e0655e",moderate:"#e6a538",supporting:"#7bbfb2",strong:"#2ec7c0"};
+
+// mode toggle (3-way: arena / collect / match)
+const MODES={
+  arena:{btn:'mode-arena',view:'arenaview'},
+  collect:{btn:'mode-collect',view:'collectview'},
+  match:{btn:'mode-match',view:'matchview'},
+};
+function setMode(m){
+  for(const [name,o] of Object.entries(MODES)){
+    document.getElementById(o.view).hidden = (name!==m);
+    document.getElementById(o.btn).classList.toggle('active', name===m);
+  }
+}
+document.getElementById('mode-arena').onclick=()=>setMode('arena');
+document.getElementById('mode-collect').onclick=()=>setMode('collect');
+document.getElementById('mode-match').onclick=()=>setMode('match');
+
+// pickers
+const pA=document.getElementById('pickA'), pB=document.getElementById('pickB');
+ranked.forEach(c=>{ pA.add(new Option(c.symbol,c.symbol)); pB.add(new Option(c.symbol,c.symbol)); });
+pA.value='BRAF'; pB.value='MAP2K1';
+
+function recordKey(a,b){                 // recorded runs are directional; find either order
+  if(PAIRS[`${a}__${b}`]) return {key:`${a}__${b}`,swap:false};
+  if(PAIRS[`${b}__${a}`]) return {key:`${b}__${a}`,swap:true};
+  return null;
+}
+function refreshNote(){
+  const a=pA.value,b=pB.value,note=document.getElementById('matchnote');
+  if(a===b){note.textContent="pick two different targets";return;}
+  const r=recordKey(a,b);
+  note.textContent = r ? "" : `⚑ ${a} vs ${b} is not yet recorded — this pair would dispatch 6 live axis agents. Recorded pairs: ${Object.keys(PAIRS).map(k=>k.replace('__',' vs ')).join(' · ')}`;
+  document.getElementById('runmatch').disabled = (a===b) || !r;
+}
+pA.onchange=pB.onchange=refreshNote;
+
+function miniCard(elId, sym, highlightAxis){
+  const c=selById(sym), el=document.getElementById(elId);
+  let rows='';
+  AXES.forEach(a=>{
+    const o=c.axes[a];
+    rows+=`<div class="mrow ${a===highlightAxis?'hi':''}">
+      <span class="ax">${AXLABEL[a]}</span>
+      <span class="g" style="background:${GCOL2[o.grade]};color:#08211f">${o.grade}</span></div>`;
+  });
+  el.innerHTML=`<h3>${sym}${c.ground_truth?' <span class="badge gt" style="font-size:9px">known +</span>':''}</h3>
+    <div class="ens">${c.ensembl} · ${c.disease}</div>
+    <div class="mini">${rows}</div>`;
+}
+
+let replayTimers=[];
+function clearReplay(){ replayTimers.forEach(t=>clearTimeout(t)); replayTimers=[]; }
+
+function runMatch(){
+  clearReplay();
+  const a=pA.value,b=pB.value, rk=recordKey(a,b);
+  if(!rk) return;
+  const rec=PAIRS[rk.key];
+  // orient so displayed A/B match the user's picks
+  const swap=rk.swap;
+  const relFor = raw => swap ? (raw==='A_better'?'B_better':raw==='B_better'?'A_better':raw) : raw;
+  const dispA=a, dispB=b;
+  miniCard('mcardA',dispA); miniCard('mcardB',dispB);
+  document.getElementById('replaymatch').hidden=false;
+  document.getElementById('verdict').className='verdict';
+
+  // lay out 6 pending judges
+  const jn=document.getElementById('axjudges'); jn.innerHTML='';
+  AXES.forEach(ax=>{
+    const d=document.createElement('div'); d.className='judge pending'; d.id='judge-'+ax;
+    d.innerHTML=`<div class="jhead">
+      <span class="spinner"></span>
+      <span class="jname">${AXLABEL[ax]} judge</span>
+      <span class="conf">dispatched…</span></div>`;
+    jn.appendChild(d);
+  });
+
+  // resolve one-by-one with staggered timing (the "steps" people watch)
+  AXES.forEach((ax,i)=>{
+    const t=setTimeout(()=>{
+      const raw=rec.axes[ax], rel=relFor(raw.relation), m=REL_META[rel];
+      const d=document.getElementById('judge-'+ax);
+      d.className='judge done '+m.cls;
+      const ev = (arr,lbl)=> arr&&arr.length ? `<div class="ev"><span class="lbl">${lbl}</span><ul>${arr.map(e=>`<li>${e}</li>`).join('')}</ul></div>`:'';
+      d.innerHTML=`<div class="jhead" onclick="this.parentElement.classList.toggle('open')">
+        <span class="jname">${AXLABEL[ax]} judge</span>
+        <span class="rel ${m.cls}">${m.short}</span>
+        <span class="conf">${raw.confidence} confidence</span>
+        <span class="chevron">▾</span></div>
+      <div class="jbody">
+        <div class="rat">${raw.rationale}</div>
+        ${ev(raw.decisive_evidence,'decisive evidence')}
+        ${ev(raw.missing_evidence,'missing evidence')}
+      </div>`;
+      // highlight the contested axis on both mini-cards
+      miniCard('mcardA',dispA,ax); miniCard('mcardB',dispB,ax);
+      if(i===AXES.length-1) showVerdict(rec,relFor,dispA,dispB);
+    }, 500 + i*900);
+    replayTimers.push(t);
+  });
+}
+
+function showVerdict(rec,relFor,dispA,dispB){
+  const rels=AXES.map(ax=>relFor(rec.axes[ax].relation));
+  const aWin=rels.filter(r=>r==='A_better').length;
+  const bWin=rels.filter(r=>r==='B_better').length;
+  const ties=rels.filter(r=>r==='tie').length;
+  const unres=rels.filter(r=>r==='incomparable'||r==='insufficient_evidence').length;
+  // apply the real conservative dominance rule, oriented to display
+  let overall, badge, cls;
+  if(aWin>0 && bWin===0 && unres===0){overall=`${dispA} dominates ${dispB}`;cls='dom';badge='A dominates B';}
+  else if(bWin>0 && aWin===0 && unres===0){overall=`${dispB} dominates ${dispA}`;cls='dom';badge='B dominates A';}
+  else {overall=`trade-off — neither dominates`;cls='tradeoff';badge='tradeoff / unresolved';}
+  const why = unres>0
+    ? `${unres} axis unresolved (incomparable / insufficient evidence) → the conservative rule refuses to claim dominance even if one side leads elsewhere.`
+    : (aWin>0 && bWin>0)
+    ? `each side wins at least one axis → genuinely non-dominated; both belong on the Pareto front.`
+    : `unanimity with no unresolved axis → clean dominance.`;
+  const v=document.getElementById('verdict');
+  v.className='verdict show';
+  v.innerHTML=`<div class="vrule"><b>Dominance rule:</b> A dominates B only if A wins ≥1 axis, loses none, and <b>no axis is unresolved</b> (unanimity). Same for B. Otherwise it's a trade-off. — ${why}</div>
+    <div class="tally">
+      <span>${dispA} better: ${aWin}</span>
+      <span>${dispB} better: ${bWin}</span>
+      <span>tie: ${ties}</span>
+      <span>unresolved: ${unres}</span></div>
+    <div class="vout">Verdict <span class="vbadge ${cls}">${badge}</span> <span style="font-weight:400;color:var(--ink-dim);font-size:13px">${overall}</span></div>`;
+}
+
+document.getElementById('runmatch').onclick=runMatch;
+document.getElementById('replaymatch').onclick=runMatch;
+refreshNote();
+
+/* ============================================================
+   BUILD-A-CARD VIEW — replay of a real live CSO collection run
+   ============================================================ */
+const COLLECT = window.COLLECT_RUNS || {};
+const GRADE_COL={absent:"#8a9aa4",weak:"#e0655e",moderate:"#e6a538",supporting:"#7bbfb2",strong:"#2ec7c0"};
+const gradeStyle=g=>`background:${GRADE_COL[g]||'#8a9aa4'};color:#08211f`;
+
+const pT=document.getElementById('pickT');
+ranked.forEach(c=>pT.add(new Option(c.symbol,c.symbol)));
+pT.value = COLLECT['BRAF']?'BRAF':(Object.keys(COLLECT)[0]||ranked[0].symbol);
+
+function refreshCollectNote(){
+  const t=pT.value, has=!!COLLECT[t], note=document.getElementById('collectnote');
+  note.textContent = has ? "" :
+    `⚑ ${t} not yet recorded — assessing it would run the live CSO harness (Chief-of-Staff → division scientists → ToolUniverse tools → Reviewer). Recorded: ${Object.keys(COLLECT).join(' · ')}`;
+  document.getElementById('runcollect').disabled = !has;
+}
+pT.onchange=refreshCollectNote;
+
+let collectTimers=[];
+function clearCollect(){collectTimers.forEach(t=>clearTimeout(t));collectTimers=[];}
+
+const GRAPHS = window.TRACE_GRAPHS || {};
+const STAGE_LABEL={run:"Run",cso:"Chief of Staff",planner:"Planner",scientist:"Scientist",
+  review:"Review panel",reviewer:"Reviewer lens",gaps:"Gap finder",reroute:"Re-route",
+  decision:"Decision",synthesis:"CSO synthesis"};
+const STAGE_COL={run:"#5f727e",cso:"#7bbfb2",planner:"#7bbfb2",scientist:"#2ec7c0",
+  review:"#e6a538",reviewer:"#e6a538",gaps:"#e6a538",reroute:"#e0655e",
+  decision:"#7bbfb2",synthesis:"#2ec7c0"};
+// 9 lanes across the viewBox width
+const NX=1000, NY=560, NW=96, NH=44, PADX=14, NLANES=9;
+function laneX(lane){return PADX + lane*((NX-2*PADX-NW)/(NLANES-1));}
+function nodeY(node,laneRows){
+  const rows=laneRows[node.lane]||1;
+  const gap=(NY-40)/(rows+1);
+  return 20 + (node.row+1)*gap - NH/2;
+}
+let curGraph=null;
+
+function drawGraph(g, doneIds){
+  const svg=document.getElementById('tracegraph');
+  const laneRows={}; g.nodes.forEach(n=>laneRows[n.lane]=Math.max(laneRows[n.lane]||0,n.row+1));
+  const pos={};
+  g.nodes.forEach(n=>{ pos[n.id]={x:laneX(n.lane),y:nodeY(n,laneRows)}; });
+  let defs=`<defs>
+    <marker id="ah" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path class="arrowhead" d="M0,0 L6,3 L0,6 Z"/></marker>
+    <marker id="ahr" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path class="arrowhead reroute" d="M0,0 L6,3 L0,6 Z"/></marker>
+  </defs>`;
+  // edges
+  let edges='';
+  g.edges.forEach((e,i)=>{
+    const a=pos[e.from], b=pos[e.to]; if(!a||!b) return;
+    const x1=a.x+NW, y1=a.y+NH/2, x2=b.x, y2=b.y+NH/2;
+    const back = b.x<=a.x; // reroute back-edge curves under
+    const mx=(x1+x2)/2;
+    const path = back
+      ? `M${x1},${y1} C${x1+40},${y1+70} ${x2-40},${y2+70} ${x2},${y2}`
+      : `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`;
+    const mk = e.kind==='reroute'?'url(#ahr)':'url(#ah)';
+    edges+=`<path class="gedge ${e.kind}" data-edge="${i}" d="${path}" marker-end="${mk}"/>`;
+  });
+  // nodes
+  let nodes='';
+  g.nodes.forEach(n=>{
+    const p=pos[n.id], done=doneIds.has(n.id), col=STAGE_COL[n.stage]||'#5f727e';
+    const sub = n.stage==='scientist'?n.div_label
+      : n.stage==='reviewer'?n.lens
+      : n.stage==='review'?(n.attrs.verdict||'')
+      : n.kind;
+    const spin = !done ? `<circle class="gspin" cx="${p.x+NW-14}" cy="${p.y+NH/2}" r="5" fill="none" stroke="${col}" stroke-width="2" stroke-dasharray="6 6"/>` : '';
+    const grade = (done && n.grade) ? `<rect x="${p.x+NW-30}" y="${p.y+NH-14}" width="26" height="11" rx="3" fill="${GRADE_COL[n.grade]||'#8a9aa4'}"/><text x="${p.x+NW-17}" y="${p.y+NH-5.5}" text-anchor="middle" font-size="7" fill="#08211f">${n.grade}</text>` : '';
+    nodes+=`<g class="gnode ${done?'done':'pending'}" data-node="${n.id}">
+      <rect x="${p.x}" y="${p.y}" width="${NW}" height="${NH}" rx="8" fill="var(--panel-2)" stroke="${col}"/>
+      <text x="${p.x+8}" y="${p.y+17}" font-size="9" font-weight="600">${nodeTitle(n)}</text>
+      <text class="gsub" x="${p.x+8}" y="${p.y+31}" font-size="8">${(sub||'').slice(0,13)}</text>
+      ${spin}${grade}
+    </g>`;
+  });
+  svg.innerHTML=defs+edges+nodes;
+  // interactions
+  svg.querySelectorAll('.gnode').forEach(el=>el.onclick=()=>selectNode(el.getAttribute('data-node')));
+  svg.querySelectorAll('.gedge').forEach(el=>el.onclick=()=>selectEdge(parseInt(el.getAttribute('data-edge'))));
+}
+function nodeTitle(n){
+  if(n.stage==='scientist') return 'scientist';
+  if(n.stage==='review') return n.label;
+  if(n.stage==='reviewer') return 'reviewer';
+  if(n.stage==='reroute') return 're-route';
+  return STAGE_LABEL[n.stage]||n.label;
+}
+
+function selectNode(id){
+  const g=curGraph; if(!g) return;
+  document.querySelectorAll('.gnode,.gedge').forEach(e=>e.classList.remove('sel'));
+  const el=document.querySelector(`.gnode[data-node="${CSS.escape(id)}"]`); if(el) el.classList.add('sel');
+  const n=g.nodes.find(x=>x.id===id); if(!n) return;
+  const nd=document.getElementById('nodedetail');
+  const dur=n.duration_ms>=1000?(n.duration_ms/1000).toFixed(1)+'s':n.duration_ms+'ms';
+  const stats=`<div class="nd-stats">
+    <div class="nd-stat">stage<b>${STAGE_LABEL[n.stage]||n.stage}</b></div>
+    <div class="nd-stat">duration<b>${dur}</b></div>
+    ${n.tokens?`<div class="nd-stat">tokens<b>${n.tokens}</b></div>`:''}
+    ${n.attrs.verdict?`<div class="nd-stat">verdict<b>${n.attrs.verdict}</b></div>`:''}
+    ${n.attrs.n_steps?`<div class="nd-stat">plan steps<b>${n.attrs.n_steps}</b></div>`:''}
+    ${n.attrs.decision?`<div class="nd-stat">decision<b>${n.attrs.decision}</b></div>`:''}
+  </div>`;
+  let body='';
+  if(n.stage==='scientist' && n.question){
+    const args=n.args?Object.entries(n.args).map(([k,v])=>`${k}=${JSON.stringify(v)}`).join(', '):'';
+    body=`<div class="nd-q">${n.question}</div>
+      ${n.tool?`<div class="nd-tool"><span class="tn">${n.tool}</span>(${args})<span class="res">→ ${n.result_summary||'—'}</span></div>`:`<div class="nd-tool">routed to ${n.skill||'—'} · no tool result captured</div>`}
+      ${n.interpretation?`<div class="nd-interp">${n.interpretation}</div>`:''}`;
+  } else if(n.stage==='reviewer'){
+    body=`<div class="nd-interp">Reviewer lens “<b style="color:var(--ink)">${n.lens}</b>” — one of four independent audit perspectives voting on whether the evidence is sufficient or the loop must re-route.</div>`;
+  } else if(n.stage==='review'){
+    body=`<div class="nd-interp">One pass of the review panel. Verdict: <b style="color:var(--ink)">${n.attrs.verdict||'—'}</b>. If <b>re-route</b>, the loop dispatches follow-up collection and runs another pass.</div>`;
+  } else if(n.stage==='reroute'){
+    body=`<div class="nd-interp">A re-route action — the reviewer found a gap and sent a follow-up query to a different skill before re-auditing.</div>`;
+  } else if(n.stage==='cso'){
+    body=`<div class="nd-interp">${(COLLECT[pT.value]?.briefing?.context||'').slice(0,300)}</div>`;
+  } else {
+    body=`<div class="nd-interp">${STAGE_LABEL[n.stage]||n.label} — ${n.kind} span from the live trace.</div>`;
+  }
+  nd.innerHTML=`<div class="nd-name">${nodeTitle(n)} <span class="nd-kind">${n.kind}</span>${n.stage==='scientist'?`<span class="nd-kind" style="color:${STAGE_COL.scientist}">${n.div_label}</span>`:''}</div>${stats}${body}`;
+}
+function selectEdge(i){
+  const g=curGraph; if(!g) return;
+  document.querySelectorAll('.gnode,.gedge').forEach(e=>e.classList.remove('sel'));
+  const el=document.querySelector(`.gedge[data-edge="${i}"]`); if(el) el.classList.add('sel');
+  const e=g.edges[i]; if(!e) return;
+  const from=g.nodes.find(x=>x.id===e.from), to=g.nodes.find(x=>x.id===e.to);
+  const kindTxt={flow:"sequential hand-off",panel:"panel fan-out (parallel judges)",reroute:"re-route — loop back for another pass"}[e.kind]||e.kind;
+  document.getElementById('nodedetail').innerHTML=
+    `<div class="nd-name">edge <span class="nd-kind ${e.kind==='reroute'?'':''}">${e.kind}</span></div>
+     <div class="nd-edge"><b>${nodeTitle(from)}</b> ${from.stage==='scientist'?'('+from.div_label+')':''} → <b>${nodeTitle(to)}</b> ${to.stage==='scientist'?'('+to.div_label+')':''}</div>
+     <div class="nd-interp" style="margin-top:10px">${kindTxt}.</div>
+     ${e.kind==='reroute'?'<div class="nd-interp" style="color:var(--amber);margin-top:6px">This back-arrow is the agent loop: the reviewer was not satisfied, so control returns upstream to gather more evidence.</div>':''}`;
+}
+
+function runCollect(){
+  clearCollect();
+  const t=pT.value, run=COLLECT[t], g=GRAPHS[t];
+  if(!run||!g) return;
+  curGraph=g;
+  document.getElementById('replaycollect').hidden=false;
+  document.getElementById('collecthead').innerHTML=
+    `LangGraph trace · <b style="color:var(--ink)">${t}</b> · “${run.query}” · ${run.backend}/${run.model} · ${g.nodes.length} spans · ${g.meta.n_review_passes} review pass${g.meta.n_review_passes>1?'es':''}`;
+  const bf=run.briefing||{};
+  document.getElementById('briefingbox').innerHTML=`<h4>① Chief-of-Staff briefing</h4><div class="ctx">${bf.context||''}</div>`;
+  document.getElementById('reviewbox').innerHTML=`<h4>③ Scientific Reviewer</h4><div class="ctx" style="color:var(--ink-faint)">auditing after collection…</div>`;
+  document.getElementById('cardout').className='cardout';
+  document.getElementById('nodedetail').innerHTML=`<div class="ndempty">▸ click any node or arrow to inspect that reasoning step</div>`;
+
+  // reveal nodes stage-by-stage (topological-ish by lane, then row)
+  const order=[...g.nodes].sort((a,b)=> a.lane-b.lane || a.row-b.row);
+  const done=new Set();
+  drawGraph(g,done);
+  order.forEach((n,i)=>{
+    const tm=setTimeout(()=>{
+      done.add(n.id); drawGraph(g,done);
+      if(i===order.length-1) showReviewAndCard(t,run);
+    }, 400 + i*520);
+    collectTimers.push(tm);
+  });
+}
+
+function showReviewAndCard(t,run){
+  // ③ Reviewer audit + gaps (the re-route driver)
+  const rv=run.review||{}, sc=rv.scores||{};
+  const gaps=(rv.gaps||[]).map(g=>`<div class="gap">
+    <div class="miss">${g.missing||''}</div>
+    ${g.route_to?`<div class="route">↻ re-route → ${g.route_to}${g.lenses&&g.lenses.length?' · '+g.lenses.join('/'):''}</div>`:''}
+    <div class="why">${g.why||''}</div></div>`).join('');
+  document.getElementById('reviewbox').innerHTML=
+    `<h4>③ Scientific Reviewer</h4>
+     <div class="revverdict">verdict <span class="vb ${rv.verdict}">${rv.verdict}</span></div>
+     <div class="scoregrid">
+       ${['relevance','evidence','thoroughness'].map(k=>`<div class="scorecell"><div class="n">${sc[k]??'–'}</div><div class="l">${k}</div></div>`).join('')}
+     </div>
+     <h4 style="margin-top:12px">Gaps found → re-route targets</h4>
+     ${gaps||'<div class="ctx" style="color:var(--ink-faint)">no gaps flagged</div>'}`;
+
+  // ④ finished card — grades THIS run actually produced (first graded step per division)
+  const runGrade={};
+  run.steps.forEach(s=>{ if(s.grade && !(s.division in runGrade)) runGrade[s.division]=s.grade; });
+  const co=document.getElementById('cardout'); co.className='cardout show';
+  let axes='';
+  AXES.forEach(a=>{
+    const g=runGrade[a];
+    axes+= g
+      ? `<div class="cardax"><div class="an">${AXLABEL[a]}<span class="ag" style="${gradeStyle(g)}">${g}</span></div></div>`
+      : `<div class="cardax"><div class="an" style="color:var(--paper-dim)">${AXLABEL[a]}<span class="ag" style="background:#eceff1;color:#7a8894">not run</span></div></div>`;
+  });
+  co.innerHTML=`<h4>④ Card produced by this run — ${t} · decision ${run.decision} (${run.confidence} confidence)</h4>
+    <div class="cardaxes">${axes}</div>
+    <div class="handoff">These grades are what <b>this live run</b> produced — with ${run.reviewer_verdict==='reroute'?'unresolved gaps still open':'the tools that answered'}. A card like this is what enters the <b>Arena overview</b> as a point and what the <b>Live match</b> pits head-to-head; every grade traces back to the tool call above. (The arena's canonical melanoma cards were graded in a separate, fuller run — grades can differ when more tools resolve.)</div>`;
+}
+
+document.getElementById('runcollect').onclick=runCollect;
+document.getElementById('replaycollect').onclick=runCollect;
+refreshCollectNote();
+</script>
+</body>
+</html>
