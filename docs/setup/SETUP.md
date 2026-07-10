@@ -2,11 +2,12 @@
 
 Two layers to stand up: **ToolUniverse** (the evidence/tool layer, pip + MCP) and
 **Claude Science** (the desktop workbench you run the agents inside). Both are wired
-so a new contributor can go live as soon as the application code lands.
+so a new contributor can go live in a few commands.
 
-> **Repo status:** docs + scaffolding today — no application code (`arena/`,
-> `skills/`) has landed yet. This page sets up the environment so you can start
-> building; the runnable demos below arrive with the code.
+> **No-install shortcut:** the [`frontend/`](../../frontend/) console needs none of
+> this — open `frontend/index.html` in a browser and it replays real recorded runs
+> with no keys, no server, no build. Set up the Python env below only to run the
+> agents live or the tests.
 
 ## 0. Fast path (no keys)
 
@@ -14,10 +15,22 @@ so a new contributor can go live as soon as the application code lands.
 bash scripts/setup.sh            # venv + package + uv (for uvx); add --tools for ToolUniverse SDK
 . .venv/bin/activate
 python -c "import scanpy, anndata, numpy, pandas; print('deps OK')"   # verify the env
+pytest                                                               # arena + CSO spine tests
 ```
 
-Once the code lands, the offline demos (arena Pareto/Elo board, CSO spine) and their
-tests run here with **no keys**.
+The arena Pareto ranker, the CSO spine, and their tests run here with **no keys**
+(`pytest` above). Recorded live runs for four melanoma targets ship in
+[`frontend/data/runs/`](../../frontend/data/runs/) — the frontend console replays them
+with no Python at all (open `frontend/index.html`).
+
+Going live (LLM agents + arena judge over real tool calls) needs one key — see §3.
+The harness is:
+
+```bash
+python skills/virtual-biotech-cso/harness.py \
+  --query "Assess BRAF as a therapeutic target in melanoma" \
+  --live --backend claude-cli --out ./output
+```
 
 ## 1. ToolUniverse (evidence/tool layer)
 
@@ -57,8 +70,8 @@ disabled when unset (`NCBI_API_KEY`, `NVIDIA_API_KEY` for hosted Boltz-2,
 
 **Boltz-2 for the arena:** ToolUniverse's Boltz-2 tool is the intended live backend
 behind the arena's `run_experiment` interface (see
-[ARENA.md §5.1](../design/ARENA.md#51-the-most-informative-action-may-be-an-experiment)). Wiring
-it is a planned workstream once the arena code lands.
+[ARENA.md §5.1](../design/ARENA.md#51-the-most-informative-action-may-be-an-experiment)). The
+arena's `run_experiment` interface is built; Boltz-2 is the live backend behind it.
 
 ## 2. Claude Science (the workbench)
 
@@ -75,8 +88,8 @@ configure Skills/Connectors in it.
 3. Download the app from <https://claude.com/product/claude-science> and sign in with
    your claude.ai account.
 
-**How this repo will map onto it** (once the code lands):
-- each planned `skills/*/SKILL.md` → a Claude Science **Skill** (near drop-in);
+**How this repo maps onto it:**
+- each `skills/*/SKILL.md` (e.g. [`skills/virtual-biotech-cso/SKILL.md`](../../skills/virtual-biotech-cso/SKILL.md)) → a Claude Science **Skill** (near drop-in);
 - external databases → **Connectors** (Anthropic-curated *featured connectors*, plus
   local connectors that run on each member's machine — ToolUniverse's MCP server is one);
 - Boltz-2 / Evo 2 / OpenFold3 → **BioNeMo** models on **Modal** GPU;
@@ -90,7 +103,7 @@ configure Skills/Connectors in it.
 
 | To run | Keys |
 | --- | --- |
-| Offline demos (arena, CSO spine) + tests, once code lands | none |
+| Offline demos (arena, CSO spine) + tests (`pytest`) + frontend replay | none |
 | ToolUniverse public databases (OT, CELLxGENE, TCGA, openFDA, trials) | none |
 | Spine `--live` (LLM agents + arena judge) | one of `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `GEMINI_API_KEY` (or Claude Code CLI) |
 | Hosted Boltz-2 via ToolUniverse | `NVIDIA_API_KEY` (optional) |
