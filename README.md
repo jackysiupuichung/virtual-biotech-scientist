@@ -12,7 +12,7 @@
 > gap (MAP2K1 ran 3 review passes; TERT ran 6). Nothing here is staged — it's straight from the
 > trace. Open [`frontend/index.html`](frontend/index.html) to run it yourself.
 
-📝 **Read the story:** [*I built a virtual biotech scientist over a weekend — here's what it taught me*](https://frombenchtobreakthrough.substack.com/p/i-built-a-virtual-biotech-scientist) — the why, the multi-agent design, and a worked PMEL run, on Substack.
+📝 **Read the story:** [*I built a virtual biotech scientist over a weekend — here's what it taught me*](https://frombenchtobreakthrough.substack.com/p/i-built-a-virtual-biotech-scientist) — the why, the multi-agent design, and a worked PMEL run. Part of an ongoing series on biotech & AI-for-science, [*From Bench to Breakthrough*](https://frombenchtobreakthrough.substack.com/) (sources in [`docs/writing/`](docs/writing/)).
 
 This project stands on two pieces of prior work and adds one thing they lack:
 
