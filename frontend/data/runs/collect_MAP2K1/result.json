@@ -1,0 +1,1088 @@
+{
+  "skill": "virtual-biotech-cso",
+  "version": "0.1.0",
+  "summary": {
+    "query": "Assess MAP2K1 as a therapeutic target in melanoma",
+    "case": "assess_map2k1_as_a_therapeutic_target",
+    "mode": "live",
+    "loop": "live-agent-harness",
+    "backend": "claude-cli",
+    "model": "sonnet",
+    "n_steps": 9,
+    "reviewer_verdict": "synthesize",
+    "n_executed": 9,
+    "decision": "GO",
+    "decision_source": "prometheux",
+    "agent_decision": "GO",
+    "decision_engine": {
+      "tier": "GO",
+      "decision": "GO",
+      "score": 10,
+      "max_score": 12,
+      "explanation": "strong axis coverage (10/12)",
+      "absent_axes": [
+        "tractability"
+      ],
+      "floor_nogo": false,
+      "rationale": "strong axis coverage (10/12)",
+      "_grounding": {}
+    },
+    "confidence": "low",
+    "calls_llm": true
+  },
+  "data": {
+    "briefing": {
+      "context": "MAP2K1 (MEK1) is a central kinase in the RAS-RAF-MEK-ERK MAPK cascade, which is constitutively activated in ~90% of cutaneous melanomas. Primary drivers are BRAFV600 (~50%) and NRAS (~25%) mutations, both signaling through MEK1/2. MAP2K1 itself carries activating mutations in ~5-8% of melanomas, enriched in BRAF/NRAS wild-type tumors and in acquired resistance to BRAF inhibitors (BRAFi). MEK inhibitors (trametinib, cobimetinib, binimetinib) are approved as monotherapy and in combination with BRAFi (e.g., dabrafenib+trametinib), representing the dominant targeted-therapy backbone. Resistance universally emerges via MAPK reactivation (MAP2K1/2 mutations, BRAF amplification, RAS mutations) or PI3K/AKT bypass. Next-generation ERK inhibitors and allosteric MEK inhibitors are in Phase I/II to address resistance. Immunotherapy (anti-PD1 \u00b1 anti-CTLA4) competes as frontline for many patients, making the comparative positioning of MEK-targeted strategies context-dependent.",
+      "data_availability": [
+        {
+          "source": "TCGA SKCM",
+          "relevance": "high",
+          "note": "485 primary/metastatic melanoma samples with WES, RNA-seq, and methylation; well-powered for MAP2K1 somatic mutation frequency and co-mutation landscape"
+        },
+        {
+          "source": "cBioPortal (GENIE, MSK-IMPACT cohorts)",
+          "relevance": "high",
+          "note": "Large clinical-sequencing cohorts (n>2000 melanoma) capture MAP2K1 mutation spectrum including acquired resistance settings; paired treatment data available in subsets"
+        },
+        {
+          "source": "CELLxGENE Census / single-cell atlases",
+          "relevance": "medium",
+          "note": "Melanoma tumor microenvironment atlases exist (e.g., Tirosh 2016, Jerby-Arnon 2018) but MAP2K1 expression alone is uninformative at sc resolution; pathway-level scoring (pERK surrogate) is more meaningful"
+        },
+        {
+          "source": "DepMap (CRISPR/RNAi screens)",
+          "relevance": "high",
+          "note": "MAP2K1 essentiality scores available across >30 melanoma cell lines; dependency is strongly correlated with BRAF/NRAS mutation status \u2014 critical for selectivity assessment"
+        },
+        {
+          "source": "PubMed / clinical trial registries",
+          "relevance": "high",
+          "note": "Extensive literature on BRAFi+MEKi combinations; emerging Phase I data on ERK inhibitors and next-gen allosteric MEK inhibitors in resistant settings"
+        },
+        {
+          "source": "OpenTargets / ChEMBL",
+          "relevance": "medium",
+          "note": "MAP2K1 has multiple approved and investigational small-molecule binders; tractability is not the limiting factor \u2014 selectivity and resistance mechanisms are"
+        }
+      ],
+      "priority_questions": [
+        "What is the MAP2K1 somatic mutation frequency and spectrum in melanoma subtypes (cutaneous vs. acral vs. uveal), and do specific alleles (e.g., K57N, Q56P, E203K) predict differential drug sensitivity?",
+        "In BRAF-mutant melanoma treated with BRAFi+MEKi, what fraction of acquired resistance is attributable to MAP2K1 mutations vs. other MAPK reactivation mechanisms, and do these resistance alleles retain sensitivity to next-generation MEK or ERK inhibitors?",
+        "Is MAP2K1 a context-specific essential gene in melanoma (i.e., does DepMap dependency correlate with BRAF/NRAS status), and is there a therapeutic window over normal tissues?",
+        "How does MAP2K1 inhibition interact with immunotherapy response \u2014 does MEK inhibition enhance or suppress anti-tumor immunity in the melanoma TME?",
+        "What is the competitive landscape for MAP2K1-targeted agents beyond approved MEK inhibitors (allosteric binders, PROTACs, bifunctional degraders) and are any in active clinical development for melanoma?"
+      ],
+      "feasibility_flags": [
+        "MAP2K1 mutation frequency (~5-8%) is low as a primary driver; statistical power for mutation-stratified clinical analyses will be limited without large pan-cohort aggregation",
+        "Approved MEK inhibitors already saturate the obvious target-occupancy space; a novel MAP2K1-focused program must differentiate on resistance allele coverage, selectivity, or modality (degrader, covalent)",
+        "TCGA SKCM is enriched for primary tumors; metastatic and post-treatment resistance samples are underrepresented \u2014 DepMap and GENIE are better for resistance-setting biology",
+        "Uveal melanoma (GNAQ/GNA11-driven) has distinct MEK dependency and poor MEK inhibitor clinical efficacy despite pathway activation \u2014 must be analyzed separately from cutaneous melanoma",
+        "Single-cell data lacks matched pre/post-treatment samples at scale, limiting TME-resistance co-analysis"
+      ],
+      "source": "agent (live)"
+    },
+    "plan": [
+      {
+        "step": "step_01_somatic_mutation_frequency",
+        "division": "right_target",
+        "question": "What is the somatic mutation frequency and allele spectrum of MAP2K1 in cutaneous, acral, and uveal melanoma subtypes, and does mutation status co-occur with BRAF/NRAS mutations or arise in wild-type tumors?",
+        "skill": "tcga-somatic-profiler",
+        "depends_on": []
+      },
+      {
+        "step": "step_02_functional_dependency",
+        "division": "right_target",
+        "question": "Is MAP2K1 a context-specific essential gene in BRAF-mutant and NRAS-mutant melanoma cell lines relative to wild-type lines, and what is the therapeutic window over non-malignant cells in DepMap?",
+        "skill": "crispr-screen-triage",
+        "depends_on": [
+          "step_01_somatic_mutation_frequency"
+        ]
+      },
+      {
+        "step": "step_03_malignant_cell_localization",
+        "division": "right_tissue",
+        "question": "Is MAP2K1 expression enriched in malignant melanocytes versus stromal and immune compartments of the tumor microenvironment in single-cell melanoma atlases?",
+        "skill": "malignant-expression-profiler",
+        "depends_on": []
+      },
+      {
+        "step": "step_04_post_market_adverse_events",
+        "division": "right_safety",
+        "question": "What is the normal-tissue expression profile of MAP2K1, and do approved MEK inhibitors show FAERS/post-market signals for tissue-specific toxicities (dermatologic, cardiac, ocular) that would constrain a novel MAP2K1 program?",
+        "skill": "openfda-safety",
+        "depends_on": []
+      },
+      {
+        "step": "step_05_prior_trials_and_outcomes",
+        "division": "right_patient",
+        "question": "What fraction of acquired resistance to BRAFi+MEKi combination therapy is attributable to MAP2K1/2 mutations versus other MAPK reactivation mechanisms, and do resistance-associated MAP2K1 alleles retain sensitivity to next-generation allosteric MEK or ERK inhibitors in clinical or preclinical data?",
+        "skill": "clinical-trial-finder",
+        "depends_on": [
+          "step_01_somatic_mutation_frequency",
+          "step_02_functional_dependency"
+        ]
+      },
+      {
+        "step": "step_06_recent_literature_and_competitive",
+        "division": "right_commercial",
+        "question": "What is the competitive landscape for MAP2K1-targeted agents beyond approved MEK inhibitors \u2014 including allosteric binders, PROTACs, ERK inhibitors, and bifunctional degraders \u2014 and are any in active Phase I/II clinical development for melanoma with differentiated resistance-allele coverage?",
+        "skill": "lit-synthesizer",
+        "depends_on": [
+          "step_05_prior_trials_and_outcomes"
+        ]
+      },
+      {
+        "step": "step_07_cell_type_specificity",
+        "division": "right_tissue",
+        "question": "Does MEK inhibition enhance or suppress anti-tumor immunity in the melanoma TME \u2014 specifically, does MAP2K1 inhibition affect T-cell activation, PD-L1 expression on tumor cells, or myeloid polarization?",
+        "skill": "celltype-specificity-profiler",
+        "depends_on": [
+          "step_03_malignant_cell_localization"
+        ]
+      }
+    ],
+    "division_findings": [
+      {
+        "division": "right_target",
+        "interpretation": "Open Targets returns only 2 evidence records linking MAP2K1 to melanoma [step_01], indicating a sparse curated association signal rather than a well-characterised direct driver relationship in this database. This is consistent with MAP2K1 being a second-tier MAPK node: MEK1 (encoded by MAP2K1) sits immediately downstream of BRAF and NRAS and is constitutively activated by the canonical V600E/NRAS-Q61 oncogenic axis, yet MAP2K1 itself carries activating somatic mutations (e.g. P124S/L, K57N) primarily in BRAF/NRAS wild-type cutaneous melanoma, making it both a downstream effector and an independent driver in a distinct subpopulation. The functional dependency data from DepMap (step_02) was not retrieved \u2014 this step was deferred \u2014 so no cell-line essentiality or therapeutic window estimate is available from this run. The rationale for MEK1 as a target therefore rests on pathway logic and approved clinical precedent (trametinib, cobimetinib) rather than fresh tool-derived essentiality scores from this analysis.",
+        "confidence": "low",
+        "caveats": [
+          "step_01 returned only 2 Open Targets evidence records; this reflects database curation depth, not the full somatic-mutation or clinical literature \u2014 the true evidence base is considerably richer but was not retrieved in this run",
+          "step_02 (DepMap CRISPR essentiality) was deferred and returned no data; absence of essentiality scores means the therapeutic window over non-malignant cells cannot be assessed here",
+          "subtype-level breakdown (cutaneous vs acral vs uveal) and co-mutation context (BRAF/NRAS co-occurrence vs wild-type background) was not resolved by the tools called",
+          "Open Targets evidence count is a proxy metric and may undercount somatic or functional evidence indexed elsewhere (cBioPortal, DepMap directly)",
+          "approved MEK inhibitor clinical context (trametinib) supports pathway relevance but does not substitute for target-specific essentiality data"
+        ],
+        "evidence_grade": "weak",
+        "source": "agent (live)"
+      },
+      {
+        "division": "right_tissue",
+        "interpretation": "The malignant-cell localization query for MAP2K1 in single-cell melanoma atlases was deferred due to missing ToolUniverse executor registration, so no direct sc-RNA enrichment data is available for malignant-versus-stromal compartment comparison [step_03]. CellMarker lookup returned a single record for MAP2K1 in human tissues, mapping exclusively to a normal cell type with zero cancer cell annotations [step_07]. This indicates MAP2K1 is not robustly catalogued as a cancer-cell marker in CellMarker, though this reflects the marker-database curation bias rather than biological absence \u2014 MAP2K1/MEK1 is constitutively active in BRAF-mutant melanoma malignant cells via the MAPK cascade, and its absence from CellMarker cancer annotations reflects the gene's broad expression rather than tumor-cell exclusion.",
+        "confidence": "low",
+        "caveats": [
+          "step_03 deferred entirely \u2014 no single-cell atlas enrichment data for malignant melanocytes vs. stromal/immune compartments was returned; this is the primary evidence gap for right_tissue",
+          "CellMarker has strong curation bias toward lineage-defining surface markers; a ubiquitous signaling kinase like MAP2K1 is systematically under-annotated in cancer cell entries regardless of its functional importance",
+          "Zero cancer-cell CellMarker records should not be interpreted as evidence of stromal or immune compartment restriction \u2014 it reflects database scope, not expression specificity",
+          "Without sc-RNA data, we cannot distinguish whether MAP2K1 inhibition will affect malignant cells preferentially or broadly impact immune and stromal compartments in the TME \u2014 a critical gap for therapeutic window assessment",
+          "MEK inhibitor effects on T-cell activation and myeloid polarization (the step_07 biological question) remain unanswered by the returned data"
+        ],
+        "evidence_grade": "weak",
+        "source": "agent (live)"
+      },
+      {
+        "division": "right_safety",
+        "interpretation": "The OpenFDA FAERS query for MAP2K1 returned an empty summary [step_04], indicating the tool was called against the gene name rather than approved MEK inhibitor drug names (e.g. trametinib, cobimetinib, binimetinib), which yielded no usable post-market adverse event data. However, the class safety profile of approved MEK inhibitors is well-characterised from regulatory labels and published literature outside this skill run: dermatologic toxicity (acneiform rash, hand-foot syndrome), ocular toxicity (retinal vein occlusion, uveitis), and cardiac toxicity (reduced LVEF) are documented class effects. Because the tool returned no structured signal [step_04], the division finding must rely on this contextual class knowledge rather than live FAERS data, which limits evidence grade.",
+        "confidence": "low",
+        "caveats": [
+          "The FAERS query was submitted with the gene name 'MAP2K1' rather than approved drug names, returning an empty result [step_04]; no live post-market signal was actually retrieved.",
+          "Class-level toxicity knowledge (dermatologic, cardiac, ocular) is drawn from external context, not from this skill run \u2014 it is not evidence produced by the tool.",
+          "A novel MAP2K1-selective agent may have a different tissue-selectivity profile than pan-MEK inhibitors, so class extrapolation may overstate or mischaracterise the true safety liability.",
+          "Normal-tissue expression data for MAP2K1 was requested but not returned, leaving the on-target/off-tumour risk unquantified."
+        ],
+        "evidence_grade": "weak",
+        "source": "agent (live)"
+      },
+      {
+        "division": "right_patient",
+        "interpretation": "The clinical trial search for MAP2K1 interventions in melanoma returned only 3 total results [step_05], indicating a sparse clinical landscape for MAP2K1-directed therapies as a primary intervention. The skill was queried on resistance allele frequency and next-generation inhibitor sensitivity, but the raw output is a count summary only \u2014 no trial-level data on resistance mechanisms, allele distributions, or clinical outcomes for specific MAP2K1 mutations was returned. This means we cannot quantify what fraction of BRAFi+MEKi acquired resistance is attributable to MAP2K1/2 mutations versus other MAPK reactivation mechanisms from this evidence alone, nor assess whether resistance-associated alleles retain sensitivity to allosteric MEK or ERK inhibitors in the clinical setting [step_05].",
+        "confidence": "low",
+        "caveats": [
+          "Tool returned only a trial count (n=3), not trial-level data; interpretation of resistance allele frequency and inhibitor sensitivity is not possible from this output.",
+          "Low trial count may reflect that MAP2K1 mutations are enrolled under broader MAPK/MEK inhibitor trials rather than MAP2K1-specific interventions, undercounting relevant patient populations.",
+          "Acquired resistance fractions and next-generation inhibitor sensitivity data, if they exist, would need to come from published cohort studies or resistance databases not queried here.",
+          "Cross-division concern (right_target / tractability): MAP2K1 resistance alleles (e.g. K57N, Q56P) are a known mechanism of BRAFi+MEKi failure; whether this creates a patient selection opportunity or a liability depends on inhibitor modality and is not resolved by this data."
+        ],
+        "evidence_grade": "weak",
+        "source": "agent (live)"
+      },
+      {
+        "division": "right_commercial",
+        "interpretation": "The only tool query run for this division [step_06] was TheraSAbDab_search_by_target against MAP2K1, which returned zero antibody/biologic entries. This is expected \u2014 MEK1/MAP2K1 is a small-molecule target, not a biologics target, so TheraSAbDab is the wrong instrument for assessing competitive landscape here. The query did not cover small-molecule PROTACs, allosteric binders, ERK inhibitors, or clinical trial registries, meaning the actual competitive landscape (cobimetinib, trametinib, selumetinib generics, next-gen allosteric MEK inhibitors, ERK1/2 inhibitors such as ulixertinib/MK-8353 in clinical development) is entirely unassessed. No signal was retrieved that speaks to differentiated resistance-allele coverage, Phase I/II activity, or commercial white space.",
+        "confidence": "low",
+        "caveats": [
+          "TheraSAbDab is a biologics/antibody database; a zero-count result for a kinase small-molecule target carries no commercial meaning",
+          "No small-molecule competitive intelligence tools (e.g. ClinicalTrials query, OpenTargets tractability, patent landscape) were executed",
+          "The MEK inhibitor space is crowded with approved agents (trametinib, cobimetinib, binimetinib) \u2014 absent data does not imply commercial opportunity",
+          "Resistance-allele coverage (MEK1 C121S, P124L/S) is a key differentiator question that remains completely unanswered",
+          "Commercial assessment requires market size, payer landscape, and combination-therapy positioning \u2014 none retrieved"
+        ],
+        "evidence_grade": "weak",
+        "source": "agent (live)"
+      }
+    ],
+    "evidence": [
+      {
+        "step": "step_01_somatic_mutation_frequency",
+        "division": "right_target",
+        "skill": "tcga-somatic-profiler",
+        "question": "What is the somatic mutation frequency and allele spectrum of MAP2K1 in cutaneous, acral, and uveal melanoma subtypes, and does mutation status co-occur with BRAF/NRAS mutations or arise in wild-type tumors?",
+        "result": {
+          "tool_call": {
+            "tool_name": "OpenTargets_target_disease_evidence",
+            "arguments": {
+              "gene_symbol": "MAP2K1",
+              "disease_name": "melanoma"
+            }
+          },
+          "summary": {
+            "data.disease.name": "melanoma",
+            "data.disease.evidences.count": 2
+          },
+          "via": "tooluniverse:OpenTargets_target_disease_evidence (in-process)",
+          "source": "tooluniverse",
+          "backend": "tooluniverse"
+        },
+        "source": "tooluniverse"
+      },
+      {
+        "step": "step_02_functional_dependency",
+        "division": "right_target",
+        "skill": "crispr-screen-triage",
+        "question": "Is MAP2K1 a context-specific essential gene in BRAF-mutant and NRAS-mutant melanoma cell lines relative to wild-type lines, and what is the therapeutic window over non-malignant cells in DepMap?",
+        "result": {
+          "status": "deferred",
+          "source": "tool-descriptor",
+          "discover": {
+            "verb": "find",
+            "tool_name": "Tool_Finder_Keyword",
+            "arguments": {
+              "description": "Is MAP2K1 a context-specific essential gene in BRAF-mutant and NRAS-mutant melanoma cell lines relative to wild-type lines, and what is the therapeutic window over non-malignant cells in DepMap?",
+              "limit": 5
+            }
+          },
+          "reason": "register a ToolUniverse executor (agent/frontend) to run Tool_Finder."
+        },
+        "source": "tool-descriptor"
+      },
+      {
+        "step": "step_03_malignant_cell_localization",
+        "division": "right_tissue",
+        "skill": "malignant-expression-profiler",
+        "question": "Is MAP2K1 expression enriched in malignant melanocytes versus stromal and immune compartments of the tumor microenvironment in single-cell melanoma atlases?",
+        "result": {
+          "status": "deferred",
+          "source": "tool-descriptor",
+          "discover": {
+            "verb": "find",
+            "tool_name": "Tool_Finder_Keyword",
+            "arguments": {
+              "description": "Is MAP2K1 expression enriched in malignant melanocytes versus stromal and immune compartments of the tumor microenvironment in single-cell melanoma atlases?",
+              "limit": 5
+            }
+          },
+          "reason": "register a ToolUniverse executor (agent/frontend) to run Tool_Finder."
+        },
+        "source": "tool-descriptor"
+      },
+      {
+        "step": "step_04_post_market_adverse_events",
+        "division": "right_safety",
+        "skill": "openfda-safety",
+        "question": "What is the normal-tissue expression profile of MAP2K1, and do approved MEK inhibitors show FAERS/post-market signals for tissue-specific toxicities (dermatologic, cardiac, ocular) that would constrain a novel MAP2K1 program?",
+        "result": {
+          "tool_call": {
+            "tool_name": "OpenFDA_search_drug_events",
+            "arguments": {
+              "drug_name": "MAP2K1",
+              "count": "patient.reaction.reactionmeddrapt.exact",
+              "limit": 20
+            }
+          },
+          "summary": {},
+          "via": "tooluniverse:OpenFDA_search_drug_events (in-process)",
+          "source": "tooluniverse",
+          "backend": "tooluniverse"
+        },
+        "source": "tooluniverse"
+      },
+      {
+        "step": "step_05_prior_trials_and_outcomes",
+        "division": "right_patient",
+        "skill": "clinical-trial-finder",
+        "question": "What fraction of acquired resistance to BRAFi+MEKi combination therapy is attributable to MAP2K1/2 mutations versus other MAPK reactivation mechanisms, and do resistance-associated MAP2K1 alleles retain sensitivity to next-generation allosteric MEK or ERK inhibitors in clinical or preclinical data?",
+        "result": {
+          "tool_call": {
+            "tool_name": "search_clinical_trials",
+            "arguments": {
+              "intervention": "MAP2K1",
+              "condition": "melanoma",
+              "max_results": 15
+            }
+          },
+          "summary": {
+            "data.total_count": 3
+          },
+          "via": "tooluniverse:search_clinical_trials (in-process)",
+          "source": "tooluniverse",
+          "backend": "tooluniverse"
+        },
+        "source": "tooluniverse"
+      },
+      {
+        "step": "step_06_recent_literature_and_competitive",
+        "division": "right_commercial",
+        "skill": "lit-synthesizer",
+        "question": "What is the competitive landscape for MAP2K1-targeted agents beyond approved MEK inhibitors \u2014 including allosteric binders, PROTACs, ERK inhibitors, and bifunctional degraders \u2014 and are any in active Phase I/II clinical development for melanoma with differentiated resistance-allele coverage?",
+        "result": {
+          "tool_call": {
+            "tool_name": "TheraSAbDab_search_by_target",
+            "arguments": {
+              "target": "MAP2K1"
+            }
+          },
+          "summary": {
+            "data.count": 0
+          },
+          "via": "tooluniverse:TheraSAbDab_search_by_target (in-process)",
+          "source": "tooluniverse",
+          "backend": "tooluniverse"
+        },
+        "source": "tooluniverse"
+      },
+      {
+        "step": "step_07_cell_type_specificity",
+        "division": "right_tissue",
+        "skill": "celltype-specificity-profiler",
+        "question": "Does MEK inhibition enhance or suppress anti-tumor immunity in the melanoma TME \u2014 specifically, does MAP2K1 inhibition affect T-cell activation, PD-L1 expression on tumor cells, or myeloid polarization?",
+        "result": {
+          "tool_call": {
+            "tool_name": "CellMarker_search_by_gene",
+            "arguments": {
+              "operation": "search_by_gene",
+              "gene_symbol": "MAP2K1",
+              "species": "Human"
+            }
+          },
+          "summary": {
+            "data.total_records": 1,
+            "cancer cell count": 0,
+            "normal cell count": 1
+          },
+          "via": "tooluniverse:CellMarker_search_by_gene (in-process)",
+          "source": "tooluniverse",
+          "backend": "tooluniverse"
+        },
+        "source": "tooluniverse"
+      },
+      {
+        "step": "step_06_reroute",
+        "division": "right_target",
+        "skill": "lit-synthesizer",
+        "question": "Reviewer follow-up: Acquired-resistance MAP2K1 allele landscape and retained sensitivity to next-generation inhibitors \u2014 step_05 returned 3 trial records but no allele-level resistance data. The clinical question \u2014 whether resistance-associated MAP2K1 mutations (e.g. P124L, I111S) retain sensitivity to allosteric MEK or ERK inhibitors \u2014 is unanswered and is central to the program differentiation thesis.",
+        "result": {
+          "tool_call": {
+            "tool_name": "TheraSAbDab_search_by_target",
+            "arguments": {
+              "target": "MAP2K1"
+            }
+          },
+          "summary": {
+            "data.count": 0
+          },
+          "via": "tooluniverse:TheraSAbDab_search_by_target (in-process)",
+          "source": "tooluniverse",
+          "backend": "tooluniverse"
+        },
+        "source": "tooluniverse"
+      },
+      {
+        "step": "step_07_reroute",
+        "division": "right_target",
+        "skill": "lit-synthesizer",
+        "question": "Reviewer follow-up: Malignant-cell vs. stromal/immune compartment localization (step_03 fully deferred). CellMarker in step_07 returned 1 normal-cell record and 0 cancer-cell records \u2014 insufficient to characterize tumor-cell specificity in the TME. \u2014 If MAP2K1 expression is predominantly stromal or immune (not malignant melanocyte), on-tumor targeting is weak and TME immunosuppression risk dominates the safety calculus.",
+        "result": {
+          "tool_call": {
+            "tool_name": "TheraSAbDab_search_by_target",
+            "arguments": {
+              "target": "MAP2K1"
+            }
+          },
+          "summary": {
+            "data.count": 0
+          },
+          "via": "tooluniverse:TheraSAbDab_search_by_target (in-process)",
+          "source": "tooluniverse",
+          "backend": "tooluniverse"
+        },
+        "source": "tooluniverse"
+      }
+    ],
+    "review": {
+      "verdict": "synthesize",
+      "scores": {
+        "relevance": 3,
+        "evidence": 1,
+        "thoroughness": 2
+      },
+      "gaps": [
+        {
+          "missing": "FAERS / post-market adverse-event signals for MEK inhibitors",
+          "route_to": "openfda-safety",
+          "why": "step_04 queried OpenFDA_search_drug_events with drug_name='MAP2K1' \u2014 MAP2K1 is a gene, not a drug name; FAERS has no entries under that string. The query should be repeated with approved MEK-inhibitor drug names (trametinib, cobimetinib, binimetinib, selumetinib). Result was an empty summary, so zero safety signal was actually retrieved. This is the single most critical gap under the safety review lens.",
+          "lenses": [
+            "safety"
+          ]
+        },
+        {
+          "missing": "Normal-tissue expression breadth of MAP2K1",
+          "route_to": "celltype-specificity-profiler",
+          "why": "No GTEx or HPA bulk-tissue expression query was run. MAP2K1 is a ubiquitous MAPK pathway node; its expression in heart, retina, skin, and GI tract directly predicts the on-target toxicity profile of any new inhibitor. CellMarker (step_07) returned only 1 normal-cell record \u2014 insufficient to characterise breadth.",
+          "lenses": [
+            "safety"
+          ]
+        },
+        {
+          "missing": "Malignant-melanocyte vs. stromal/immune compartment localisation",
+          "route_to": "scrna-orchestrator",
+          "why": "step_03 was fully deferred. CellMarker (step_07) returned 0 cancer-cell records. Without knowing whether MAP2K1 signal sits predominantly in malignant cells or in CD8 T-cells / macrophages, the risk that MEK inhibition suppresses anti-tumour immunity rather than killing tumour cells cannot be quantified \u2014 a direct safety concern.",
+          "lenses": [
+            "safety"
+          ]
+        },
+        {
+          "missing": "Therapeutic window \u2014 CRISPR dependency in malignant vs. non-malignant lines",
+          "route_to": "crispr-screen-triage",
+          "why": "step_02 was fully deferred. Without a DepMap selectivity index (BRAF-mut / NRAS-mut vs. normal-tissue lines), on-target toxicity risk relative to anti-tumour benefit is entirely uncharacterised. A narrow or absent therapeutic window would be a programme-stopping safety finding.",
+          "lenses": [
+            "safety"
+          ]
+        },
+        {
+          "missing": "Resistance-allele sensitivity to next-generation inhibitors",
+          "route_to": "lit-synthesizer",
+          "why": "Both step_06_reroute and step_07_reroute used TheraSAbDab (an antibody database) to answer a small-molecule resistance question \u2014 categorically the wrong tool; both returned 0. The question (do P124L, I111S, etc. retain sensitivity to allosteric MEK/ERK inhibitors?) is unanswered. This affects the differentiation thesis but also safety: resistance alleles may have different off-target profiles.",
+          "lenses": [
+            "safety"
+          ]
+        },
+        {
+          "missing": "Somatic mutation frequency and allele spectrum by melanoma subtype (cutaneous vs acral vs uveal); co-mutation with BRAF/NRAS",
+          "route_to": "tcga-somatic-profiler",
+          "why": "step_01 returned only 2 OpenTargets evidence records \u2014 no allele-level breakdown, no subtype stratification, no co-mutation analysis. This is the foundational genetics question and it is unanswered.",
+          "lenses": [
+            "genetics"
+          ]
+        },
+        {
+          "missing": "CRISPR/DepMap context-specific essentiality in BRAF-mutant vs NRAS-mutant vs WT melanoma lines",
+          "route_to": "crispr-screen-triage",
+          "why": "step_02 fully deferred. Functional dependency is required to establish therapeutic window and distinguish driver from passenger role.",
+          "lenses": [
+            "genetics"
+          ]
+        },
+        {
+          "missing": "Malignant melanocyte vs stromal/immune compartment expression in single-cell atlases",
+          "route_to": "scrna-orchestrator",
+          "why": "step_03 fully deferred; step_07 CellMarker returned 0 cancer-cell records. Without tumor-cell localization, on-target rationale for a novel agent is unestablished and TME immunosuppression risk cannot be assessed.",
+          "lenses": [
+            "genetics"
+          ]
+        },
+        {
+          "missing": "Acquired-resistance MAP2K1 allele landscape and retained sensitivity to allosteric MEK/ERK inhibitors",
+          "route_to": "lit-synthesizer",
+          "why": "steps 05/06_reroute both hit TheraSAbDab (wrong tool for small-molecule resistance allele literature) and returned 0 records. The program differentiation thesis depends on whether P124L, I111S, and related alleles retain sensitivity to next-generation inhibitors \u2014 this remains entirely unanswered.",
+          "lenses": [
+            "genetics"
+          ]
+        },
+        {
+          "missing": "Normal-tissue expression and class-effect toxicity constraints from approved MEK inhibitors (dermatologic, cardiac, ocular FAERS signals)",
+          "route_to": "openfda-safety",
+          "why": "step_04 queried OpenFDA with gene name as drug name (MAP2K1), returning an empty summary. Should be re-run with approved MEK inhibitor drug names (trametinib, cobimetinib, binimetinib).",
+          "lenses": [
+            "genetics"
+          ]
+        },
+        {
+          "missing": "Malignant-cell vs. stromal/immune MAP2K1 localization in single-cell melanoma atlases",
+          "route_to": "scrna-orchestrator",
+          "why": "Step 03 fully deferred; Step 07 CellMarker returned 0 cancer-cell records. For any on-tumor program, knowing whether MAP2K1 expression is enriched in malignant melanocytes versus CAFs or myeloid cells is prerequisite \u2014 stromal-dominant expression would substantially weaken the target rationale and shift the safety calculus toward TME immunosuppression risk.",
+          "lenses": [
+            "specificity"
+          ]
+        },
+        {
+          "missing": "DepMap functional dependency (CRISPR essentiality) of MAP2K1 in BRAF/NRAS-mutant vs. WT melanoma lines",
+          "route_to": "crispr-screen-triage",
+          "why": "Step 02 fully deferred. Without essentiality data, the therapeutic window claim over normal tissue is unsubstantiated. This is the primary evidence needed to support a MAP2K1-selective program over pan-MEK inhibition.",
+          "lenses": [
+            "specificity"
+          ]
+        },
+        {
+          "missing": "Resistance allele-level sensitivity data (P124L, I111S, etc.) to allosteric MEK and ERK inhibitors",
+          "route_to": "lit-synthesizer",
+          "why": "Steps 05 and 06_reroute both resolved to TheraSAbDab (antibody DB), which is the wrong tool for a small-molecule kinase resistance question. The clinical differentiation thesis rests entirely on whether resistance-associated MAP2K1 alleles retain sensitivity to next-generation inhibitors \u2014 this remains completely unanswered.",
+          "lenses": [
+            "specificity"
+          ]
+        },
+        {
+          "missing": "FAERS / post-market safety signals for approved MEK inhibitors (trametinib, cobimetinib, binimetinib) across tissue toxicities",
+          "route_to": "openfda-safety",
+          "why": "Step 04 queried OpenFDA with drug_name='MAP2K1' (a gene symbol, not a drug name) and returned an empty summary. The safety question is unanswered; the tool was mis-routed. Must re-query with approved drug names to characterize dermatologic, cardiac, and ocular AE profiles that constrain a novel program.",
+          "lenses": [
+            "specificity"
+          ]
+        },
+        {
+          "missing": "Somatic mutation allele spectrum of MAP2K1 across melanoma subtypes (cutaneous, acral, uveal) and co-mutation with BRAF/NRAS",
+          "route_to": "tcga-somatic-profiler",
+          "why": "Step 01 OpenTargets returned only 2 evidence records with no allele-level or subtype-stratified data. TCGA/cBioPortal-level mutation frequency and co-occurrence analysis is required to characterize the addressable patient population.",
+          "lenses": [
+            "specificity"
+          ]
+        },
+        {
+          "missing": "CRISPR/DepMap functional dependency data (step_02 fully deferred)",
+          "route_to": "crispr-screen-triage",
+          "why": "Without DepMap essentiality scores stratified by BRAF/NRAS mutation status, the therapeutic window claim is entirely unsupported. A program differentiation thesis requires demonstrating context-specific dependency, not just target expression.",
+          "lenses": [
+            "clinical"
+          ]
+        },
+        {
+          "missing": "Malignant-cell vs. stromal/immune TME localization (step_03 fully deferred; step_07 CellMarker returned 0 cancer-cell records)",
+          "route_to": "scrna-orchestrator",
+          "why": "If MAP2K1 expression is predominantly stromal or immune rather than malignant melanocyte, on-tumor targeting rationale collapses and TME immunosuppression risk dominates the safety calculus. This is a binary go/no-go data point.",
+          "lenses": [
+            "clinical"
+          ]
+        },
+        {
+          "missing": "Acquired-resistance MAP2K1 allele landscape and retained sensitivity to next-generation inhibitors (step_05 returned 3 trial records with no allele-level data; step_06_reroute and step_07_reroute both misfired to TheraSAbDab returning 0 antibody records \u2014 wrong tool for a kinase inhibitor question)",
+          "route_to": "lit-synthesizer",
+          "why": "The central differentiation thesis \u2014 that resistance-associated MAP2K1 alleles (P124L, I111S, F53L) retain sensitivity to allosteric MEK or ERK inhibitors \u2014 is completely unanswered. TheraSAbDab is an antibody database and irrelevant here; a Tavily/PubMed literature search is needed.",
+          "lenses": [
+            "clinical"
+          ]
+        },
+        {
+          "missing": "MEK inhibitor FAERS/post-market safety signals (step_04 queried MAP2K1 as a drug name, returning empty summary \u2014 wrong query strategy)",
+          "route_to": "openfda-safety",
+          "why": "The OpenFDA query used the gene symbol as the drug name. Should query approved MEK inhibitors (trametinib, cobimetinib, binimetinib) for dermatologic, cardiac, and ocular adverse event signals. Empty result is a tool miscall, not absence of signal.",
+          "lenses": [
+            "clinical"
+          ]
+        },
+        {
+          "missing": "Competitive and clinical landscape for next-generation MAP2K1 agents beyond approved MEKi (step_06 TheraSAbDab returned 0 \u2014 wrong tool; no lit search was actually executed)",
+          "route_to": "lit-synthesizer",
+          "why": "No web/literature search was performed for allosteric binders, PROTACs, ERK inhibitors, or bifunctional degraders in active clinical development. Clinical lens requires competitive context before a program is recommended.",
+          "lenses": [
+            "clinical"
+          ]
+        }
+      ],
+      "experiments": [
+        {
+          "missing": "MEK-inhibitor FAERS adverse-event profile",
+          "proposed_experiment": "Re-run OpenFDA_search_drug_events with drug_name in ['trametinib', 'cobimetinib', 'binimetinib', 'selumetinib'], count='patient.reaction.reactionmeddrapt.exact', limit=20 for each; aggregate top adverse events across all four queries",
+          "route_to": "openfda-safety",
+          "expected_readout": "Ranked MedDRA reaction terms with event counts; expected dominant signals: rash/dermatitis, retinal vein occlusion, cardiomyopathy, diarrhoea, elevated CK \u2014 quantifying the class-effect toxicity floor any new MAP2K1 programme must clear",
+          "why": "The step_04 query returned empty because MAP2K1 was passed as the drug identifier. Correcting to approved drug names is a one-line fix that immediately populates the safety table \u2014 the highest-priority remediation in this package."
+        },
+        {
+          "missing": "Normal-tissue MAP2K1 expression breadth",
+          "proposed_experiment": "Query GTEx bulk-tissue TPM and Human Protein Atlas tissue-specificity score for MAP2K1; flag any tissue with expression > 10 TPM or HPA 'high' annotation beyond the expected ubiquitous baseline",
+          "route_to": "celltype-specificity-profiler",
+          "expected_readout": "Tissue-specificity index (tau or HPA category); tissues with elevated expression (heart, retina, skin keratinocytes) flagged as on-target toxicity liabilities",
+          "why": "MAP2K1 is expected to be broadly expressed; quantifying which tissues sit above baseline narrows which FAERS signals are mechanistically on-target vs. off-target and informs therapeutic index modelling."
+        },
+        {
+          "missing": "Malignant-melanocyte fraction of MAP2K1 expression in TME",
+          "proposed_experiment": "Query a single-cell melanoma atlas (SKCM TCGA or Tirosh 2016 scRNA dataset) for MAP2K1 expression partitioned by cell-type annotation (malignant, T-cell, macrophage, fibroblast, endothelial)",
+          "route_to": "scrna-orchestrator",
+          "expected_readout": "Fraction of total MAP2K1 UMIs attributable to malignant melanocyte cluster; if <30% the target is predominantly stromal/immune and therapeutic window is structurally narrow",
+          "why": "If MAP2K1 expression is highest in T-cells or macrophages, a new inhibitor risks immunosuppression in addition to the known class-effect toxicities \u2014 a compounded safety liability."
+        },
+        {
+          "missing": "CRISPR essentiality and therapeutic window",
+          "proposed_experiment": "Pull DepMap CERES / Chronos gene-effect scores for MAP2K1 across SKCM lines stratified by BRAF-mut vs. NRAS-mut vs. WT; compare to normal-tissue-derived lines (RPE1, IMR90, etc.)",
+          "route_to": "crispr-screen-triage",
+          "expected_readout": "Median gene-effect score per genotype group; therapeutic window = (normal-line mean) \u2212 (BRAF-mut line mean); window <0.3 Chronos units would indicate insufficient selectivity for a new programme",
+          "why": "Without a selectivity index, on-target toxicity risk has no quantitative floor. MEK is essential in many normal cells; DepMap data would reveal whether the melanoma genotype actually confers differential dependency."
+        },
+        {
+          "missing": "Resistance-allele inhibitor sensitivity (P124L, I111S, others)",
+          "proposed_experiment": "Web/literature search via Tavily or PubMed for pharmacological characterisation of MAP2K1 resistance alleles against allosteric MEK inhibitors (CH5126766, RO5126766) and ERK inhibitors (ulixertinib, MK-8353) in melanoma cell-line or PDX models",
+          "route_to": "lit-synthesizer",
+          "expected_readout": "IC50 shift ratios for each allele vs. parental; alleles retaining IC50 <100 nM against a next-generation agent support the differentiation thesis; pan-resistant alleles close the programme",
+          "why": "TheraSAbDab is an antibody database and cannot answer this question. A PubMed / preprint search is the correct route. The answer is also safety-relevant: if resistance alleles drive constitutive ERK activation at higher amplitude, toxicity from partial inhibition may differ from the parental setting."
+        },
+        {
+          "missing": "Allele-level somatic mutation frequency by melanoma subtype",
+          "proposed_experiment": "Query TCGA SKCM + GDC somatic MAF for MAP2K1 with co-mutation matrix (BRAF/NRAS/NF1/WT stratification); include TCGA-UVM for uveal subtype",
+          "route_to": "tcga-somatic-profiler",
+          "expected_readout": "Per-subtype MAP2K1 mutation rate, dominant alleles (P124L, Q56P, etc.), mutual exclusivity or co-occurrence with BRAF V600E / NRAS Q61",
+          "why": "Establishes whether MAP2K1 mutations define a distinct patient segment or are secondary resistance events; determines initial indication scope"
+        },
+        {
+          "missing": "Functional essentiality and therapeutic window",
+          "proposed_experiment": "Pull DepMap CERES/Chronos scores for MAP2K1 across melanoma lines stratified by BRAF/NRAS mutation status; compare to non-malignant melanocyte lines",
+          "route_to": "crispr-screen-triage",
+          "expected_readout": "Context-specific dependency score delta (mutant vs WT); selectivity index over normal cells",
+          "why": "Without DepMap support, MAP2K1 may not be functionally essential in the relevant context \u2014 this would undermine the entire target rationale"
+        },
+        {
+          "missing": "Tumor-cell localization in melanoma TME",
+          "proposed_experiment": "Query CancerSEA or TISCH single-cell melanoma atlas for MAP2K1 expression per cell cluster (malignant melanocyte, CAF, TAM, T cell, endothelial)",
+          "route_to": "scrna-orchestrator",
+          "expected_readout": "Fraction of MAP2K1 expression in malignant vs stromal/immune compartments; correlation with MAPK pathway activity score",
+          "why": "If expression is predominantly stromal, an ADC or targeted agent will not reach the driver population; TME immunosuppression from MEK inhibition in T cells becomes the dominant concern"
+        },
+        {
+          "missing": "Resistance allele sensitivity to next-generation inhibitors",
+          "proposed_experiment": "Literature search (PubMed/ClinicalTrials) for allosteric MEK1/2 inhibitors (CH5126766/RO5126766, SHR7390) and ERK inhibitors (LY3214996, MK-8353, ASTX029) with MAP2K1-mutant preclinical or clinical cohort data",
+          "route_to": "lit-synthesizer",
+          "expected_readout": "IC50 shift or clinical response rate for resistance-associated MAP2K1 alleles under next-generation agents; any active Phase I/II enrollment",
+          "why": "Program differentiation versus approved BRAFi+MEKi requires demonstrated activity against acquired resistance alleles \u2014 this is the central commercial thesis and is currently a complete evidence void"
+        },
+        {
+          "missing": "Class-effect MEK inhibitor toxicity profile constraining a novel program",
+          "proposed_experiment": "Re-run OpenFDA FAERS query with trametinib, cobimetinib, and binimetinib as drug names; count dermatologic (rash, acneiform), cardiac (LVEF decrease), and ocular (serous retinopathy) MedDRA PTs",
+          "route_to": "openfda-safety",
+          "expected_readout": "Ranked adverse event frequencies for approved MEK inhibitors; whether class toxicities are mechanism-on-target and thus unavoidable for any MAP2K1 program",
+          "why": "A novel agent inherits class-effect risks unless it achieves a differentiated selectivity profile; knowing the constraint informs modality choice (allosteric vs ATP-competitive vs PROTAC)"
+        },
+        {
+          "missing": "Malignant-cell MAP2K1 expression fraction in melanoma TME",
+          "proposed_experiment": "Query single-cell melanoma atlases (e.g. Tirosh 2016, TISCH2 database) for MAP2K1 expression per annotated cell type; compute malignant-cell enrichment score vs. CAF, macrophage, T-cell compartments",
+          "route_to": "scrna-orchestrator",
+          "expected_readout": "Fraction of MAP2K1 high-expressing cells that are annotated as malignant melanocytes; ideally >60% to support on-tumor rationale",
+          "why": "CellMarker returned 0 cancer-cell records; this is the single most important specificity gap for the lens assigned to this review"
+        },
+        {
+          "missing": "Context-specific CRISPR essentiality in BRAF/NRAS-mutant melanoma",
+          "proposed_experiment": "Pull DepMap 24Q2 gene effect scores for MAP2K1 across melanoma cell lines stratified by BRAF V600E, NRAS Q61X, and WT status; compute differential essentiality and therapeutic window vs. non-malignant RPMI-8226 / fibroblast lines",
+          "route_to": "crispr-screen-triage",
+          "expected_readout": "Gene effect < -0.5 in BRAF/NRAS-mutant lines with selectivity ratio \u22652x over normal lines",
+          "why": "Essentiality data is the core validation for MAP2K1 as a drug target; currently fully missing"
+        },
+        {
+          "missing": "Resistance allele sensitivity to allosteric MEK / ERK inhibitors",
+          "proposed_experiment": "Literature search (PubMed + ClinicalTrials) for MAP2K1 P124L, I111S, K57N sensitivity data against avutometinib (VS-6766), MK-8353, LY3214996, and ravoxertinib; supplement with structural modeling of allosteric pocket accessibility per allele",
+          "route_to": "lit-synthesizer",
+          "expected_readout": "IC50 shift ratios for resistance alleles vs. parental; identification of alleles that retain sensitivity to \u22651 next-generation agent",
+          "why": "Program differentiation thesis is entirely predicated on this; TheraSAbDab is wrong tool \u2014 needs PubMed/preprint search"
+        },
+        {
+          "missing": "MEK inhibitor FAERS adverse event profile",
+          "proposed_experiment": "Re-query OpenFDA drug_events with drug_name in ['trametinib','cobimetinib','binimetinib'] and count by MedDRA PT; flag dermatologic (acneiform rash, DRESS), cardiac (decreased LVEF), and ocular (uveitis, serous retinopathy) signal rates",
+          "route_to": "openfda-safety",
+          "expected_readout": "Top-20 AE terms with proportional reporting ratios; comparison across three approved agents to identify class vs. agent-specific signals",
+          "why": "Step 04 mis-queried a gene symbol; safety constraint characterization is fully absent"
+        },
+        {
+          "missing": "MAP2K1 mutation frequency and co-occurrence across melanoma subtypes",
+          "proposed_experiment": "Query cBioPortal TCGA-SKCM and GDC acral/uveal cohorts for MAP2K1 mutation frequency, allele distribution, and co-mutation with BRAF V600E / NRAS Q61 / NF1 loss",
+          "route_to": "tcga-somatic-profiler",
+          "expected_readout": "Per-subtype mutation rate (%), top alleles by frequency, mutual exclusivity or co-occurrence p-values with BRAF/NRAS",
+          "why": "Addressable patient population size and combination-therapy rationale cannot be estimated without subtype-stratified allele data"
+        },
+        {
+          "missing": "Context-specific MAP2K1 essentiality in BRAF/NRAS-mutant melanoma",
+          "proposed_experiment": "Query DepMap CERES/Chronos scores for MAP2K1 across melanoma cell lines stratified by BRAF V600E, NRAS Q61, and WT status; compute therapeutic index vs. normal-tissue lines",
+          "route_to": "crispr-screen-triage",
+          "expected_readout": "Chronos score \u2264 \u22120.5 in BRAF/NRAS-mutant lines with <\u22120.2 in normal lines would support a synthetic-lethal window",
+          "why": "Essentiality data is prerequisite for any target-selection decision; currently entirely absent"
+        },
+        {
+          "missing": "MAP2K1 expression in malignant melanocytes vs. TME compartments",
+          "proposed_experiment": "Run single-cell melanoma atlas query (Tirosh 2016, TCGA SKCM scRNA) to decompose MAP2K1 expression by cell type: malignant, T-cell, NK, myeloid, fibroblast, endothelial",
+          "route_to": "scrna-orchestrator",
+          "expected_readout": "Fraction of MAP2K1-high cells that are malignant melanocytes (target: >60% for ADC/small-molecule rationale); PD-L1 co-expression on tumor cells under MEK inhibition",
+          "why": "CellMarker returned 1 normal-cell record and 0 cancer-cell records \u2014 the TME localization question is entirely open"
+        },
+        {
+          "missing": "Resistance-allele sensitivity to allosteric MEK and ERK inhibitors",
+          "proposed_experiment": "Literature synthesis (PubMed + ClinicalTrials.gov) on MAP2K1 P124L, I111S, F53L, K57N alleles: in vitro IC50 against VS-6766 (allosteric MEK), ulixertinib (ERK), and bifunctional MEK-ERK degraders; cross-reference with tumor mutation burden in post-BRAFi progression biopsies",
+          "route_to": "lit-synthesizer",
+          "expected_readout": "IC50 fold-shift relative to WT MAP2K1 for each resistance allele; any Phase I dose-response data from trials NCT03875820 (VS-6766) or equivalent",
+          "why": "Program differentiation hinges on whether resistance alleles are re-sensitized by next-generation inhibitors; unanswered by any step executed"
+        },
+        {
+          "missing": "MEK inhibitor class adverse event profile from post-market data",
+          "proposed_experiment": "Re-run OpenFDA FAERS query with drug names: trametinib, cobimetinib, binimetinib; count by MedDRA PT for dermatologic (rash, acneiform), cardiac (decreased LVEF, cardiomyopathy), and ocular (chorioretinopathy, uveitis) events",
+          "route_to": "openfda-safety",
+          "expected_readout": "Proportional reporting ratios and absolute event counts for class-defining toxicities; signals exceeding ROR 2.0 warrant safety-strategy annotation in CSO report",
+          "why": "Step_04 miscalled the tool with the gene symbol as drug name; the safety profile of approved MEKi class is clinically critical for a novel MAP2K1 program"
+        },
+        {
+          "missing": "Competitive clinical pipeline for next-generation MAP2K1/MEK agents",
+          "proposed_experiment": "Tavily/PubMed web search: 'MAP2K1 inhibitor melanoma clinical trial 2023\u20132026', 'allosteric MEK inhibitor resistance', 'MEK PROTAC melanoma', 'ERK inhibitor Phase I melanoma'; cross-reference ClinicalTrials.gov for active IND-stage agents",
+          "route_to": "lit-synthesizer",
+          "expected_readout": "Named agents, sponsoring companies, trial phase, melanoma-specific cohort existence, and resistance-allele coverage claims",
+          "why": "No competitive landscape was actually retrieved; TheraSAbDab is an antibody-only database and returned 0 results as expected \u2014 the lit search was never executed"
+        }
+      ],
+      "panel": {
+        "n_lenses": 4,
+        "reroute_votes": 1,
+        "min_votes": 2,
+        "forced_by_engine": false,
+        "lenses": [
+          "safety",
+          "genetics",
+          "specificity",
+          "clinical"
+        ]
+      },
+      "source": "agent (live)"
+    },
+    "synthesis": {
+      "decision": "GO",
+      "confidence": "low",
+      "recommendation": "MAP2K1 (MEK1) is a GO target in melanoma on the strength of pathway-level clinical validation (approved trametinib, cobimetinib, binimetinib combinations) and its central role in the constitutively activated RAS-RAF-MEK-ERK axis in ~90% of cutaneous melanomas; however, direct tool-derived evidence was severely limited \u2014 Open Targets returned only 2 association records [step_01], DepMap essentiality was fully deferred [step_02], single-cell TME localization was fully deferred [step_03], and all commercial/resistance-allele queries misfired to the wrong tools [step_05, step_06, step_06_reroute, step_07_reroute]. The GO tier reflects pathway logic and approved clinical precedent, not fresh multi-pillar evidence; confidence is accordingly low pending execution of the proposed experiments.",
+      "target_overview": "MAP2K1 encodes MEK1, the dual-specificity kinase immediately downstream of BRAF and NRAS in the MAPK cascade. In cutaneous melanoma, constitutive MAPK activation is present in ~90% of tumours (BRAF V600 ~50%, NRAS Q61 ~25%, NF1 loss ~15%); MAP2K1 itself carries activating mutations (P124L/S, K57N, Q56P) in ~5\u20138% of cases, enriched in BRAF/NRAS wild-type tumours and in acquired resistance to BRAFi+MEKi combinations. Approved MEK inhibitors (trametinib, cobimetinib, binimetinib) are standard-of-care in combination with BRAF inhibitors for BRAF-mutant melanoma. A novel MAP2K1-directed programme must differentiate on resistance-allele coverage, selectivity, or modality (allosteric, PROTAC, covalent) to justify development against an approved drug class.",
+      "liabilities": [
+        {
+          "risk": "On-target class toxicity: dermatologic (acneiform rash, hand-foot syndrome), cardiac (reduced LVEF), and ocular (retinal vein occlusion, serous retinopathy) adverse events are documented for all approved MEK inhibitors and may be unavoidable for any MAP2K1 programme",
+          "mitigation": "Re-query OpenFDA FAERS with approved drug names (trametinib, cobimetinib, binimetinib) to quantify class-effect signal rates; model whether allosteric or PROTAC modalities can spare normal-tissue MEK activity relative to ATP-competitive inhibitors"
+        },
+        {
+          "risk": "Broad normal-tissue MAP2K1 expression may yield a narrow therapeutic window over non-malignant cells, particularly in heart, retina, skin, and GI tract",
+          "mitigation": "Quantify MAP2K1 tissue-specificity via GTEx TPM and Human Protein Atlas; pull DepMap CERES/Chronos scores stratified by BRAF/NRAS mutation status to establish selectivity index [step_02 deferred]"
+        },
+        {
+          "risk": "Malignant-cell TME localization unknown: if MAP2K1 expression or signalling dependence is predominantly in stromal/immune compartments rather than malignant melanocytes, MEK inhibition risks immunosuppression rather than tumour killing [step_03 deferred; step_07 CellMarker 0 cancer-cell records]",
+          "mitigation": "Query single-cell melanoma atlases (Tirosh 2016, TISCH2) for MAP2K1 expression partitioned by cell-type annotation; compute fraction attributable to malignant melanocyte cluster"
+        },
+        {
+          "risk": "Resistance universally emerges via MAPK reactivation (MAP2K1/2 mutations, BRAF amplification, RAS mutations) or PI3K/AKT bypass; the differentiation thesis for a novel programme rests entirely on whether resistance alleles (P124L, I111S, K57N) retain sensitivity to next-generation agents \u2014 currently a complete evidence void [step_05 count-only; step_06_reroute and step_07_reroute misfired to antibody database]",
+          "mitigation": "PubMed/ClinicalTrials literature search for MAP2K1 resistance allele pharmacology against avutometinib (VS-6766), ulixertinib, MK-8353, LY3214996; supplement with structural modelling of allosteric pocket per allele"
+        },
+        {
+          "risk": "Crowded approved drug class (trametinib, cobimetinib, binimetinib) with generics and next-generation agents in Phase I/II; no competitive white-space analysis was retrieved [step_06 TheraSAbDab wrong tool, returned 0]",
+          "mitigation": "Execute web/literature search for allosteric MEK inhibitors, MEK PROTACs, ERK inhibitors in active melanoma trials; map resistance-allele coverage claims by competitor"
+        },
+        {
+          "risk": "Low MAP2K1 somatic mutation frequency (~5\u20138%) limits addressable patient population for a mutation-selective programme; subtype breakdown (cutaneous vs acral vs uveal) and co-mutation landscape are unresolved [step_01 returned 2 OpenTargets records, no allele-level data]",
+          "mitigation": "Query TCGA SKCM + cBioPortal GENIE for MAP2K1 mutation frequency, allele distribution, and BRAF/NRAS co-occurrence by subtype; analyse TCGA-UVM separately given distinct GNAQ/GNA11 biology and poor MEKi clinical efficacy"
+        }
+      ],
+      "evidence_gaps": [
+        "DepMap CRISPR essentiality (CERES/Chronos scores) for MAP2K1 stratified by BRAF/NRAS mutation status across melanoma and normal-tissue lines \u2014 fully deferred [step_02]; therapeutic window is unquantified",
+        "Single-cell TME localization: MAP2K1 expression fraction in malignant melanocytes vs. CAF/macrophage/T-cell compartments \u2014 fully deferred [step_03]; CellMarker returned 0 cancer-cell records [step_07]",
+        "FAERS post-market adverse event signals for approved MEK inhibitors \u2014 step_04 queried gene symbol 'MAP2K1' as drug name (wrong query), returning empty summary; actual AE profile is uncharacterised from this run",
+        "Allele-level somatic mutation frequency across cutaneous, acral, and uveal melanoma subtypes and co-mutation matrix with BRAF/NRAS \u2014 step_01 returned only 2 Open Targets records with no allele or subtype stratification",
+        "Resistance-allele sensitivity to allosteric MEK (VS-6766/avutometinib, CH5126766) and ERK inhibitors (ulixertinib, MK-8353, LY3214996) \u2014 steps 05/06_reroute/07_reroute all misfired to TheraSAbDab (antibody database), returning 0; question entirely unanswered",
+        "Competitive clinical pipeline for next-generation MAP2K1-directed agents (allosteric binders, PROTACs, ERK inhibitors) in active Phase I/II melanoma trials \u2014 no literature search was executed; TheraSAbDab is wrong instrument for small-molecule competitive intelligence",
+        "Normal-tissue MAP2K1 expression breadth via GTEx/Human Protein Atlas \u2014 not queried; on-target/off-tumour toxicity risk in heart, retina, skin, and GI tract is uncharacterised",
+        "MEK inhibition effects on anti-tumour immunity in melanoma TME \u2014 T-cell activation, PD-L1 regulation, myeloid polarization \u2014 CellMarker step_07 did not address immunological compartment; question is open"
+      ],
+      "proposed_experiments": [
+        {
+          "experiment": "Re-run OpenFDA FAERS query with drug_name in ['trametinib', 'cobimetinib', 'binimetinib', 'selumetinib'], count by patient.reaction.reactionmeddrapt.exact, limit 20 per agent; aggregate top MedDRA PTs across all four",
+          "expected_readout": "Ranked adverse event terms with proportional reporting ratios; expected dominant signals \u2014 acneiform rash, chorioretinopathy, decreased LVEF, diarrhoea, elevated CK \u2014 quantifying the class-effect toxicity floor any novel MAP2K1 programme must clear",
+          "rationale": "Step_04 miscalled OpenFDA with gene symbol as drug name, returning empty summary. This is a one-line fix that immediately populates the safety table and is the highest-priority remediation in this package."
+        },
+        {
+          "experiment": "Pull DepMap 24Q2 CERES/Chronos gene-effect scores for MAP2K1 across all SKCM cell lines stratified by BRAF V600E, NRAS Q61, NF1-loss, and WT status; compare to non-malignant melanocyte and fibroblast lines",
+          "expected_readout": "Median Chronos score per genotype group; therapeutic window = (normal-line mean) minus (BRAF-mut line mean); window <0.3 Chronos units would indicate insufficient selectivity to support a new programme",
+          "rationale": "Functional essentiality data is entirely absent from this run [step_02 deferred]. Without a selectivity index, the claim that MAP2K1 inhibition preferentially kills BRAF/NRAS-mutant melanoma cells over normal tissue is unsupported."
+        },
+        {
+          "experiment": "Query single-cell melanoma atlases (Tirosh 2016, Jerby-Arnon 2018, TISCH2 database) for MAP2K1 expression partitioned by annotated cell type: malignant melanocyte, CAF, TAM, CD8 T-cell, NK cell, endothelial",
+          "expected_readout": "Fraction of MAP2K1 UMIs attributable to malignant melanocyte cluster; if <30% expression is predominantly stromal/immune and therapeutic window is structurally narrow; PD-L1 co-expression on tumour cells under pERK-surrogate scoring",
+          "rationale": "Step_03 was fully deferred and step_07 CellMarker returned 0 cancer-cell records. If MAP2K1 signalling dependence resides in T-cells or macrophages, MEK inhibition risks compounding immunosuppression on top of known class-effect toxicities."
+        },
+        {
+          "experiment": "PubMed/ClinicalTrials.gov literature search for MAP2K1 resistance alleles P124L, I111S, K57N, F53L sensitivity against allosteric MEK inhibitors (avutometinib/VS-6766, CH5126766/RO5126766, SHR7390) and ERK inhibitors (ulixertinib, MK-8353, LY3214996, ASTX029); supplement with structural modelling of allosteric pocket accessibility per allele",
+          "expected_readout": "IC50 shift ratios for each resistance allele vs. parental MAP2K1-WT; alleles retaining IC50 <100 nM against a next-generation agent support differentiation thesis; pan-resistant alleles close the programme",
+          "rationale": "Steps 05/06_reroute/07_reroute all resolved to TheraSAbDab (antibody database), which is categorically wrong for kinase resistance pharmacology. The differentiation thesis for any novel MAP2K1 programme is entirely predicated on this answer."
+        },
+        {
+          "experiment": "Query TCGA SKCM somatic MAF and cBioPortal GENIE cohort (n>2000 melanoma) for MAP2K1 mutation frequency, dominant alleles, and co-mutation matrix with BRAF V600E / NRAS Q61 / NF1 loss; analyse TCGA-UVM separately for uveal subtype",
+          "expected_readout": "Per-subtype MAP2K1 mutation rate (%), top alleles by frequency, mutual exclusivity or co-occurrence p-values with BRAF/NRAS; addressable patient fraction in cutaneous vs acral vs uveal settings",
+          "rationale": "Step_01 returned only 2 Open Targets records with no allele-level or subtype stratification. Without this data, the size of the addressable patient population for a mutation-selective programme cannot be estimated."
+        },
+        {
+          "experiment": "Tavily/PubMed web search for active clinical-stage MAP2K1/MEK-directed agents beyond approved class: search terms 'MAP2K1 inhibitor melanoma clinical trial 2023\u20132026', 'allosteric MEK inhibitor resistance melanoma', 'MEK PROTAC', 'ERK inhibitor Phase I melanoma'; cross-reference ClinicalTrials.gov for active IND-stage agents with melanoma cohorts",
+          "expected_readout": "Named next-generation agents (avutometinib, MK-8353, LY3214996 etc.), sponsoring companies, trial phase, melanoma-specific cohort enrolment, and resistance-allele coverage claims; identification of commercial white space vs. overcrowding",
+          "rationale": "No competitive landscape was retrieved in this run; TheraSAbDab returned 0 as expected for a small-molecule target. The commercial axis is entirely unassessed and required before a programme decision."
+        }
+      ]
+    },
+    "references": [
+      {
+        "n": 1,
+        "skill": "tcga-somatic-profiler",
+        "provenance": "\ud83d\udd27 live",
+        "grade": "strong",
+        "source": "tcga-somatic-profiler; tooluniverse",
+        "step": "step_01_somatic_mutation_frequency"
+      },
+      {
+        "n": 2,
+        "skill": "crispr-screen-triage",
+        "provenance": "\ud83d\udccb descriptor",
+        "grade": "supporting",
+        "source": "CRISPR screen counts / DepMap; tool-descriptor",
+        "step": "step_02_functional_dependency"
+      },
+      {
+        "n": 3,
+        "skill": "malignant-expression-profiler",
+        "provenance": "\ud83d\udccb descriptor",
+        "grade": "supporting",
+        "source": "malignant-expression-profiler; tool-descriptor",
+        "step": "step_03_malignant_cell_localization"
+      },
+      {
+        "n": 4,
+        "skill": "openfda-safety",
+        "provenance": "\ud83d\udd27 live",
+        "grade": "strong",
+        "source": "openFDA FAERS / drug label; tooluniverse \u2014 https://open.fda.gov/",
+        "step": "step_04_post_market_adverse_events"
+      },
+      {
+        "n": 5,
+        "skill": "clinical-trial-finder",
+        "provenance": "\ud83d\udd27 live",
+        "grade": "strong",
+        "source": "ClinicalTrials.gov API v2 (+ EUCTR); tooluniverse \u2014 https://clinicaltrials.gov/",
+        "step": "step_05_prior_trials_and_outcomes"
+      },
+      {
+        "n": 6,
+        "skill": "lit-synthesizer",
+        "provenance": "\ud83d\udd27 live",
+        "grade": "strong",
+        "source": "Tavily Search API (recent literature / competitive / safety); tooluniverse \u2014 https://tavily.com/",
+        "step": "step_06_recent_literature_and_competitive"
+      },
+      {
+        "n": 7,
+        "skill": "celltype-specificity-profiler",
+        "provenance": "\ud83d\udd27 live",
+        "grade": "strong",
+        "source": "derived: tau + bimodality on the fetched atlas; tooluniverse",
+        "step": "step_07_cell_type_specificity"
+      },
+      {
+        "n": 8,
+        "skill": "lit-synthesizer",
+        "provenance": "\ud83d\udd27 live",
+        "grade": "strong",
+        "source": "Tavily Search API (recent literature / competitive / safety); tooluniverse \u2014 https://tavily.com/",
+        "step": "step_06_reroute"
+      },
+      {
+        "n": 9,
+        "skill": "lit-synthesizer",
+        "provenance": "\ud83d\udd27 live",
+        "grade": "strong",
+        "source": "Tavily Search API (recent literature / competitive / safety); tooluniverse \u2014 https://tavily.com/",
+        "step": "step_07_reroute"
+      }
+    ],
+    "evidence_gaps": [
+      "FAERS / post-market adverse-event signals for MEK inhibitors",
+      "Normal-tissue expression breadth of MAP2K1",
+      "Malignant-melanocyte vs. stromal/immune compartment localisation",
+      "Therapeutic window \u2014 CRISPR dependency in malignant vs. non-malignant lines",
+      "Resistance-allele sensitivity to next-generation inhibitors",
+      "Somatic mutation frequency and allele spectrum by melanoma subtype (cutaneous vs acral vs uveal); co-mutation with BRAF/NRAS",
+      "CRISPR/DepMap context-specific essentiality in BRAF-mutant vs NRAS-mutant vs WT melanoma lines",
+      "Malignant melanocyte vs stromal/immune compartment expression in single-cell atlases",
+      "Acquired-resistance MAP2K1 allele landscape and retained sensitivity to allosteric MEK/ERK inhibitors",
+      "Normal-tissue expression and class-effect toxicity constraints from approved MEK inhibitors (dermatologic, cardiac, ocular FAERS signals)",
+      "Malignant-cell vs. stromal/immune MAP2K1 localization in single-cell melanoma atlases",
+      "DepMap functional dependency (CRISPR essentiality) of MAP2K1 in BRAF/NRAS-mutant vs. WT melanoma lines",
+      "Resistance allele-level sensitivity data (P124L, I111S, etc.) to allosteric MEK and ERK inhibitors",
+      "FAERS / post-market safety signals for approved MEK inhibitors (trametinib, cobimetinib, binimetinib) across tissue toxicities",
+      "Somatic mutation allele spectrum of MAP2K1 across melanoma subtypes (cutaneous, acral, uveal) and co-mutation with BRAF/NRAS",
+      "CRISPR/DepMap functional dependency data (step_02 fully deferred)",
+      "Malignant-cell vs. stromal/immune TME localization (step_03 fully deferred; step_07 CellMarker returned 0 cancer-cell records)",
+      "Acquired-resistance MAP2K1 allele landscape and retained sensitivity to next-generation inhibitors (step_05 returned 3 trial records with no allele-level data; step_06_reroute and step_07_reroute both misfired to TheraSAbDab returning 0 antibody records \u2014 wrong tool for a kinase inhibitor question)",
+      "MEK inhibitor FAERS/post-market safety signals (step_04 queried MAP2K1 as a drug name, returning empty summary \u2014 wrong query strategy)",
+      "Competitive and clinical landscape for next-generation MAP2K1 agents beyond approved MEKi (step_06 TheraSAbDab returned 0 \u2014 wrong tool; no lit search was actually executed)",
+      "DepMap CRISPR essentiality (CERES/Chronos scores) for MAP2K1 stratified by BRAF/NRAS mutation status across melanoma and normal-tissue lines \u2014 fully deferred [step_02]; therapeutic window is unquantified",
+      "Single-cell TME localization: MAP2K1 expression fraction in malignant melanocytes vs. CAF/macrophage/T-cell compartments \u2014 fully deferred [step_03]; CellMarker returned 0 cancer-cell records [step_07]",
+      "FAERS post-market adverse event signals for approved MEK inhibitors \u2014 step_04 queried gene symbol 'MAP2K1' as drug name (wrong query), returning empty summary; actual AE profile is uncharacterised from this run",
+      "Allele-level somatic mutation frequency across cutaneous, acral, and uveal melanoma subtypes and co-mutation matrix with BRAF/NRAS \u2014 step_01 returned only 2 Open Targets records with no allele or subtype stratification",
+      "Resistance-allele sensitivity to allosteric MEK (VS-6766/avutometinib, CH5126766) and ERK inhibitors (ulixertinib, MK-8353, LY3214996) \u2014 steps 05/06_reroute/07_reroute all misfired to TheraSAbDab (antibody database), returning 0; question entirely unanswered",
+      "Competitive clinical pipeline for next-generation MAP2K1-directed agents (allosteric binders, PROTACs, ERK inhibitors) in active Phase I/II melanoma trials \u2014 no literature search was executed; TheraSAbDab is wrong instrument for small-molecule competitive intelligence",
+      "Normal-tissue MAP2K1 expression breadth via GTEx/Human Protein Atlas \u2014 not queried; on-target/off-tumour toxicity risk in heart, retina, skin, and GI tract is uncharacterised",
+      "MEK inhibition effects on anti-tumour immunity in melanoma TME \u2014 T-cell activation, PD-L1 regulation, myeloid polarization \u2014 CellMarker step_07 did not address immunological compartment; question is open"
+    ],
+    "proposed_experiments": [
+      {
+        "experiment": "Re-run OpenFDA FAERS query with drug_name in ['trametinib', 'cobimetinib', 'binimetinib', 'selumetinib'], count by patient.reaction.reactionmeddrapt.exact, limit 20 per agent; aggregate top MedDRA PTs across all four",
+        "expected_readout": "Ranked adverse event terms with proportional reporting ratios; expected dominant signals \u2014 acneiform rash, chorioretinopathy, decreased LVEF, diarrhoea, elevated CK \u2014 quantifying the class-effect toxicity floor any novel MAP2K1 programme must clear",
+        "rationale": "Step_04 miscalled OpenFDA with gene symbol as drug name, returning empty summary. This is a one-line fix that immediately populates the safety table and is the highest-priority remediation in this package."
+      },
+      {
+        "experiment": "Pull DepMap 24Q2 CERES/Chronos gene-effect scores for MAP2K1 across all SKCM cell lines stratified by BRAF V600E, NRAS Q61, NF1-loss, and WT status; compare to non-malignant melanocyte and fibroblast lines",
+        "expected_readout": "Median Chronos score per genotype group; therapeutic window = (normal-line mean) minus (BRAF-mut line mean); window <0.3 Chronos units would indicate insufficient selectivity to support a new programme",
+        "rationale": "Functional essentiality data is entirely absent from this run [step_02 deferred]. Without a selectivity index, the claim that MAP2K1 inhibition preferentially kills BRAF/NRAS-mutant melanoma cells over normal tissue is unsupported."
+      },
+      {
+        "experiment": "Query single-cell melanoma atlases (Tirosh 2016, Jerby-Arnon 2018, TISCH2 database) for MAP2K1 expression partitioned by annotated cell type: malignant melanocyte, CAF, TAM, CD8 T-cell, NK cell, endothelial",
+        "expected_readout": "Fraction of MAP2K1 UMIs attributable to malignant melanocyte cluster; if <30% expression is predominantly stromal/immune and therapeutic window is structurally narrow; PD-L1 co-expression on tumour cells under pERK-surrogate scoring",
+        "rationale": "Step_03 was fully deferred and step_07 CellMarker returned 0 cancer-cell records. If MAP2K1 signalling dependence resides in T-cells or macrophages, MEK inhibition risks compounding immunosuppression on top of known class-effect toxicities."
+      },
+      {
+        "experiment": "PubMed/ClinicalTrials.gov literature search for MAP2K1 resistance alleles P124L, I111S, K57N, F53L sensitivity against allosteric MEK inhibitors (avutometinib/VS-6766, CH5126766/RO5126766, SHR7390) and ERK inhibitors (ulixertinib, MK-8353, LY3214996, ASTX029); supplement with structural modelling of allosteric pocket accessibility per allele",
+        "expected_readout": "IC50 shift ratios for each resistance allele vs. parental MAP2K1-WT; alleles retaining IC50 <100 nM against a next-generation agent support differentiation thesis; pan-resistant alleles close the programme",
+        "rationale": "Steps 05/06_reroute/07_reroute all resolved to TheraSAbDab (antibody database), which is categorically wrong for kinase resistance pharmacology. The differentiation thesis for any novel MAP2K1 programme is entirely predicated on this answer."
+      },
+      {
+        "experiment": "Query TCGA SKCM somatic MAF and cBioPortal GENIE cohort (n>2000 melanoma) for MAP2K1 mutation frequency, dominant alleles, and co-mutation matrix with BRAF V600E / NRAS Q61 / NF1 loss; analyse TCGA-UVM separately for uveal subtype",
+        "expected_readout": "Per-subtype MAP2K1 mutation rate (%), top alleles by frequency, mutual exclusivity or co-occurrence p-values with BRAF/NRAS; addressable patient fraction in cutaneous vs acral vs uveal settings",
+        "rationale": "Step_01 returned only 2 Open Targets records with no allele-level or subtype stratification. Without this data, the size of the addressable patient population for a mutation-selective programme cannot be estimated."
+      },
+      {
+        "experiment": "Tavily/PubMed web search for active clinical-stage MAP2K1/MEK-directed agents beyond approved class: search terms 'MAP2K1 inhibitor melanoma clinical trial 2023\u20132026', 'allosteric MEK inhibitor resistance melanoma', 'MEK PROTAC', 'ERK inhibitor Phase I melanoma'; cross-reference ClinicalTrials.gov for active IND-stage agents with melanoma cohorts",
+        "expected_readout": "Named next-generation agents (avutometinib, MK-8353, LY3214996 etc.), sponsoring companies, trial phase, melanoma-specific cohort enrolment, and resistance-allele coverage claims; identification of commercial white space vs. overcrowding",
+        "rationale": "No competitive landscape was retrieved in this run; TheraSAbDab returned 0 as expected for a small-molecule target. The commercial axis is entirely unassessed and required before a programme decision."
+      },
+      {
+        "missing": "MEK-inhibitor FAERS adverse-event profile",
+        "proposed_experiment": "Re-run OpenFDA_search_drug_events with drug_name in ['trametinib', 'cobimetinib', 'binimetinib', 'selumetinib'], count='patient.reaction.reactionmeddrapt.exact', limit=20 for each; aggregate top adverse events across all four queries",
+        "route_to": "openfda-safety",
+        "expected_readout": "Ranked MedDRA reaction terms with event counts; expected dominant signals: rash/dermatitis, retinal vein occlusion, cardiomyopathy, diarrhoea, elevated CK \u2014 quantifying the class-effect toxicity floor any new MAP2K1 programme must clear",
+        "why": "The step_04 query returned empty because MAP2K1 was passed as the drug identifier. Correcting to approved drug names is a one-line fix that immediately populates the safety table \u2014 the highest-priority remediation in this package."
+      },
+      {
+        "missing": "Normal-tissue MAP2K1 expression breadth",
+        "proposed_experiment": "Query GTEx bulk-tissue TPM and Human Protein Atlas tissue-specificity score for MAP2K1; flag any tissue with expression > 10 TPM or HPA 'high' annotation beyond the expected ubiquitous baseline",
+        "route_to": "celltype-specificity-profiler",
+        "expected_readout": "Tissue-specificity index (tau or HPA category); tissues with elevated expression (heart, retina, skin keratinocytes) flagged as on-target toxicity liabilities",
+        "why": "MAP2K1 is expected to be broadly expressed; quantifying which tissues sit above baseline narrows which FAERS signals are mechanistically on-target vs. off-target and informs therapeutic index modelling."
+      },
+      {
+        "missing": "Malignant-melanocyte fraction of MAP2K1 expression in TME",
+        "proposed_experiment": "Query a single-cell melanoma atlas (SKCM TCGA or Tirosh 2016 scRNA dataset) for MAP2K1 expression partitioned by cell-type annotation (malignant, T-cell, macrophage, fibroblast, endothelial)",
+        "route_to": "scrna-orchestrator",
+        "expected_readout": "Fraction of total MAP2K1 UMIs attributable to malignant melanocyte cluster; if <30% the target is predominantly stromal/immune and therapeutic window is structurally narrow",
+        "why": "If MAP2K1 expression is highest in T-cells or macrophages, a new inhibitor risks immunosuppression in addition to the known class-effect toxicities \u2014 a compounded safety liability."
+      },
+      {
+        "missing": "CRISPR essentiality and therapeutic window",
+        "proposed_experiment": "Pull DepMap CERES / Chronos gene-effect scores for MAP2K1 across SKCM lines stratified by BRAF-mut vs. NRAS-mut vs. WT; compare to normal-tissue-derived lines (RPE1, IMR90, etc.)",
+        "route_to": "crispr-screen-triage",
+        "expected_readout": "Median gene-effect score per genotype group; therapeutic window = (normal-line mean) \u2212 (BRAF-mut line mean); window <0.3 Chronos units would indicate insufficient selectivity for a new programme",
+        "why": "Without a selectivity index, on-target toxicity risk has no quantitative floor. MEK is essential in many normal cells; DepMap data would reveal whether the melanoma genotype actually confers differential dependency."
+      },
+      {
+        "missing": "Resistance-allele inhibitor sensitivity (P124L, I111S, others)",
+        "proposed_experiment": "Web/literature search via Tavily or PubMed for pharmacological characterisation of MAP2K1 resistance alleles against allosteric MEK inhibitors (CH5126766, RO5126766) and ERK inhibitors (ulixertinib, MK-8353) in melanoma cell-line or PDX models",
+        "route_to": "lit-synthesizer",
+        "expected_readout": "IC50 shift ratios for each allele vs. parental; alleles retaining IC50 <100 nM against a next-generation agent support the differentiation thesis; pan-resistant alleles close the programme",
+        "why": "TheraSAbDab is an antibody database and cannot answer this question. A PubMed / preprint search is the correct route. The answer is also safety-relevant: if resistance alleles drive constitutive ERK activation at higher amplitude, toxicity from partial inhibition may differ from the parental setting."
+      },
+      {
+        "missing": "Allele-level somatic mutation frequency by melanoma subtype",
+        "proposed_experiment": "Query TCGA SKCM + GDC somatic MAF for MAP2K1 with co-mutation matrix (BRAF/NRAS/NF1/WT stratification); include TCGA-UVM for uveal subtype",
+        "route_to": "tcga-somatic-profiler",
+        "expected_readout": "Per-subtype MAP2K1 mutation rate, dominant alleles (P124L, Q56P, etc.), mutual exclusivity or co-occurrence with BRAF V600E / NRAS Q61",
+        "why": "Establishes whether MAP2K1 mutations define a distinct patient segment or are secondary resistance events; determines initial indication scope"
+      },
+      {
+        "missing": "Functional essentiality and therapeutic window",
+        "proposed_experiment": "Pull DepMap CERES/Chronos scores for MAP2K1 across melanoma lines stratified by BRAF/NRAS mutation status; compare to non-malignant melanocyte lines",
+        "route_to": "crispr-screen-triage",
+        "expected_readout": "Context-specific dependency score delta (mutant vs WT); selectivity index over normal cells",
+        "why": "Without DepMap support, MAP2K1 may not be functionally essential in the relevant context \u2014 this would undermine the entire target rationale"
+      },
+      {
+        "missing": "Tumor-cell localization in melanoma TME",
+        "proposed_experiment": "Query CancerSEA or TISCH single-cell melanoma atlas for MAP2K1 expression per cell cluster (malignant melanocyte, CAF, TAM, T cell, endothelial)",
+        "route_to": "scrna-orchestrator",
+        "expected_readout": "Fraction of MAP2K1 expression in malignant vs stromal/immune compartments; correlation with MAPK pathway activity score",
+        "why": "If expression is predominantly stromal, an ADC or targeted agent will not reach the driver population; TME immunosuppression from MEK inhibition in T cells becomes the dominant concern"
+      },
+      {
+        "missing": "Resistance allele sensitivity to next-generation inhibitors",
+        "proposed_experiment": "Literature search (PubMed/ClinicalTrials) for allosteric MEK1/2 inhibitors (CH5126766/RO5126766, SHR7390) and ERK inhibitors (LY3214996, MK-8353, ASTX029) with MAP2K1-mutant preclinical or clinical cohort data",
+        "route_to": "lit-synthesizer",
+        "expected_readout": "IC50 shift or clinical response rate for resistance-associated MAP2K1 alleles under next-generation agents; any active Phase I/II enrollment",
+        "why": "Program differentiation versus approved BRAFi+MEKi requires demonstrated activity against acquired resistance alleles \u2014 this is the central commercial thesis and is currently a complete evidence void"
+      },
+      {
+        "missing": "Class-effect MEK inhibitor toxicity profile constraining a novel program",
+        "proposed_experiment": "Re-run OpenFDA FAERS query with trametinib, cobimetinib, and binimetinib as drug names; count dermatologic (rash, acneiform), cardiac (LVEF decrease), and ocular (serous retinopathy) MedDRA PTs",
+        "route_to": "openfda-safety",
+        "expected_readout": "Ranked adverse event frequencies for approved MEK inhibitors; whether class toxicities are mechanism-on-target and thus unavoidable for any MAP2K1 program",
+        "why": "A novel agent inherits class-effect risks unless it achieves a differentiated selectivity profile; knowing the constraint informs modality choice (allosteric vs ATP-competitive vs PROTAC)"
+      },
+      {
+        "missing": "Malignant-cell MAP2K1 expression fraction in melanoma TME",
+        "proposed_experiment": "Query single-cell melanoma atlases (e.g. Tirosh 2016, TISCH2 database) for MAP2K1 expression per annotated cell type; compute malignant-cell enrichment score vs. CAF, macrophage, T-cell compartments",
+        "route_to": "scrna-orchestrator",
+        "expected_readout": "Fraction of MAP2K1 high-expressing cells that are annotated as malignant melanocytes; ideally >60% to support on-tumor rationale",
+        "why": "CellMarker returned 0 cancer-cell records; this is the single most important specificity gap for the lens assigned to this review"
+      },
+      {
+        "missing": "Context-specific CRISPR essentiality in BRAF/NRAS-mutant melanoma",
+        "proposed_experiment": "Pull DepMap 24Q2 gene effect scores for MAP2K1 across melanoma cell lines stratified by BRAF V600E, NRAS Q61X, and WT status; compute differential essentiality and therapeutic window vs. non-malignant RPMI-8226 / fibroblast lines",
+        "route_to": "crispr-screen-triage",
+        "expected_readout": "Gene effect < -0.5 in BRAF/NRAS-mutant lines with selectivity ratio \u22652x over normal lines",
+        "why": "Essentiality data is the core validation for MAP2K1 as a drug target; currently fully missing"
+      },
+      {
+        "missing": "Resistance allele sensitivity to allosteric MEK / ERK inhibitors",
+        "proposed_experiment": "Literature search (PubMed + ClinicalTrials) for MAP2K1 P124L, I111S, K57N sensitivity data against avutometinib (VS-6766), MK-8353, LY3214996, and ravoxertinib; supplement with structural modeling of allosteric pocket accessibility per allele",
+        "route_to": "lit-synthesizer",
+        "expected_readout": "IC50 shift ratios for resistance alleles vs. parental; identification of alleles that retain sensitivity to \u22651 next-generation agent",
+        "why": "Program differentiation thesis is entirely predicated on this; TheraSAbDab is wrong tool \u2014 needs PubMed/preprint search"
+      },
+      {
+        "missing": "MEK inhibitor FAERS adverse event profile",
+        "proposed_experiment": "Re-query OpenFDA drug_events with drug_name in ['trametinib','cobimetinib','binimetinib'] and count by MedDRA PT; flag dermatologic (acneiform rash, DRESS), cardiac (decreased LVEF), and ocular (uveitis, serous retinopathy) signal rates",
+        "route_to": "openfda-safety",
+        "expected_readout": "Top-20 AE terms with proportional reporting ratios; comparison across three approved agents to identify class vs. agent-specific signals",
+        "why": "Step 04 mis-queried a gene symbol; safety constraint characterization is fully absent"
+      },
+      {
+        "missing": "MAP2K1 mutation frequency and co-occurrence across melanoma subtypes",
+        "proposed_experiment": "Query cBioPortal TCGA-SKCM and GDC acral/uveal cohorts for MAP2K1 mutation frequency, allele distribution, and co-mutation with BRAF V600E / NRAS Q61 / NF1 loss",
+        "route_to": "tcga-somatic-profiler",
+        "expected_readout": "Per-subtype mutation rate (%), top alleles by frequency, mutual exclusivity or co-occurrence p-values with BRAF/NRAS",
+        "why": "Addressable patient population size and combination-therapy rationale cannot be estimated without subtype-stratified allele data"
+      },
+      {
+        "missing": "Context-specific MAP2K1 essentiality in BRAF/NRAS-mutant melanoma",
+        "proposed_experiment": "Query DepMap CERES/Chronos scores for MAP2K1 across melanoma cell lines stratified by BRAF V600E, NRAS Q61, and WT status; compute therapeutic index vs. normal-tissue lines",
+        "route_to": "crispr-screen-triage",
+        "expected_readout": "Chronos score \u2264 \u22120.5 in BRAF/NRAS-mutant lines with <\u22120.2 in normal lines would support a synthetic-lethal window",
+        "why": "Essentiality data is prerequisite for any target-selection decision; currently entirely absent"
+      },
+      {
+        "missing": "MAP2K1 expression in malignant melanocytes vs. TME compartments",
+        "proposed_experiment": "Run single-cell melanoma atlas query (Tirosh 2016, TCGA SKCM scRNA) to decompose MAP2K1 expression by cell type: malignant, T-cell, NK, myeloid, fibroblast, endothelial",
+        "route_to": "scrna-orchestrator",
+        "expected_readout": "Fraction of MAP2K1-high cells that are malignant melanocytes (target: >60% for ADC/small-molecule rationale); PD-L1 co-expression on tumor cells under MEK inhibition",
+        "why": "CellMarker returned 1 normal-cell record and 0 cancer-cell records \u2014 the TME localization question is entirely open"
+      },
+      {
+        "missing": "Resistance-allele sensitivity to allosteric MEK and ERK inhibitors",
+        "proposed_experiment": "Literature synthesis (PubMed + ClinicalTrials.gov) on MAP2K1 P124L, I111S, F53L, K57N alleles: in vitro IC50 against VS-6766 (allosteric MEK), ulixertinib (ERK), and bifunctional MEK-ERK degraders; cross-reference with tumor mutation burden in post-BRAFi progression biopsies",
+        "route_to": "lit-synthesizer",
+        "expected_readout": "IC50 fold-shift relative to WT MAP2K1 for each resistance allele; any Phase I dose-response data from trials NCT03875820 (VS-6766) or equivalent",
+        "why": "Program differentiation hinges on whether resistance alleles are re-sensitized by next-generation inhibitors; unanswered by any step executed"
+      },
+      {
+        "missing": "MEK inhibitor class adverse event profile from post-market data",
+        "proposed_experiment": "Re-run OpenFDA FAERS query with drug names: trametinib, cobimetinib, binimetinib; count by MedDRA PT for dermatologic (rash, acneiform), cardiac (decreased LVEF, cardiomyopathy), and ocular (chorioretinopathy, uveitis) events",
+        "route_to": "openfda-safety",
+        "expected_readout": "Proportional reporting ratios and absolute event counts for class-defining toxicities; signals exceeding ROR 2.0 warrant safety-strategy annotation in CSO report",
+        "why": "Step_04 miscalled the tool with the gene symbol as drug name; the safety profile of approved MEKi class is clinically critical for a novel MAP2K1 program"
+      },
+      {
+        "missing": "Competitive clinical pipeline for next-generation MAP2K1/MEK agents",
+        "proposed_experiment": "Tavily/PubMed web search: 'MAP2K1 inhibitor melanoma clinical trial 2023\u20132026', 'allosteric MEK inhibitor resistance', 'MEK PROTAC melanoma', 'ERK inhibitor Phase I melanoma'; cross-reference ClinicalTrials.gov for active IND-stage agents",
+        "route_to": "lit-synthesizer",
+        "expected_readout": "Named agents, sponsoring companies, trial phase, melanoma-specific cohort existence, and resistance-allele coverage claims",
+        "why": "No competitive landscape was actually retrieved; TheraSAbDab is an antibody-only database and returned 0 results as expected \u2014 the lit search was never executed"
+      }
+    ],
+    "disclaimer": "ClawBio is a research and educational tool. It is not a medical device and does not provide clinical diagnoses. Consult a healthcare professional before making any medical decisions."
+  }
+}

@@ -1,0 +1,1254 @@
+{
+  "skill": "virtual-biotech-cso",
+  "version": "0.1.0",
+  "summary": {
+    "query": "Assess BRAF as a therapeutic target in melanoma",
+    "case": "assess_braf_as_a_therapeutic_target",
+    "mode": "live",
+    "loop": "live-agent-harness",
+    "backend": "claude-cli",
+    "model": "sonnet",
+    "n_steps": 10,
+    "reviewer_verdict": "synthesize",
+    "n_executed": 10,
+    "decision": "CONDITIONAL_GO",
+    "decision_source": "agent",
+    "agent_decision": "CONDITIONAL_GO",
+    "decision_engine": null,
+    "confidence": "low",
+    "calls_llm": true
+  },
+  "data": {
+    "briefing": {
+      "context": "BRAF is mutated in ~50% of cutaneous melanomas, overwhelmingly V600E (~90% of BRAF-mutant cases) and V600K (~5\u201310%). The MAPK pathway is constitutively activated, driving proliferation and survival. First-generation BRAF monotherapy (vemurafenib) showed dramatic initial responses but near-universal acquired resistance within 6\u201312 months. Second-generation doublet BRAF+MEK inhibition (dabrafenib+trametinib, encorafenib+binimetinib) became the standard of care for BRAF-mutant advanced melanoma, improving median PFS to ~12\u201314 months and 5-year OS to ~35%. The current frontier is triplet combinations (BRAF+MEK+ERK or +SHP2) to suppress adaptive reactivation, and integration with immune checkpoint inhibitors (anti-PD-1 \u00b1 anti-CTLA-4) \u2014 with the COMBI-i/TRILOGY trials establishing feasibility but also overlapping toxicity. Rare non-V600 mutations (Class II/III: K601E, fusions, splice variants) remain harder to target and are under-represented in approved indications.",
+      "data_availability": [
+        {
+          "source": "TCGA SKCM",
+          "relevance": "high",
+          "note": "Deep somatic mutation, CNV, RNA-seq, methylation data for 470 cutaneous melanomas; strong BRAF coverage; acral/mucosal subtypes under-represented"
+        },
+        {
+          "source": "CELLxGENE Census / single-cell atlases",
+          "relevance": "high",
+          "note": "Multiple melanoma tumor microenvironment scRNA-seq datasets available; good coverage of immune infiltrates and phenotypic plasticity states relevant to BRAFi resistance"
+        },
+        {
+          "source": "GWAS Catalog",
+          "relevance": "low",
+          "note": "BRAF V600E is a somatic driver \u2014 germline GWAS has limited direct utility; pigmentation/nevi loci exist but not actionable for target assessment"
+        },
+        {
+          "source": "ChEMBL / BindingDB",
+          "relevance": "high",
+          "note": "Extensive BRAFi compound activity data; Class I/II selectivity profiling available; useful for next-generation inhibitor positioning"
+        },
+        {
+          "source": "ClinicalTrials.gov",
+          "relevance": "high",
+          "note": "Dozens of active trials; triplet combinations and BRAFi+ICI combos actively enrolling as of 2024\u20132025"
+        },
+        {
+          "source": "DepMap / CCLE",
+          "relevance": "medium",
+          "note": "Strong BRAF-mutant melanoma cell line representation; functional essentiality and drug sensitivity data available; note 2D culture may not capture TME-driven resistance"
+        },
+        {
+          "source": "PubMed resistance mechanism literature",
+          "relevance": "high",
+          "note": "Well-characterized resistance mechanisms: NRAS mutation, MEK1/2 mutation, BRAF amplification, splice variants, RTK bypass (EGFR, MET, IGF1R), phenotypic switch \u2014 robust prior art for hypotheses"
+        }
+      ],
+      "priority_questions": [
+        "What acquired resistance mechanisms dominate in patients who relapse on doublet BRAF+MEK therapy, and which are most pharmacologically tractable (e.g., ERK reactivation vs. lineage plasticity)?",
+        "Does upfront triplet therapy (BRAF+MEK+ERK inhibitor) delay resistance onset without prohibitive toxicity, and what biomarkers predict which patients benefit most?",
+        "What is the optimal sequencing or combination strategy with PD-1/CTLA-4 checkpoint blockade \u2014 concurrent vs. sequential, and do BRAFi-induced immune remodeling windows matter?",
+        "Are Class II/III non-V600 BRAF mutations addressable by next-generation type II inhibitors or degraders (e.g., PLX8394, LOXO-783), and how large is this unmet-need population?",
+        "Can transcriptomic or single-cell signatures of the invasive/mesenchymal phenotypic switch predict de novo resistance and stratify patients before treatment initiation?"
+      ],
+      "feasibility_flags": [
+        "Resistance mechanism heterogeneity is high \u2014 most datasets capture bulk tumor at a single timepoint; longitudinal biopsies are sparse, limiting conclusions about clonal evolution under treatment",
+        "BRAFi+ICI combination trials show overlapping immune-mediated toxicity (hepatitis, colitis) that may confound efficacy signal interpretation in retrospective analyses",
+        "Non-V600 BRAF mutation cohorts are small (<5% of cases each); any subgroup analysis will be underpowered without dedicated rare-mutation registries",
+        "Phenotypic plasticity (MITF-high vs. AXL/EGFR-high state switching) is context-dependent and poorly modeled in standard cell lines \u2014 DepMap data may underestimate this axis",
+        "Acral and mucosal melanoma subtypes have lower BRAF mutation rates and distinct biology; any analysis must stratify by subtype or risk conflating distinct disease entities"
+      ],
+      "source": "agent (live)"
+    },
+    "plan": [
+      {
+        "step": "step_01_somatic_mutation_frequency",
+        "division": "right_target",
+        "question": "What is the somatic mutation frequency of BRAF V600E/V600K vs. non-V600 (Class II/III) variants across TCGA SKCM, and how does it stratify by histological subtype (cutaneous vs. acral vs. mucosal)?",
+        "skill": "tcga-somatic-profiler",
+        "depends_on": []
+      },
+      {
+        "step": "step_02_functional_dependency",
+        "division": "right_target",
+        "question": "Is BRAF functionally essential in BRAF-mutant melanoma cell lines (DepMap CRISPR scores), and does essentiality correlate with V600 status vs. non-V600 class?",
+        "skill": "crispr-screen-triage",
+        "depends_on": [
+          "step_01_somatic_mutation_frequency"
+        ]
+      },
+      {
+        "step": "step_03_malignant_cell_localization",
+        "division": "right_tissue",
+        "question": "In single-cell melanoma atlases, what fraction of malignant cells (vs. stromal, endothelial, immune) express BRAF, and does expression differ between MITF-high (proliferative) and AXL/EGFR-high (mesenchymal/invasive) phenotypic states?",
+        "skill": "malignant-expression-profiler",
+        "depends_on": []
+      },
+      {
+        "step": "step_04_off_target_expression",
+        "division": "right_safety",
+        "question": "What is the normal-tissue expression profile of BRAF across human organs (GTEx/HPA), and are there high-expression tissues not covered by current clinical safety monitoring?",
+        "skill": "celltype-specificity-profiler",
+        "depends_on": []
+      },
+      {
+        "step": "step_05_post_market_adverse_events",
+        "division": "right_safety",
+        "question": "What post-market adverse event signals are recorded in FAERS for approved BRAFi agents (vemurafenib, dabrafenib, encorafenib) beyond the labelled cutaneous and hepatic events?",
+        "skill": "openfda-safety",
+        "depends_on": []
+      },
+      {
+        "step": "step_06_prior_trials_and_outcomes",
+        "division": "right_patient",
+        "question": "What do completed and ongoing clinical trials reveal about efficacy outcomes (ORR, PFS, OS) for BRAF+MEK doublet vs. triplet (BRAF+MEK+ERK/SHP2) vs. BRAFi+ICI combinations, and what biomarkers of response or resistance have been prospectively validated?",
+        "skill": "clinical-trial-finder",
+        "depends_on": [
+          "step_01_somatic_mutation_frequency"
+        ]
+      },
+      {
+        "step": "step_07_trial_success_prior",
+        "division": "right_patient",
+        "question": "What is the trial success probability for BRAF-targeted therapies in melanoma given historical phase transition rates, and how does it compare across combination modalities (doublet, triplet, BRAFi+ICI)?",
+        "skill": "celltype-specificity-profiler",
+        "depends_on": [
+          "step_06_prior_trials_and_outcomes"
+        ]
+      },
+      {
+        "step": "step_08_recent_literature_and_competitive",
+        "division": "right_commercial",
+        "question": "What is the current competitive and intellectual-property landscape for BRAF inhibitors, degraders (PROTACs), and allosteric inhibitors in melanoma \u2014 which mechanistic niches are crowded vs. whitespace?",
+        "skill": "lit-synthesizer",
+        "depends_on": [
+          "step_06_prior_trials_and_outcomes"
+        ]
+      }
+    ],
+    "division_findings": [
+      {
+        "division": "right_target",
+        "interpretation": "OpenTargets returns 8 evidence items linking BRAF to melanoma [step_01], confirming a documented target\u2013disease association. The somatic mutation frequency query did not return variant-level breakdown (V600E/V600K vs. Class II/III) or histological subtype stratification \u2014 the tool returned only aggregate evidence count, not TCGA mutation frequencies. Functional dependency via DepMap CRISPR scores was not executed; step_02 returned a deferred/tool-discovery status with no essentiality data [step_02]. The target rationale for BRAF in melanoma therefore rests on the OpenTargets association signal and prior clinical knowledge implicit in that aggregation, but neither variant-resolved somatic frequency nor functional essentiality data were produced in this run.",
+        "confidence": "low",
+        "caveats": [
+          "step_01 returned only an evidence count (n=8), not variant-level mutation frequencies \u2014 V600E/V600K vs. non-V600 stratification is absent",
+          "Histological subtype breakdown (cutaneous vs. acral vs. mucosal) was not returned",
+          "step_02 (DepMap CRISPR essentiality) was fully deferred \u2014 no functional dependency data available for this assessment",
+          "Without V600 status correlation, the finding cannot distinguish between the high-essentiality V600-mutant context and the more complex non-V600 (RAS-independent vs. RAS-dependent) contexts",
+          "OpenTargets evidence count alone does not confirm mechanism, causality, or therapeutic vulnerability"
+        ],
+        "evidence_grade": "weak",
+        "source": "agent (live)"
+      },
+      {
+        "division": "right_tissue",
+        "interpretation": "The single-cell localization query for BRAF expression in malignant vs. stromal/immune/endothelial compartments, and its distribution across MITF-high (proliferative) vs. AXL/EGFR-high (mesenchymal/invasive) phenotypic states, was not executed \u2014 the skill returned a deferred/tool-descriptor status requiring a ToolUniverse executor [step_03]. No quantitative cell-fraction or phenotypic-state data is therefore available from this run. What is known from the established literature (not from live tool output) is that BRAF V600E is a somatic driver mutation present in ~50% of cutaneous melanomas, and its expression is intrinsic to the malignant clone rather than a stromal signal \u2014 but this background cannot substitute for the missing single-cell atlas evidence requested. The right-tissue question \u2014 whether BRAF signal is malignant-cell-restricted and whether it varies by phenotypic state \u2014 remains unanswered by this run.",
+        "confidence": "low",
+        "caveats": [
+          "step_03 was deferred: no live single-cell tool output was returned; all tissue-compartment and phenotypic-state claims would rest on background knowledge, not evidence from this pipeline run.",
+          "Without malignant-cell fraction data, we cannot confirm that BRAF expression is tumor-cell-restricted rather than partly stromal or immune in the atlases queried.",
+          "Phenotypic-state heterogeneity (MITF-high vs. AXL/EGFR-high) is directly relevant to predicting intrinsic resistance to BRAF inhibitors; absence of this data is a material gap.",
+          "Background literature on BRAF V600E prevalence is not a substitute for single-cell localization evidence and must not be treated as confirming tissue specificity."
+        ],
+        "evidence_grade": "weak",
+        "source": "agent (live)"
+      },
+      {
+        "division": "right_safety",
+        "interpretation": "The CellMarker query for BRAF returned only 3 records \u2014 2 cancer cell entries and 1 normal cell entry \u2014 providing minimal resolution on normal-tissue expression breadth [step_04]. This thin CellMarker result does not rule out safety-relevant off-target expression; it reflects a database coverage gap rather than genuine tissue restriction. The OpenFDA query for BRAF as a drug name returned an empty summary, likely because FAERS indexes by drug product name (vemurafenib, dabrafenib, encorafenib) rather than target gene symbol [step_05]. As a result, the post-market adverse event landscape cannot be characterised from this run. From established clinical knowledge, BRAFi class effects include paradoxical MAPK activation in RAS-wild-type tissues, cutaneous squamous cell carcinoma, uveitis, pyrexia, and hepatotoxicity \u2014 but these are not confirmed by live skill output in this run.",
+        "confidence": "low",
+        "caveats": [
+          "CellMarker_search_by_gene with gene_symbol='BRAF' returned only 3 records; this reflects incomplete database indexing, not true tissue restriction \u2014 GTEx/HPA data were not queried [step_04].",
+          "OpenFDA query used 'BRAF' as drug_name rather than approved product names (vemurafenib, dabrafenib, encorafenib), yielding an empty result; real FAERS signals for the BRAFi class are uncharacterised in this run [step_05].",
+          "No live GTEx or Human Protein Atlas data were returned, so high-expression normal tissues (brain, colon, thyroid) that may inform cardiac or neurological monitoring gaps remain unassessed.",
+          "Paradoxical ERK activation in RAS-wild-type cells \u2014 the dominant mechanistic safety liability of BRAFi \u2014 was not surfaced by either tool call and must be considered an unaddressed gap.",
+          "Evidence grade reflects skill execution gaps, not absence of real safety signals; the BRAFi class has a well-characterised clinical safety profile in the literature that this run did not capture."
+        ],
+        "evidence_grade": "weak",
+        "source": "agent (live)"
+      },
+      {
+        "division": "right_patient",
+        "interpretation": "The clinical trial search returned 67 trials for BRAF-targeted interventions in melanoma [step_06], confirming a mature and active development landscape. However, the step_06 tool call retrieved only a count summary without efficacy outcomes (ORR, PFS, OS) or prospectively validated biomarkers of response/resistance \u2014 the structured detail needed to differentiate doublet vs. triplet vs. BRAFi+ICI combinations is absent from the returned data. Step_07 was misrouted: the CellMarker cell-type marker lookup was executed instead of a trial success probability estimator, returning 3 records (2 cancer, 1 normal cell type) that are not relevant to phase transition rates or combination modality comparisons [step_07]. The breadth of 67 trials is consistent with BRAF V600E/K being a well-validated oncogenic driver in melanoma with established patient selection via companion diagnostics, but the division cannot derive confidence-level claims about comparative efficacy or resistance biomarkers from this run's raw output alone.",
+        "confidence": "low",
+        "caveats": [
+          "step_06 returned only a trial count (n=67), not trial-level efficacy data \u2014 ORR, PFS, OS, and biomarker endpoints are absent from the output.",
+          "step_07 was misrouted to a cell-marker tool (CellMarker_search_by_gene) rather than a trial success probability estimator; its output is irrelevant to right_patient assessment.",
+          "Without prospectively validated resistance biomarkers (e.g. NRAS, MEK1/2 mutations, BRAF amplification) from the tool output, resistance mechanism characterisation cannot be grounded here.",
+          "The 67-trial count likely spans all phases, indications within melanoma subtypes, and combination regimens \u2014 no stratification is available from the raw data.",
+          "Established clinical knowledge (vemurafenib, dabrafenib+trametinib approvals) is not substituted here per no-fabrication rules; only the tool output is interpreted."
+        ],
+        "evidence_grade": "weak",
+        "source": "agent (live)"
+      },
+      {
+        "division": "right_commercial",
+        "interpretation": "The TheraSAbDab antibody database query for BRAF returned zero hits [step_08], indicating no approved or late-stage therapeutic antibodies targeting BRAF \u2014 consistent with BRAF being a predominantly intracellular kinase where small molecules dominate. This absence of antibody entries does not reflect the true competitive density of the BRAF space, which is heavily occupied by approved small-molecule inhibitors (vemurafenib, dabrafenib, encorafenib) and MEK combinations. The therapeutic antibody niche for BRAF is therefore genuinely open, but the broader small-molecule inhibitor landscape is mature and crowded. Novel mechanistic approaches \u2014 PROTACs, allosteric inhibitors, RAS-RAF interface disruptors \u2014 represent potential whitespace, but this tool query cannot confirm or size those opportunities.",
+        "confidence": "low",
+        "caveats": [
+          "TheraSAbDab covers only antibody-based therapeutics; the dominant BRAF modality (small molecules) is entirely outside this database's scope, making the zero-hit result uninformative about actual competitive crowding",
+          "No patent landscape, PROTAC pipeline, or small-molecule competitive analysis was returned \u2014 the commercial landscape assessment is therefore severely underpowered",
+          "The query result reflects a database boundary artifact, not a genuine signal of low competitive interest",
+          "Allosteric and degrader whitespace assessment would require separate IP and clinical-pipeline databases (e.g., ClinicalTrials, Cortellis, Integrity) that were not queried"
+        ],
+        "evidence_grade": "weak",
+        "source": "agent (live)"
+      }
+    ],
+    "evidence": [
+      {
+        "step": "step_01_somatic_mutation_frequency",
+        "division": "right_target",
+        "skill": "tcga-somatic-profiler",
+        "question": "What is the somatic mutation frequency of BRAF V600E/V600K vs. non-V600 (Class II/III) variants across TCGA SKCM, and how does it stratify by histological subtype (cutaneous vs. acral vs. mucosal)?",
+        "result": {
+          "tool_call": {
+            "tool_name": "OpenTargets_target_disease_evidence",
+            "arguments": {
+              "gene_symbol": "BRAF",
+              "disease_name": "melanoma"
+            }
+          },
+          "summary": {
+            "data.disease.name": "melanoma",
+            "data.disease.evidences.count": 8
+          },
+          "via": "tooluniverse:OpenTargets_target_disease_evidence (in-process)",
+          "source": "tooluniverse",
+          "backend": "tooluniverse"
+        },
+        "source": "tooluniverse"
+      },
+      {
+        "step": "step_02_functional_dependency",
+        "division": "right_target",
+        "skill": "crispr-screen-triage",
+        "question": "Is BRAF functionally essential in BRAF-mutant melanoma cell lines (DepMap CRISPR scores), and does essentiality correlate with V600 status vs. non-V600 class?",
+        "result": {
+          "status": "deferred",
+          "source": "tool-descriptor",
+          "discover": {
+            "verb": "find",
+            "tool_name": "Tool_Finder_Keyword",
+            "arguments": {
+              "description": "Is BRAF functionally essential in BRAF-mutant melanoma cell lines (DepMap CRISPR scores), and does essentiality correlate with V600 status vs. non-V600 class?",
+              "limit": 5
+            }
+          },
+          "reason": "register a ToolUniverse executor (agent/frontend) to run Tool_Finder."
+        },
+        "source": "tool-descriptor"
+      },
+      {
+        "step": "step_03_malignant_cell_localization",
+        "division": "right_tissue",
+        "skill": "malignant-expression-profiler",
+        "question": "In single-cell melanoma atlases, what fraction of malignant cells (vs. stromal, endothelial, immune) express BRAF, and does expression differ between MITF-high (proliferative) and AXL/EGFR-high (mesenchymal/invasive) phenotypic states?",
+        "result": {
+          "status": "deferred",
+          "source": "tool-descriptor",
+          "discover": {
+            "verb": "find",
+            "tool_name": "Tool_Finder_Keyword",
+            "arguments": {
+              "description": "In single-cell melanoma atlases, what fraction of malignant cells (vs. stromal, endothelial, immune) express BRAF, and does expression differ between MITF-high (proliferative) and AXL/EGFR-high (mesenchymal/invasive) phenotypic states?",
+              "limit": 5
+            }
+          },
+          "reason": "register a ToolUniverse executor (agent/frontend) to run Tool_Finder."
+        },
+        "source": "tool-descriptor"
+      },
+      {
+        "step": "step_04_off_target_expression",
+        "division": "right_safety",
+        "skill": "celltype-specificity-profiler",
+        "question": "What is the normal-tissue expression profile of BRAF across human organs (GTEx/HPA), and are there high-expression tissues not covered by current clinical safety monitoring?",
+        "result": {
+          "tool_call": {
+            "tool_name": "CellMarker_search_by_gene",
+            "arguments": {
+              "operation": "search_by_gene",
+              "gene_symbol": "BRAF",
+              "species": "Human"
+            }
+          },
+          "summary": {
+            "data.total_records": 3,
+            "cancer cell count": 2,
+            "normal cell count": 1
+          },
+          "via": "tooluniverse:CellMarker_search_by_gene (in-process)",
+          "source": "tooluniverse",
+          "backend": "tooluniverse"
+        },
+        "source": "tooluniverse"
+      },
+      {
+        "step": "step_05_post_market_adverse_events",
+        "division": "right_safety",
+        "skill": "openfda-safety",
+        "question": "What post-market adverse event signals are recorded in FAERS for approved BRAFi agents (vemurafenib, dabrafenib, encorafenib) beyond the labelled cutaneous and hepatic events?",
+        "result": {
+          "tool_call": {
+            "tool_name": "OpenFDA_search_drug_events",
+            "arguments": {
+              "drug_name": "BRAF",
+              "count": "patient.reaction.reactionmeddrapt.exact",
+              "limit": 20
+            }
+          },
+          "summary": {},
+          "via": "tooluniverse:OpenFDA_search_drug_events (in-process)",
+          "source": "tooluniverse",
+          "backend": "tooluniverse"
+        },
+        "source": "tooluniverse"
+      },
+      {
+        "step": "step_06_prior_trials_and_outcomes",
+        "division": "right_patient",
+        "skill": "clinical-trial-finder",
+        "question": "What do completed and ongoing clinical trials reveal about efficacy outcomes (ORR, PFS, OS) for BRAF+MEK doublet vs. triplet (BRAF+MEK+ERK/SHP2) vs. BRAFi+ICI combinations, and what biomarkers of response or resistance have been prospectively validated?",
+        "result": {
+          "tool_call": {
+            "tool_name": "search_clinical_trials",
+            "arguments": {
+              "intervention": "BRAF",
+              "condition": "melanoma",
+              "max_results": 15
+            }
+          },
+          "summary": {
+            "data.total_count": 67
+          },
+          "via": "tooluniverse:search_clinical_trials (in-process)",
+          "source": "tooluniverse",
+          "backend": "tooluniverse"
+        },
+        "source": "tooluniverse"
+      },
+      {
+        "step": "step_07_trial_success_prior",
+        "division": "right_patient",
+        "skill": "celltype-specificity-profiler",
+        "question": "What is the trial success probability for BRAF-targeted therapies in melanoma given historical phase transition rates, and how does it compare across combination modalities (doublet, triplet, BRAFi+ICI)?",
+        "result": {
+          "tool_call": {
+            "tool_name": "CellMarker_search_by_gene",
+            "arguments": {
+              "operation": "search_by_gene",
+              "gene_symbol": "BRAF",
+              "species": "Human"
+            }
+          },
+          "summary": {
+            "data.total_records": 3,
+            "cancer cell count": 2,
+            "normal cell count": 1
+          },
+          "via": "tooluniverse:CellMarker_search_by_gene (in-process)",
+          "source": "tooluniverse",
+          "backend": "tooluniverse"
+        },
+        "source": "tooluniverse"
+      },
+      {
+        "step": "step_08_recent_literature_and_competitive",
+        "division": "right_commercial",
+        "skill": "lit-synthesizer",
+        "question": "What is the current competitive and intellectual-property landscape for BRAF inhibitors, degraders (PROTACs), and allosteric inhibitors in melanoma \u2014 which mechanistic niches are crowded vs. whitespace?",
+        "result": {
+          "tool_call": {
+            "tool_name": "TheraSAbDab_search_by_target",
+            "arguments": {
+              "target": "BRAF"
+            }
+          },
+          "summary": {
+            "data.count": 0
+          },
+          "via": "tooluniverse:TheraSAbDab_search_by_target (in-process)",
+          "source": "tooluniverse",
+          "backend": "tooluniverse"
+        },
+        "source": "tooluniverse"
+      },
+      {
+        "step": "step_06_reroute",
+        "division": "right_target",
+        "skill": "lit-synthesizer",
+        "question": "Reviewer follow-up: Single-cell malignant-vs-stromal BRAF expression fractions \u2014 step_03 was deferred entirely \u2014 If BRAF expression is enriched in stromal/endothelial compartments rather than malignant cells, the therapeutic window narrows and normal-tissue toxicity risk rises; required before any safety verdict.",
+        "result": {
+          "tool_call": {
+            "tool_name": "TheraSAbDab_search_by_target",
+            "arguments": {
+              "target": "BRAF"
+            }
+          },
+          "summary": {
+            "data.count": 0
+          },
+          "via": "tooluniverse:TheraSAbDab_search_by_target (in-process)",
+          "source": "tooluniverse",
+          "backend": "tooluniverse"
+        },
+        "source": "tooluniverse"
+      },
+      {
+        "step": "step_07_reroute",
+        "division": "right_target",
+        "skill": "lit-synthesizer",
+        "question": "Reviewer follow-up: Malignant-cell vs. stromal/immune BRAF expression fractions in single-cell melanoma atlases \u2014 step_03 was fully deferred and the re-route in step_06_reroute incorrectly resolved to TheraSAbDab (an antibody DB), returning 0 records. Without this data we cannot assess whether BRAF inhibition has an on-tumour vs. on-stroma predominant mechanism \u2014 a prerequisite for any therapeutic-window safety verdict.",
+        "result": {
+          "tool_call": {
+            "tool_name": "TheraSAbDab_search_by_target",
+            "arguments": {
+              "target": "BRAF"
+            }
+          },
+          "summary": {
+            "data.count": 0
+          },
+          "via": "tooluniverse:TheraSAbDab_search_by_target (in-process)",
+          "source": "tooluniverse",
+          "backend": "tooluniverse"
+        },
+        "source": "tooluniverse"
+      }
+    ],
+    "review": {
+      "verdict": "synthesize",
+      "scores": {
+        "relevance": 3,
+        "evidence": 1,
+        "thoroughness": 1
+      },
+      "gaps": [
+        {
+          "missing": "Malignant-cell vs. stromal/immune BRAF expression fractions in single-cell melanoma atlases",
+          "route_to": "scrna-orchestrator",
+          "why": "step_03 was deferred; two re-route attempts (step_06_reroute, step_07_reroute) both misfired to TheraSAbDab returning 0 records \u2014 the compartment-specificity question that gating safety and therapeutic-window conclusions remains completely open",
+          "lenses": [
+            "genetics",
+            "specificity"
+          ]
+        },
+        {
+          "missing": "BRAF normal-tissue expression breadth (GTEx/HPA) \u2014 CellMarker returned only 3 records (2 cancer, 1 normal), providing no organ-level safety profile",
+          "route_to": "celltype-specificity-profiler",
+          "why": "Safety lens requires knowing which normal tissues express BRAF at therapeutically relevant levels; CellMarker is a cell-type marker DB, not a tissue expression atlas \u2014 the wrong tool was called for step_04",
+          "lenses": [
+            "safety"
+          ]
+        },
+        {
+          "missing": "Post-market adverse event profile for BRAFi agents (vemurafenib, dabrafenib, encorafenib) \u2014 step_05 queried OpenFDA with drug_name='BRAF' (a gene, not a drug name) and returned an empty summary",
+          "route_to": "openfda-safety",
+          "why": "Queries must be re-run with correct drug names ('vemurafenib', 'dabrafenib', 'encorafenib') to surface FAERS signals; empty result is a query failure, not a true null signal",
+          "lenses": [
+            "safety"
+          ]
+        },
+        {
+          "missing": "Malignant-cell vs. stromal/immune BRAF expression fractions in single-cell melanoma atlases \u2014 step_03 deferred entirely; two re-route attempts (step_06_reroute, step_07_reroute) both incorrectly resolved to TheraSAbDab (antibody DB), returning 0 records",
+          "route_to": "scrna-orchestrator",
+          "why": "Without on-tumour vs. on-stroma expression fractions, the therapeutic window is undefined; BRAF expressed predominantly in stroma or endothelium would dramatically increase normal-tissue toxicity risk \u2014 this is the single most critical safety gap",
+          "lenses": [
+            "safety"
+          ]
+        },
+        {
+          "missing": "BRAF CRISPR essentiality scores stratified by V600 vs. non-V600 class \u2014 step_02 deferred with no re-route executed",
+          "route_to": "crispr-screen-triage",
+          "why": "Essentiality data distinguishes on-target mechanism from passenger effect; non-V600 class dependency on BRAF is weaker and toxicity risk profile differs \u2014 required before safety verdict on class-selective inhibitors",
+          "lenses": [
+            "safety"
+          ]
+        },
+        {
+          "missing": "Competitive and IP landscape for BRAF inhibitors/degraders \u2014 step_08 queried TheraSAbDab (antibody DB) for a small-molecule kinase target, returning 0 records; lit-synthesizer was never actually invoked",
+          "route_to": "lit-synthesizer",
+          "why": "TheraSAbDab does not index small-molecule inhibitors or PROTACs; Tavily web search is needed to surface current clinical/IP landscape",
+          "lenses": [
+            "safety"
+          ]
+        },
+        {
+          "missing": "BRAF V600E/K vs. non-V600 mutation frequency stratified by melanoma subtype (cutaneous/acral/mucosal)",
+          "route_to": "tcga-somatic-profiler",
+          "why": "step_01 retrieved only aggregate OpenTargets evidence count (n=8); no allele-level frequencies or histological breakdown were returned \u2014 the core genetics question is unanswered",
+          "lenses": [
+            "genetics"
+          ]
+        },
+        {
+          "missing": "CRISPR essentiality scores by BRAF mutation class in DepMap melanoma lines",
+          "route_to": "crispr-screen-triage",
+          "why": "step_02 was fully deferred with no data returned; functional dependency evidence is absent, so we cannot distinguish driver from passenger biology",
+          "lenses": [
+            "genetics"
+          ]
+        },
+        {
+          "missing": "Normal-tissue BRAF expression across GTEx/HPA organs",
+          "route_to": "celltype-specificity-profiler",
+          "why": "step_04 used CellMarker (a cell-type marker DB) returning only 3 records, 2 of which are cancer cells \u2014 GTEx/HPA bulk tissue expression was never queried; on-target toxicity risk in heart, thyroid, and CNS cannot be assessed",
+          "lenses": [
+            "genetics"
+          ]
+        },
+        {
+          "missing": "FAERS adverse event signals for approved BRAFi agents (vemurafenib, dabrafenib, encorafenib)",
+          "route_to": "openfda-safety",
+          "why": "step_05 queried drug_name='BRAF' (a gene symbol, not a drug name) and returned an empty summary \u2014 no post-market safety signal data was recovered",
+          "lenses": [
+            "genetics"
+          ]
+        },
+        {
+          "missing": "Phase transition success rates and trial-level efficacy outcomes for BRAFi doublet/triplet/ICI combinations",
+          "route_to": "clinical-trial-finder",
+          "why": "step_06 found 67 trials but no efficacy data (ORR, PFS, OS) was extracted; step_07 incorrectly reused CellMarker instead of a trial-success-prior tool \u2014 probability estimates are absent",
+          "lenses": [
+            "genetics"
+          ]
+        },
+        {
+          "missing": "Competitive and IP landscape for BRAF inhibitors, PROTACs, and allosteric inhibitors",
+          "route_to": "lit-synthesizer",
+          "why": "step_08 queried TheraSAbDab (an antibody DB, irrelevant for small-molecule BRAFi/PROTACs) and returned 0 records \u2014 whitespace vs. crowded niche analysis is entirely missing",
+          "lenses": [
+            "genetics"
+          ]
+        },
+        {
+          "missing": "BRAF V600E/K vs. non-V600 mutation frequency stratified by histological subtype (cutaneous/acral/mucosal)",
+          "route_to": "tcga-somatic-profiler",
+          "why": "step_01 returned only a count of 8 OpenTargets evidence records \u2014 no allele-level frequencies, no histological breakdown. The original question was never answered.",
+          "lenses": [
+            "specificity"
+          ]
+        },
+        {
+          "missing": "BRAF CRISPR essentiality scores in BRAF-mutant vs. WT melanoma lines (DepMap)",
+          "route_to": "crispr-screen-triage",
+          "why": "step_02 was fully deferred; functional dependency data is absent. Without DepMap scores we cannot distinguish driver essentiality from passenger mutation.",
+          "lenses": [
+            "specificity"
+          ]
+        },
+        {
+          "missing": "Normal-tissue BRAF expression across GTEx/HPA organs beyond CellMarker's 3-record return",
+          "route_to": "celltype-specificity-profiler",
+          "why": "step_04 returned CellMarker data (2 cancer, 1 normal cell type) \u2014 far too sparse for a safety profile. GTEx bulk and HPA protein-level data across 50+ tissues is required.",
+          "lenses": [
+            "specificity"
+          ]
+        },
+        {
+          "missing": "FAERS adverse event signals for vemurafenib, dabrafenib, encorafenib \u2014 step_05 queried gene symbol 'BRAF' not drug names and returned an empty summary",
+          "route_to": "openfda-safety",
+          "why": "The tool was called with drug_name='BRAF' rather than approved drug names; the empty result is an execution error, not a true signal. Needs re-run with each approved BRAFi as drug_name.",
+          "lenses": [
+            "specificity"
+          ]
+        },
+        {
+          "missing": "Trial success probability by combination modality (doublet/triplet/BRAFi+ICI) \u2014 step_07 was answered by CellMarker (wrong tool), not a phase-transition rate calculator",
+          "route_to": "clinical-trial-finder",
+          "why": "step_07 was mis-routed to CellMarker; trial success priors are absent. The 67-trial count from step_06 was returned but not parsed for ORR/PFS/OS outcomes or resistance biomarkers.",
+          "lenses": [
+            "specificity"
+          ]
+        },
+        {
+          "missing": "Competitive/IP landscape for BRAF inhibitors, PROTACs, allosteric inhibitors \u2014 step_08 queried TheraSAbDab (small-molecule target not covered) and returned 0 records",
+          "route_to": "lit-synthesizer",
+          "why": "TheraSAbDab covers therapeutic antibodies; BRAF small-molecule inhibitors/degraders will not appear. A web-search-grounded lit-synthesizer call is needed for current patent and pipeline landscape.",
+          "lenses": [
+            "specificity"
+          ]
+        },
+        {
+          "missing": "Somatic mutation frequency stratified by BRAF variant class and histological subtype (step_01 returned only an evidence count of 8, no allele frequencies or subtype breakdown)",
+          "route_to": "tcga-somatic-profiler",
+          "why": "Without V600E/K vs. Class II/III frequencies across cutaneous/acral/mucosal subtypes, it is impossible to define the addressable patient population or interpret the clinical trial landscape meaningfully",
+          "lenses": [
+            "clinical"
+          ]
+        },
+        {
+          "missing": "BRAF malignant-cell vs. stromal/immune expression fractions in single-cell atlases (step_03, step_06_reroute, step_07_reroute all deferred or misfired to TheraSAbDab returning 0 records)",
+          "route_to": "scrna-orchestrator",
+          "why": "Three successive attempts failed to resolve this. Without tumour-cell-intrinsic expression data we cannot assess whether BRAFi mechanism is on-tumour or on-stroma, a prerequisite for any therapeutic-window or safety verdict",
+          "lenses": [
+            "clinical"
+          ]
+        },
+        {
+          "missing": "BRAF CRISPR functional dependency scores by mutation class in DepMap melanoma lines (step_02 fully deferred)",
+          "route_to": "crispr-screen-triage",
+          "why": "Essentiality data is the mechanistic anchor for the target hypothesis; its absence means the entire 'right_target' evidence chain rests only on association counts from OpenTargets",
+          "lenses": [
+            "clinical"
+          ]
+        },
+        {
+          "missing": "Normal-tissue BRAF expression safety profile (step_04 returned CellMarker with 3 records \u2014 2 cancer, 1 normal \u2014 not GTEx/HPA organ-level data)",
+          "route_to": "celltype-specificity-profiler",
+          "why": "CellMarker is a cell-type marker DB, not a quantitative normal-tissue atlas; GTEx/HPA bulk and single-cell data are required to flag high-expression tissues not covered by current clinical monitoring",
+          "lenses": [
+            "clinical"
+          ]
+        },
+        {
+          "missing": "Post-market FAERS adverse event signals for approved BRAFi agents (step_05 summary was empty \u2014 tool fired but returned no data)",
+          "route_to": "openfda-safety",
+          "why": "Empty FAERS summary is almost certainly a query error (drug_name set to 'BRAF' rather than a drug name like 'vemurafenib'); unlabelled AEs beyond cutaneous/hepatic events are clinically material for a safety verdict",
+          "lenses": [
+            "clinical"
+          ]
+        },
+        {
+          "missing": "Trial efficacy outcomes and validated resistance biomarkers for BRAFi doublet/triplet/ICI combinations (step_06 returned a count of 67 trials but no outcome data; step_07 misfired to CellMarker)",
+          "route_to": "clinical-trial-finder",
+          "why": "The clinical lens requires ORR/PFS/OS numbers and prospectively validated biomarkers; a raw trial count with no outcomes data cannot support a translatability judgement",
+          "lenses": [
+            "clinical"
+          ]
+        },
+        {
+          "missing": "Competitive and IP landscape for BRAF inhibitors, degraders, and allosteric inhibitors (step_08 resolved to TheraSAbDab returning 0 \u2014 correct tool would be a patent/literature search, not an antibody DB)",
+          "route_to": "lit-synthesizer",
+          "why": "BRAF is a small-molecule kinase target, not an antibody target; TheraSAbDab returning 0 is expected and uninformative. A Tavily/PubMed literature sweep is required to identify crowded vs. whitespace mechanistic niches",
+          "lenses": [
+            "clinical"
+          ]
+        }
+      ],
+      "experiments": [
+        {
+          "missing": "Organ-level BRAF expression in normal human tissues",
+          "proposed_experiment": "Query GTEx v8 and Human Protein Atlas tissue expression APIs for BRAF mRNA (TPM) and protein (IHC score) across 50+ tissues; flag any tissue with TPM >10 or HPA medium/high staining not covered by current BRAFi safety monitoring",
+          "route_to": "celltype-specificity-profiler",
+          "expected_readout": "Ranked tissue expression heatmap with toxicity-flag annotation; expected high expression in brain, thyroid, skin \u2014 cross-reference against BRAFi label warnings",
+          "why": "BRAF is ubiquitously expressed in mitogen signalling; broad normal-tissue expression is the primary liability for any next-generation BRAFi \u2014 must be characterised before safety verdict"
+        },
+        {
+          "missing": "FAERS adverse event signals for approved BRAFi drugs",
+          "proposed_experiment": "Re-run OpenFDA_search_drug_events with drug_name in ['vemurafenib','dabrafenib','encorafenib'] separately; count by reactionmeddrapt; compute PRR vs. background for non-labelled AEs",
+          "route_to": "openfda-safety",
+          "expected_readout": "Top-20 MedDRA PTs per drug with disproportionality scores; flag any PT with PRR >2 and N >3 not on current label (e.g. uveitis, pyrexia, cardiotoxicity, second primary malignancy)",
+          "why": "Empty step_05 result was a query artefact; real FAERS data for these approved drugs exists and contains known signals (e.g. cutaneous SCC, pyrexia, QTc) plus potentially unlabelled ones"
+        },
+        {
+          "missing": "Malignant-cell BRAF expression fraction in single-cell melanoma atlases",
+          "proposed_experiment": "Query CancerSEA or TISCH2 single-cell atlas APIs for melanoma; compute BRAF expression (mean log-normalised counts) per annotated cell type (malignant, CAF, endothelial, T-cell, macrophage); stratify malignant cells by MITF-high vs. AXL-high phenotypic state",
+          "route_to": "scrna-orchestrator",
+          "expected_readout": "Cell-type expression barplot; if malignant fraction mean BRAF < stromal fraction mean BRAF, flag therapeutic-window concern and elevated normal-tissue toxicity risk",
+          "why": "BRAF is a ubiquitous RAF kinase; if stromal/endothelial cells are the dominant expressers in the tumour microenvironment, kinase inhibition will have substantial on-stroma effects \u2014 changes the toxicity calculus entirely"
+        },
+        {
+          "missing": "BRAFi CRISPR essentiality stratified by mutation class",
+          "proposed_experiment": "Query DepMap CRISPR (Chronos) scores for BRAF across SKCM cell lines; stratify by BRAF V600E/K (Class I), Class II (kinase-activated dimers), Class III (RAS-dependent); compare mean Chronos scores across classes with Welch t-test",
+          "route_to": "crispr-screen-triage",
+          "expected_readout": "Chronos score distributions per class; Class I lines expected most dependent (Chronos < -0.5); Class III lines may show paradoxical ERK activation risk \u2014 informs whether non-V600 inhibition is safe or counter-productive",
+          "why": "Essentiality determines whether BRAF inhibition kills tumour cells or merely perturbs signalling; non-essential BRAF in non-V600 lines implies higher drug:toxicity burden without efficacy return"
+        },
+        {
+          "missing": "Current competitive and IP landscape for BRAF-targeted modalities",
+          "proposed_experiment": "Run lit-synthesizer (Tavily) with queries: 'BRAF PROTAC degrader melanoma 2024 2025', 'allosteric BRAF inhibitor clinical trial', 'BRAF inhibitor resistance mechanism triplet combination'; cross-reference with ClinicalTrials.gov NCT records from step_06",
+          "route_to": "lit-synthesizer",
+          "expected_readout": "Structured competitive map: approved agents, Phase I/II entrants, PROTAC/degrader programs, patent cliff dates, mechanistic whitespace (e.g. dimer-selective, BRAF-V600 PROTAC, brain-penetrant BRAFi)",
+          "why": "Any next-generation BRAF programme must differentiate from vemurafenib/dabrafenib/encorafenib; IP whitespace and clinical gap analysis is prerequisite for a commercial safety-efficacy trade-off assessment"
+        },
+        {
+          "missing": "V600E/K vs. Class II/III allele frequencies by melanoma histological subtype",
+          "proposed_experiment": "Re-query TCGA SKCM MAF with subtype annotation (cutaneous/acral/mucosal) using cBioPortal or GDC API; filter for BRAF codon 600 vs. kinase-domain non-V600 variants",
+          "route_to": "tcga-somatic-profiler",
+          "expected_readout": "Allele frequency tables per subtype; V600E dominance expected in cutaneous, lower in acral/mucosal",
+          "why": "Without subtype-stratified frequencies the genetic rationale for V600-selective vs. pan-BRAF therapy cannot be differentiated"
+        },
+        {
+          "missing": "BRAF CRISPR essentiality by mutation class in melanoma DepMap lines",
+          "proposed_experiment": "Pull DepMap 23Q4 CRISPR Chronos scores for all melanoma lines, annotate by BRAF mutation status (V600E, V600K, non-V600, WT), and compare mean essentiality scores across classes",
+          "route_to": "crispr-screen-triage",
+          "expected_readout": "Negative Chronos score (essential) in V600 lines; attenuated or absent in non-V600/WT \u2014 confirming oncogene addiction",
+          "why": "Functional essentiality is the strongest genetic argument for target validity; its absence would demote BRAF from driver to passenger in non-V600 contexts"
+        },
+        {
+          "missing": "Malignant-cell-specific BRAF expression fraction in scRNA melanoma atlases",
+          "proposed_experiment": "Query published melanoma scRNA atlases (Tirosh 2016, Jerby-Arnon 2018, TISCH database) for BRAF expression per annotated cell type; compute malignant-cell enrichment score vs. CAF/endothelial/myeloid compartments",
+          "route_to": "scrna-orchestrator",
+          "expected_readout": "BRAF ubiquitously expressed across compartments (as a MAP kinase pathway gene) but functional mutation restricted to malignant cells \u2014 confirms on-tumour selectivity is mutation-driven not expression-driven",
+          "why": "Three consecutive re-routes failed to obtain this data; without it the therapeutic-window and stromal-toxicity sections of the CSO report cannot be written with confidence"
+        },
+        {
+          "missing": "Normal-tissue BRAF expression profile (GTEx/HPA)",
+          "proposed_experiment": "Query HPA proteinatlas.org API or GTEx bulk tissue RNA for BRAF across 30+ organ types; flag tissues with TPM >20 not covered by standard BRAFi clinical monitoring",
+          "route_to": "celltype-specificity-profiler",
+          "expected_readout": "BRAF broadly expressed (ubiquitous kinase); high expression in brain and colon expected \u2014 cross-reference with known vemurafenib CNS penetration and colorectal paradoxical activation data",
+          "why": "step_04's CellMarker query was the wrong tool; GTEx/HPA data is required for on-target normal-tissue toxicity risk and monitoring gap identification"
+        },
+        {
+          "missing": "FAERS post-market adverse event signals for vemurafenib, dabrafenib, encorafenib",
+          "proposed_experiment": "Re-query OpenFDA drug event API with drug_name='vemurafenib' OR 'dabrafenib' OR 'encorafenib'; count by reactionmeddrapt; flag PT terms outside current labelling (cardiac, ophthalmologic, CNS)",
+          "route_to": "openfda-safety",
+          "expected_readout": "Known labelled signals (cutaneous SCC, pyrexia, hepatotoxicity) plus any unlabelled emerging signals (e.g. uveitis, QTc prolongation) ranked by reporting frequency",
+          "why": "step_05 used a gene symbol as a drug name and returned nothing; post-market pharmacovigilance data is essential for the safety section"
+        },
+        {
+          "missing": "BRAFi combination therapy efficacy benchmarks and trial success priors",
+          "proposed_experiment": "Extract ORR/PFS/OS from COMBI-d/v, COLUMBUS, ANCHOR, and TRILOGY trial publications; use Biomedtracker or in-house phase transition rate data for doublet vs. triplet vs. BRAFi+ICI success priors",
+          "route_to": "lit-synthesizer",
+          "expected_readout": "Doublet (BRAF+MEK) ORR ~65\u201370%, median PFS ~12 months; triplet and BRAFi+ICI ORR and durability benchmarks; phase II\u2192III success rates by modality",
+          "why": "step_06 retrieved a trial count but no efficacy data; step_07 used the wrong tool entirely \u2014 these benchmarks anchor any commercial or clinical go/no-go recommendation"
+        },
+        {
+          "missing": "Competitive and IP landscape for BRAF-targeted modalities (small molecule, PROTAC, allosteric)",
+          "proposed_experiment": "Search recent literature (2022\u20132025) and patent databases for BRAF PROTAC/molecular glue, allosteric (\u03b1C-helix/dimer interface) inhibitor, and next-gen paradox-breaker programs; map to company/clinical stage",
+          "route_to": "lit-synthesizer",
+          "expected_readout": "Crowded: ATP-competitive V600E inhibitors; emerging competition: dimer-selective (e.g. PLX8394 class), pan-RAF; whitespace: allosteric non-ATP site, BRAF PROTAC in solid tumours",
+          "why": "step_08 used TheraSAbDab (antibody DB) and returned 0 records \u2014 the entire commercial differentiation analysis must be rebuilt via literature/patent search"
+        },
+        {
+          "missing": "Malignant-cell-specific BRAF expression fraction",
+          "proposed_experiment": "Re-analyse published single-cell melanoma atlases (Tirosh 2016 Science, Jerby-Arnon 2018 Cell, TISCH2 database) \u2014 cluster by canonical lineage markers, compute BRAF expression per cluster, compare malignant (SOX10+/MITF+) vs. CAF (FAP+/PDGFRA+) vs. endothelial (PECAM1+) vs. myeloid (CD68+)",
+          "route_to": "scrna-orchestrator",
+          "expected_readout": "Fraction of BRAF-expressing cells by cell type; fold-enrichment in malignant vs. stromal compartment; MITF-high vs. AXL-high state differential",
+          "why": "Critical for ADC/CAR-T specificity verdict; also informs whether BRAFi on-target effects are tumour-intrinsic or partially stromal (relevant for combination scheduling)"
+        },
+        {
+          "missing": "DepMap CRISPR essentiality in BRAF-mutant vs. WT melanoma lines",
+          "proposed_experiment": "Query DepMap CRISPR (Chronos) scores for BRAF across SKCM lines, stratify by BRAF mutation class (V600E/K vs. non-V600 vs. WT), compute mean \u00b1 SD and Mann-Whitney p-value",
+          "route_to": "crispr-screen-triage",
+          "expected_readout": "CRISPR dependency score distribution; confirmation that V600 lines are selectively dependent (score < \u22120.5) relative to WT lines",
+          "why": "Validates BRAF as a true driver dependency, not a bystander; required for any 'right target' confidence claim"
+        },
+        {
+          "missing": "GTEx/HPA normal-tissue BRAF expression for safety profiling",
+          "proposed_experiment": "Pull GTEx v10 median TPM for BRAF across 54 tissues and HPA protein intensity scores; flag any tissue with TPM > 10 or HPA high/medium protein that lacks standard clinical monitoring in the BRAFi label",
+          "route_to": "celltype-specificity-profiler",
+          "expected_readout": "Ranked list of normal tissues by BRAF expression; identification of high-expression tissues not covered by approved BRAFi safety monitoring",
+          "why": "Current 3-record CellMarker result is insufficient; undiscovered high-expression normal tissues would represent unlabelled safety risk"
+        },
+        {
+          "missing": "FAERS signals for approved BRAFi drugs (vemurafenib, dabrafenib, encorafenib)",
+          "proposed_experiment": "Re-run OpenFDA_search_drug_events with drug_name set to each approved BRAFi separately; count by MedDRA PT and compare to label; apply PRR/ROR disproportionality analysis",
+          "route_to": "openfda-safety",
+          "expected_readout": "Top 20 disproportionate AE signals per drug; identification of off-label signals (e.g. cardiac, ophthalmic, CNS) not prominent in current labelling",
+          "why": "step_05 was an execution error (wrong drug_name parameter); this is a required re-run, not optional enrichment"
+        },
+        {
+          "missing": "Competitive and IP landscape for BRAF-targeted mechanistic modalities",
+          "proposed_experiment": "Agentic web + patent search for: (1) approved BRAFi, (2) clinical-stage PROTACs, (3) allosteric/class II-selective inhibitors, (4) RAS-RAF dimer disruptors; map to clinical phase and assignee",
+          "route_to": "lit-synthesizer",
+          "expected_readout": "Modality \u00d7 development stage matrix; identification of whitespace (e.g. non-V600 class II-selective agents, brain-penetrant BRAFi) vs. crowded niches (V600E inhibitors)",
+          "why": "step_08 TheraSAbDab query was structurally wrong for small molecules; competitive landscape is entirely absent from the evidence package"
+        },
+        {
+          "missing": "BRAF malignant-cell expression fraction in single-cell tumour atlases",
+          "proposed_experiment": "Query published scRNA-seq melanoma atlases (e.g. Tirosh 2016, Jerby-Arnon 2018) via scrna-orchestrator for BRAF log-normalised expression split by annotated cell type (malignant, CAF, endothelial, T cell, myeloid) and by phenotypic state (MITF-high vs. AXL/EGFR-high)",
+          "route_to": "scrna-orchestrator",
+          "expected_readout": "Fraction of malignant cells expressing BRAF >1 log-normalised count; mean expression by phenotypic state with Wilcoxon p-value",
+          "why": "Three pipeline iterations failed on this; it is the single highest-priority gap before a safety or therapeutic-window verdict can be rendered"
+        },
+        {
+          "missing": "BRAF CRISPR dependency by V600 status",
+          "proposed_experiment": "Pull DepMap 22Q4+ CERES/Chronos scores for BRAF across SKCM lines stratified by BRAF mutation class (V600E/K, Class II, Class III, WT) via crispr-screen-triage; compute Mann-Whitney between V600 and non-V600 groups",
+          "route_to": "crispr-screen-triage",
+          "expected_readout": "Chronos score distribution per mutation class; p-value for V600 vs. non-V600 essentiality difference",
+          "why": "Essentiality in V600E lines is well-established but non-V600 dependency is the open question for combination or next-generation inhibitor strategies"
+        },
+        {
+          "missing": "Post-market FAERS AE profile for approved BRAFi agents",
+          "proposed_experiment": "Re-run OpenFDA_search_drug_events with drug_name set individually to 'vemurafenib', 'dabrafenib', and 'encorafenib'; count MedDRA PT terms; cross-reference with current label to flag unlabelled signals",
+          "route_to": "openfda-safety",
+          "expected_readout": "Top 20 MedDRA PT terms per agent with disproportionality signal (PRR or ROR) for any term not in the current label",
+          "why": "Cardiac, ophthalmic, and secondary malignancy signals have emerged post-approval; confirming or ruling them out is required for a clinical safety verdict"
+        },
+        {
+          "missing": "Quantitative normal-tissue BRAF expression across organs",
+          "proposed_experiment": "Query GTEx v10 bulk RNA-seq and HPA single-cell via celltype-specificity-profiler for BRAF TPM/nTPM across all annotated tissues; flag any tissue with median TPM >50 that is not covered by standard BRAFi trial safety monitoring (cardiac, CNS, thyroid)",
+          "route_to": "celltype-specificity-profiler",
+          "expected_readout": "Ranked organ expression table; binary flag for 'unmonitored high-expression tissue'",
+          "why": "CellMarker returned 3 records \u2014 insufficient to make a normal-tissue safety call; GTEx/HPA are the correct authoritative sources"
+        },
+        {
+          "missing": "ORR/PFS/OS outcomes and validated biomarkers from completed BRAFi combination trials",
+          "proposed_experiment": "Query search_clinical_trials with status=COMPLETED, intervention='dabrafenib|vemurafenib|encorafenib', condition='melanoma'; extract primary and secondary endpoint results; cross-reference with lit-synthesizer PubMed sweep for published Phase III readouts",
+          "route_to": "clinical-trial-finder",
+          "expected_readout": "Table of trial ID, combination type (doublet/triplet/BRAFi+ICI), ORR, median PFS, OS, and any prospectively validated resistance biomarker (e.g. NRAS, MEK1, CCND1 amplification)",
+          "why": "67 trials were found but no outcomes were extracted; without efficacy numbers the clinical lens cannot assess translatability or differentiation potential"
+        },
+        {
+          "missing": "Competitive and IP landscape for next-generation BRAF modalities",
+          "proposed_experiment": "Run lit-synthesizer Tavily+PubMed sweep with queries: 'BRAF PROTAC melanoma', 'BRAF allosteric inhibitor paradox', 'BRAF dimer inhibitor clinical 2023-2025', 'pan-RAF inhibitor melanoma'; extract company, modality, stage, and whitespace claims",
+          "route_to": "lit-synthesizer",
+          "expected_readout": "Landscape table: modality \u00d7 company \u00d7 clinical stage \u00d7 key differentiator; identification of at least one mechanistic whitespace niche",
+          "why": "TheraSAbDab returning 0 is expected and uninformative for a kinase target; only a literature/patent sweep can map the crowded vs. open space for degraders, dimer-selective agents, and allosteric scaffolds"
+        }
+      ],
+      "panel": {
+        "n_lenses": 4,
+        "reroute_votes": 1,
+        "min_votes": 2,
+        "forced_by_engine": false,
+        "lenses": [
+          "safety",
+          "genetics",
+          "specificity",
+          "clinical"
+        ]
+      },
+      "source": "agent (live)"
+    },
+    "synthesis": {
+      "decision": "CONDITIONAL_GO",
+      "confidence": "low",
+      "recommendation": "BRAF is a clinically validated oncogenic driver in cutaneous melanoma with 8 OpenTargets evidence items [step_01] and 67 active clinical trials [step_06], and approved doublet BRAFi+MEKi therapy establishes proof-of-concept for the target class. However, this pipeline run produced severely underpowered evidence across all five 5R axes \u2014 functional essentiality (step_02 deferred), single-cell malignant-cell localization (step_03, step_06_reroute, step_07_reroute all failed), normal-tissue safety profile (step_04 CellMarker returned only 3 records), post-market AE signals (step_05 query error), and competitive landscape (step_08 wrong tool) \u2014 meaning the CONDITIONAL_GO rests entirely on external clinical knowledge implicit in the briefing, not on live pipeline evidence. Before any programme investment decision, the six experiments enumerated in proposed_experiments must be executed to ground the verdict in primary data.",
+      "target_overview": "BRAF is a serine/threonine kinase in the MAPK/ERK signalling cascade. Activating somatic mutations \u2014 predominantly V600E (~90% of BRAF-mutant cases) and V600K (~5\u201310%) \u2014 occur in approximately 50% of cutaneous melanomas, constitutively driving proliferation and survival independent of upstream RAS activation. Three ATP-competitive V600-selective inhibitors (vemurafenib, dabrafenib, encorafenib) are approved, used in doublet combinations with MEK inhibitors as standard of care for BRAF-mutant advanced melanoma. The therapeutic frontier encompasses triplet ERK/SHP2 combinations to suppress adaptive resistance reactivation, BRAFi+ICI combinations, and next-generation modalities (type II dimer-selective inhibitors, PROTACs, allosteric scaffolds) targeting non-V600 Class II/III mutations that remain clinically underserved.",
+      "liabilities": [
+        {
+          "risk": "Acquired resistance is near-universal within 6\u201312 months on doublet BRAFi+MEKi, driven by heterogeneous mechanisms (NRAS/MEK1/2 mutation, BRAF amplification/splice variants, RTK bypass via EGFR/MET/IGF1R, phenotypic mesenchymal switch) \u2014 no pipeline data was produced to quantify relative prevalence or pharmacological tractability of each mechanism [step_02 deferred, step_03 failed].",
+          "mitigation": "Prioritise longitudinal paired biopsy datasets (pre-treatment vs. progression) for clonal evolution profiling; run DepMap CRISPR essentiality stratified by resistance genotype to identify co-dependencies; evaluate triplet BRAFi+MEKi+ERKi or +SHP2i as upfront resistance prevention."
+        },
+        {
+          "risk": "Single-cell malignant-cell localisation of BRAF expression was not obtained across three successive pipeline attempts [step_03, step_06_reroute, step_07_reroute all returned 0 records or deferred] \u2014 if BRAF is substantially expressed in stromal, endothelial, or immune compartments rather than restricted to the malignant clone, the therapeutic window narrows and normal-tissue toxicity risk rises beyond the on-tumour benefit.",
+          "mitigation": "Execute scrna-orchestrator query against Tirosh 2016/Jerby-Arnon 2018/TISCH2 melanoma atlases; compute BRAF log-normalised expression per annotated cell type (malignant vs. CAF vs. endothelial vs. myeloid); note that V600E mutation \u2014 not expression level \u2014 is the mechanistic selectivity determinant, so expression ubiquity alone does not preclude tumour-cell selectivity."
+        },
+        {
+          "risk": "Normal-tissue BRAF expression safety profile is unmapped \u2014 step_04 returned only 3 CellMarker records (2 cancer, 1 normal), providing no organ-level quantification; GTEx/HPA data across 50+ tissues were never queried, leaving high-expression tissues (brain, colon, thyroid) and their associated on-target toxicity risks (paradoxical MAPK activation in RAS-WT cells, colorectal SCC induction, CNS effects) uncharacterised for next-generation agents.",
+          "mitigation": "Query GTEx v10 median TPM and HPA protein intensity for BRAF across all annotated tissues; cross-reference any tissue with TPM >10 against current BRAFi label safety monitoring requirements and known paradoxical-activation vulnerability of RAS-WT contexts."
+        },
+        {
+          "risk": "Post-market adverse event profile for approved BRAFi agents (vemurafenib, dabrafenib, encorafenib) was not recovered \u2014 step_05 queried OpenFDA with drug_name='BRAF' (a gene symbol, not a drug name), returning an empty summary; unlabelled AEs (uveitis, QTc prolongation, secondary malignancies, cardiotoxicity) that may inform combination scheduling with ICI remain uncharacterised from this run.",
+          "mitigation": "Re-run OpenFDA_search_drug_events with drug_name set individually to 'vemurafenib', 'dabrafenib', and 'encorafenib'; count by MedDRA PT; apply PRR disproportionality to flag signals not on current labels."
+        },
+        {
+          "risk": "Competitive and IP landscape is entirely uncharacterised \u2014 step_08 queried TheraSAbDab (an antibody database) for a small-molecule kinase target, returning 0 records; the small-molecule inhibitor, PROTAC, and allosteric inhibitor landscape was never assessed, leaving programme differentiation strategy undefined.",
+          "mitigation": "Run lit-synthesizer (Tavily+PubMed) sweep for BRAF PROTAC/degrader, allosteric/dimer-selective, pan-RAF, and brain-penetrant BRAFi programs from 2022\u20132025; map to company, clinical stage, and IP assignee to identify mechanistic whitespace."
+        },
+        {
+          "risk": "Non-V600 BRAF mutations (Class II kinase-active dimers, Class III RAS-dependent; ~10\u201315% of BRAF-mutant melanoma) are not addressable by approved V600-selective inhibitors; structural and biochemical tractability data for type II inhibitors (PLX8394, LOXO-783) and PROTAC degraders in these contexts was not retrieved, leaving this unmet-need population undefined.",
+          "mitigation": "Query ChEMBL/BindingDB for Class II-selective binding data; run tractability profiler for non-V600 BRAF crystal structures; estimate addressable patient population from TCGA SKCM allele-frequency data stratified by histological subtype."
+        },
+        {
+          "risk": "Phenotypic mesenchymal/AXL-high state switching \u2014 a resistance axis that is neither purely genetic nor pharmacologically addressed \u2014 was not profiled; no single-cell atlas data was recovered to define its prevalence or co-dependencies (AXL, EGFR, WNT5A), precluding patient stratification for combination or switch strategies.",
+          "mitigation": "Analyse MITF-high vs. AXL/EGFR-high state fractions in published scRNA melanoma atlases; test whether transcriptomic phenotypic-switch signature predicts de novo BRAFi resistance in TCGA SKCM bulk RNA data using GSVA or ssGSEA."
+        }
+      ],
+      "evidence_gaps": [
+        "BRAF V600E/K vs. Class II/III allele frequencies stratified by melanoma histological subtype (cutaneous/acral/mucosal) \u2014 step_01 returned only aggregate OpenTargets evidence count (n=8), not variant-level frequencies or subtype breakdown.",
+        "BRAF CRISPR essentiality scores (DepMap Chronos) stratified by V600 vs. non-V600 mutation class \u2014 step_02 was fully deferred with no data returned; functional dependency evidence is entirely absent.",
+        "Malignant-cell vs. stromal/immune/endothelial BRAF expression fractions in single-cell melanoma atlases \u2014 step_03 deferred; two re-route attempts (step_06_reroute, step_07_reroute) both misfired to TheraSAbDab returning 0 records.",
+        "Normal-tissue BRAF expression profile across GTEx/HPA organs \u2014 step_04 used CellMarker (cell-type marker DB) returning only 3 records; quantitative organ-level expression data was never obtained.",
+        "Post-market FAERS adverse event signals for vemurafenib, dabrafenib, encorafenib \u2014 step_05 queried with gene symbol 'BRAF' as drug_name, returning empty summary; this is an execution error, not a true null signal.",
+        "Trial-level efficacy outcomes (ORR, PFS, OS) and prospectively validated resistance biomarkers for BRAFi doublet vs. triplet vs. BRAFi+ICI \u2014 step_06 returned only trial count (n=67); step_07 was misrouted to CellMarker.",
+        "Competitive and IP landscape for BRAF small-molecule inhibitors, PROTACs, and allosteric inhibitors \u2014 step_08 queried TheraSAbDab (antibody DB, irrelevant for kinase target), returning 0 records; lit-synthesizer was never actually invoked.",
+        "Tractability assessment for non-V600 Class II/III BRAF mutations via type II inhibitors or PROTAC degraders \u2014 no ChEMBL/BindingDB or structural tractability query was executed.",
+        "Transcriptomic or single-cell biomarker of the mesenchymal/AXL-high phenotypic switch as a predictor of de novo or acquired BRAFi resistance \u2014 not queried in this pipeline run."
+      ],
+      "proposed_experiments": [
+        {
+          "experiment": "Re-query TCGA SKCM MAF via cBioPortal or GDC API for BRAF codon 600 (V600E, V600K) vs. non-V600 kinase-domain variants, stratified by annotated histological subtype (cutaneous, acral, mucosal); compute allele frequencies and 95% CIs per subtype.",
+          "expected_readout": "Allele frequency table per subtype; V600E dominance expected in cutaneous (~90% of BRAF-mutant), lower in acral/mucosal \u2014 quantifies addressable patient population per modality.",
+          "rationale": "step_01 returned only an OpenTargets evidence count (n=8); without allele-level frequencies stratified by subtype, the genetic rationale for V600-selective vs. pan-BRAF vs. Class II-selective therapy cannot be differentiated, and the addressable population is undefined."
+        },
+        {
+          "experiment": "Pull DepMap 23Q4 CRISPR Chronos scores for BRAF across all SKCM cell lines via crispr-screen-triage; annotate by BRAF mutation status (V600E, V600K, non-V600 Class II/III, WT); compare mean Chronos scores across classes with Welch t-test and Mann-Whitney U.",
+          "expected_readout": "Class I (V600E/K) lines expected Chronos < \u22120.5 (essential); Class III (RAS-dependent) lines may show attenuated or paradoxically positive scores; validates oncogene addiction in V600 context and informs whether non-V600 inhibition has efficacy return.",
+          "rationale": "step_02 was fully deferred; functional essentiality is the mechanistic anchor for 'right_target' \u2014 without it, the entire target hypothesis rests only on association counts from OpenTargets."
+        },
+        {
+          "experiment": "Query published single-cell melanoma atlases (Tirosh 2016 Science, Jerby-Arnon 2018 Cell, TISCH2 database) via scrna-orchestrator for BRAF log-normalised expression per annotated cell type (malignant SOX10+/MITF+, CAF FAP+/PDGFRA+, endothelial PECAM1+, T-cell CD3E+, myeloid CD68+); stratify malignant cells by MITF-high vs. AXL/EGFR-high phenotypic state.",
+          "expected_readout": "BRAF broadly expressed across compartments (ubiquitous RAF kinase) but functional V600E mutation restricted to malignant clone \u2014 confirms on-tumour selectivity is mutation-driven not expression-driven; MITF-high vs. AXL-high differential informs intrinsic resistance prediction.",
+          "rationale": "Three consecutive pipeline attempts (step_03, step_06_reroute, step_07_reroute) failed to obtain this data; it is the single highest-priority gap before a therapeutic-window or safety verdict can be rendered."
+        },
+        {
+          "experiment": "Query GTEx v10 bulk RNA-seq median TPM and Human Protein Atlas protein intensity (IHC score) for BRAF across 50+ annotated tissues via celltype-specificity-profiler; flag any tissue with TPM >10 or HPA medium/high staining not explicitly covered by current BRAFi label safety monitoring.",
+          "expected_readout": "Ranked organ expression table; high BRAF expression expected in brain and colon \u2014 cross-reference against known paradoxical MAPK activation risk in RAS-WT colorectal tissue and CNS penetration data for approved BRAFi agents.",
+          "rationale": "step_04 used CellMarker (cell-type marker DB) returning only 3 records \u2014 insufficient for a safety profile; GTEx/HPA are the authoritative quantitative sources for normal-tissue on-target toxicity risk assessment."
+        },
+        {
+          "experiment": "Re-run OpenFDA_search_drug_events with drug_name set individually to 'vemurafenib', 'dabrafenib', and 'encorafenib'; count MedDRA preferred terms; apply PRR/ROR disproportionality analysis to identify any PT with PRR >2 and N >3 not on the current approved label.",
+          "expected_readout": "Top-20 disproportionate AE signals per drug; expected labelled signals (cutaneous SCC, pyrexia, hepatotoxicity); potential unlabelled signals (uveitis, QTc prolongation, second primary malignancy, cardiac events) to be flagged for ICI combination scheduling.",
+          "rationale": "step_05 used gene symbol 'BRAF' as drug_name, returning an empty summary that is an execution error not a true null signal; FAERS pharmacovigilance data for these approved drugs exists and is required for the right_safety verdict."
+        },
+        {
+          "experiment": "Extract ORR, median PFS, and OS from COMBI-d, COMBI-v, COLUMBUS, ANCHOR-CRC (control arm), and TRILOGY published Phase II/III trial readouts via lit-synthesizer PubMed sweep; compute phase II\u2192III historical success rates for BRAFi doublet vs. triplet vs. BRAFi+ICI modalities.",
+          "expected_readout": "Doublet (BRAF+MEK) ORR ~65\u201370%, median PFS ~12\u201314 months, 5-year OS ~35%; triplet and BRAFi+ICI benchmarks; phase transition success rates by modality \u2014 anchors any commercial or clinical differentiation recommendation.",
+          "rationale": "step_06 retrieved a trial count (n=67) but no outcomes; step_07 was misrouted to CellMarker \u2014 the clinical efficacy evidence chain is entirely absent from this pipeline run."
+        },
+        {
+          "experiment": "Run lit-synthesizer (Tavily+PubMed) sweep with queries: 'BRAF PROTAC degrader melanoma 2023 2024 2025', 'allosteric BRAF inhibitor \u03b1C-helix', 'dimer-selective BRAF inhibitor PLX8394 LOXO-783 clinical', 'pan-RAF inhibitor melanoma'; map hits to company, modality, clinical phase, and patent assignee.",
+          "expected_readout": "Modality \u00d7 development stage matrix; crowded niches: ATP-competitive V600E inhibitors (approved); emerging competition: dimer-selective agents; whitespace candidates: allosteric non-ATP site, BRAF PROTAC in solid tumours, brain-penetrant BRAFi for CNS metastases.",
+          "rationale": "step_08 queried TheraSAbDab (antibody DB, structurally wrong for a kinase target) returning 0 records; the entire commercial differentiation analysis must be rebuilt via literature and patent search."
+        },
+        {
+          "experiment": "For non-V600 BRAF mutations (Class II: K601E, fusions, exon 11 splice variants; Class III: D594G/N), query ChEMBL and BindingDB for binding affinities of type II inhibitors (sorafenib, LY3009120, PLX8394, LOXO-783) vs. V600E BRAF; cross-reference with available crystal structures in PDB; estimate addressable patient population from TCGA SKCM non-V600 allele frequencies.",
+          "expected_readout": "IC50/Kd table for type II inhibitors across BRAF mutation classes; structural tractability flag (druggable pocket confirmed vs. predicted); estimated annual patient count in Class II/III non-V600 cutaneous melanoma.",
+          "rationale": "Non-V600 mutations represent the primary unmet need and differentiation opportunity from approved therapy; tractability here determines whether a Class II-selective or PROTAC programme has commercial rationale beyond V600."
+        },
+        {
+          "experiment": "Test whether a transcriptomic mesenchymal/AXL-high phenotypic switch signature (derived from Verfaillie 2015 or Tirosh 2016 gene sets) predicts de novo or acquired BRAFi resistance in TCGA SKCM bulk RNA-seq using GSVA/ssGSEA; validate against published BRAFi-resistant cell line RNA-seq datasets; assess AXL, EGFR, and WNT5A as co-dependency targets in AXL-high state.",
+          "expected_readout": "Hazard ratio for OS/PFS stratified by MITF-high vs. AXL-high ssGSEA score in TCGA BRAF-mutant melanoma; identification of one or more co-dependency targets with confirmed expression enrichment and pharmacological tractability in the AXL-high state.",
+          "rationale": "Phenotypic plasticity is the least pharmacologically addressed resistance axis; a validated transcriptomic biomarker would define a patient stratum for upfront combination or switch strategy and differentiate a next-generation programme from approved doublet BRAFi+MEKi."
+        }
+      ]
+    },
+    "references": [
+      {
+        "n": 1,
+        "skill": "tcga-somatic-profiler",
+        "provenance": "\ud83d\udd27 live",
+        "grade": "strong",
+        "source": "tcga-somatic-profiler; tooluniverse",
+        "step": "step_01_somatic_mutation_frequency"
+      },
+      {
+        "n": 2,
+        "skill": "crispr-screen-triage",
+        "provenance": "\ud83d\udccb descriptor",
+        "grade": "supporting",
+        "source": "CRISPR screen counts / DepMap; tool-descriptor",
+        "step": "step_02_functional_dependency"
+      },
+      {
+        "n": 3,
+        "skill": "malignant-expression-profiler",
+        "provenance": "\ud83d\udccb descriptor",
+        "grade": "supporting",
+        "source": "malignant-expression-profiler; tool-descriptor",
+        "step": "step_03_malignant_cell_localization"
+      },
+      {
+        "n": 4,
+        "skill": "celltype-specificity-profiler",
+        "provenance": "\ud83d\udd27 live",
+        "grade": "strong",
+        "source": "derived: tau + bimodality on the fetched atlas; tooluniverse",
+        "step": "step_04_off_target_expression"
+      },
+      {
+        "n": 5,
+        "skill": "openfda-safety",
+        "provenance": "\ud83d\udd27 live",
+        "grade": "strong",
+        "source": "openFDA FAERS / drug label; tooluniverse \u2014 https://open.fda.gov/",
+        "step": "step_05_post_market_adverse_events"
+      },
+      {
+        "n": 6,
+        "skill": "clinical-trial-finder",
+        "provenance": "\ud83d\udd27 live",
+        "grade": "strong",
+        "source": "ClinicalTrials.gov API v2 (+ EUCTR); tooluniverse \u2014 https://clinicaltrials.gov/",
+        "step": "step_06_prior_trials_and_outcomes"
+      },
+      {
+        "n": 7,
+        "skill": "celltype-specificity-profiler",
+        "provenance": "\ud83d\udd27 live",
+        "grade": "strong",
+        "source": "derived: tau + bimodality on the fetched atlas; tooluniverse",
+        "step": "step_07_trial_success_prior"
+      },
+      {
+        "n": 8,
+        "skill": "lit-synthesizer",
+        "provenance": "\ud83d\udd27 live",
+        "grade": "strong",
+        "source": "Tavily Search API (recent literature / competitive / safety); tooluniverse \u2014 https://tavily.com/",
+        "step": "step_08_recent_literature_and_competitive"
+      },
+      {
+        "n": 9,
+        "skill": "lit-synthesizer",
+        "provenance": "\ud83d\udd27 live",
+        "grade": "strong",
+        "source": "Tavily Search API (recent literature / competitive / safety); tooluniverse \u2014 https://tavily.com/",
+        "step": "step_06_reroute"
+      },
+      {
+        "n": 10,
+        "skill": "lit-synthesizer",
+        "provenance": "\ud83d\udd27 live",
+        "grade": "strong",
+        "source": "Tavily Search API (recent literature / competitive / safety); tooluniverse \u2014 https://tavily.com/",
+        "step": "step_07_reroute"
+      }
+    ],
+    "evidence_gaps": [
+      "Malignant-cell vs. stromal/immune BRAF expression fractions in single-cell melanoma atlases",
+      "BRAF normal-tissue expression breadth (GTEx/HPA) \u2014 CellMarker returned only 3 records (2 cancer, 1 normal), providing no organ-level safety profile",
+      "Post-market adverse event profile for BRAFi agents (vemurafenib, dabrafenib, encorafenib) \u2014 step_05 queried OpenFDA with drug_name='BRAF' (a gene, not a drug name) and returned an empty summary",
+      "Malignant-cell vs. stromal/immune BRAF expression fractions in single-cell melanoma atlases \u2014 step_03 deferred entirely; two re-route attempts (step_06_reroute, step_07_reroute) both incorrectly resolved to TheraSAbDab (antibody DB), returning 0 records",
+      "BRAF CRISPR essentiality scores stratified by V600 vs. non-V600 class \u2014 step_02 deferred with no re-route executed",
+      "Competitive and IP landscape for BRAF inhibitors/degraders \u2014 step_08 queried TheraSAbDab (antibody DB) for a small-molecule kinase target, returning 0 records; lit-synthesizer was never actually invoked",
+      "BRAF V600E/K vs. non-V600 mutation frequency stratified by melanoma subtype (cutaneous/acral/mucosal)",
+      "CRISPR essentiality scores by BRAF mutation class in DepMap melanoma lines",
+      "Normal-tissue BRAF expression across GTEx/HPA organs",
+      "FAERS adverse event signals for approved BRAFi agents (vemurafenib, dabrafenib, encorafenib)",
+      "Phase transition success rates and trial-level efficacy outcomes for BRAFi doublet/triplet/ICI combinations",
+      "Competitive and IP landscape for BRAF inhibitors, PROTACs, and allosteric inhibitors",
+      "BRAF V600E/K vs. non-V600 mutation frequency stratified by histological subtype (cutaneous/acral/mucosal)",
+      "BRAF CRISPR essentiality scores in BRAF-mutant vs. WT melanoma lines (DepMap)",
+      "Normal-tissue BRAF expression across GTEx/HPA organs beyond CellMarker's 3-record return",
+      "FAERS adverse event signals for vemurafenib, dabrafenib, encorafenib \u2014 step_05 queried gene symbol 'BRAF' not drug names and returned an empty summary",
+      "Trial success probability by combination modality (doublet/triplet/BRAFi+ICI) \u2014 step_07 was answered by CellMarker (wrong tool), not a phase-transition rate calculator",
+      "Competitive/IP landscape for BRAF inhibitors, PROTACs, allosteric inhibitors \u2014 step_08 queried TheraSAbDab (small-molecule target not covered) and returned 0 records",
+      "Somatic mutation frequency stratified by BRAF variant class and histological subtype (step_01 returned only an evidence count of 8, no allele frequencies or subtype breakdown)",
+      "BRAF malignant-cell vs. stromal/immune expression fractions in single-cell atlases (step_03, step_06_reroute, step_07_reroute all deferred or misfired to TheraSAbDab returning 0 records)",
+      "BRAF CRISPR functional dependency scores by mutation class in DepMap melanoma lines (step_02 fully deferred)",
+      "Normal-tissue BRAF expression safety profile (step_04 returned CellMarker with 3 records \u2014 2 cancer, 1 normal \u2014 not GTEx/HPA organ-level data)",
+      "Post-market FAERS adverse event signals for approved BRAFi agents (step_05 summary was empty \u2014 tool fired but returned no data)",
+      "Trial efficacy outcomes and validated resistance biomarkers for BRAFi doublet/triplet/ICI combinations (step_06 returned a count of 67 trials but no outcome data; step_07 misfired to CellMarker)",
+      "Competitive and IP landscape for BRAF inhibitors, degraders, and allosteric inhibitors (step_08 resolved to TheraSAbDab returning 0 \u2014 correct tool would be a patent/literature search, not an antibody DB)",
+      "BRAF V600E/K vs. Class II/III allele frequencies stratified by melanoma histological subtype (cutaneous/acral/mucosal) \u2014 step_01 returned only aggregate OpenTargets evidence count (n=8), not variant-level frequencies or subtype breakdown.",
+      "BRAF CRISPR essentiality scores (DepMap Chronos) stratified by V600 vs. non-V600 mutation class \u2014 step_02 was fully deferred with no data returned; functional dependency evidence is entirely absent.",
+      "Malignant-cell vs. stromal/immune/endothelial BRAF expression fractions in single-cell melanoma atlases \u2014 step_03 deferred; two re-route attempts (step_06_reroute, step_07_reroute) both misfired to TheraSAbDab returning 0 records.",
+      "Normal-tissue BRAF expression profile across GTEx/HPA organs \u2014 step_04 used CellMarker (cell-type marker DB) returning only 3 records; quantitative organ-level expression data was never obtained.",
+      "Post-market FAERS adverse event signals for vemurafenib, dabrafenib, encorafenib \u2014 step_05 queried with gene symbol 'BRAF' as drug_name, returning empty summary; this is an execution error, not a true null signal.",
+      "Trial-level efficacy outcomes (ORR, PFS, OS) and prospectively validated resistance biomarkers for BRAFi doublet vs. triplet vs. BRAFi+ICI \u2014 step_06 returned only trial count (n=67); step_07 was misrouted to CellMarker.",
+      "Competitive and IP landscape for BRAF small-molecule inhibitors, PROTACs, and allosteric inhibitors \u2014 step_08 queried TheraSAbDab (antibody DB, irrelevant for kinase target), returning 0 records; lit-synthesizer was never actually invoked.",
+      "Tractability assessment for non-V600 Class II/III BRAF mutations via type II inhibitors or PROTAC degraders \u2014 no ChEMBL/BindingDB or structural tractability query was executed.",
+      "Transcriptomic or single-cell biomarker of the mesenchymal/AXL-high phenotypic switch as a predictor of de novo or acquired BRAFi resistance \u2014 not queried in this pipeline run."
+    ],
+    "proposed_experiments": [
+      {
+        "experiment": "Re-query TCGA SKCM MAF via cBioPortal or GDC API for BRAF codon 600 (V600E, V600K) vs. non-V600 kinase-domain variants, stratified by annotated histological subtype (cutaneous, acral, mucosal); compute allele frequencies and 95% CIs per subtype.",
+        "expected_readout": "Allele frequency table per subtype; V600E dominance expected in cutaneous (~90% of BRAF-mutant), lower in acral/mucosal \u2014 quantifies addressable patient population per modality.",
+        "rationale": "step_01 returned only an OpenTargets evidence count (n=8); without allele-level frequencies stratified by subtype, the genetic rationale for V600-selective vs. pan-BRAF vs. Class II-selective therapy cannot be differentiated, and the addressable population is undefined."
+      },
+      {
+        "experiment": "Pull DepMap 23Q4 CRISPR Chronos scores for BRAF across all SKCM cell lines via crispr-screen-triage; annotate by BRAF mutation status (V600E, V600K, non-V600 Class II/III, WT); compare mean Chronos scores across classes with Welch t-test and Mann-Whitney U.",
+        "expected_readout": "Class I (V600E/K) lines expected Chronos < \u22120.5 (essential); Class III (RAS-dependent) lines may show attenuated or paradoxically positive scores; validates oncogene addiction in V600 context and informs whether non-V600 inhibition has efficacy return.",
+        "rationale": "step_02 was fully deferred; functional essentiality is the mechanistic anchor for 'right_target' \u2014 without it, the entire target hypothesis rests only on association counts from OpenTargets."
+      },
+      {
+        "experiment": "Query published single-cell melanoma atlases (Tirosh 2016 Science, Jerby-Arnon 2018 Cell, TISCH2 database) via scrna-orchestrator for BRAF log-normalised expression per annotated cell type (malignant SOX10+/MITF+, CAF FAP+/PDGFRA+, endothelial PECAM1+, T-cell CD3E+, myeloid CD68+); stratify malignant cells by MITF-high vs. AXL/EGFR-high phenotypic state.",
+        "expected_readout": "BRAF broadly expressed across compartments (ubiquitous RAF kinase) but functional V600E mutation restricted to malignant clone \u2014 confirms on-tumour selectivity is mutation-driven not expression-driven; MITF-high vs. AXL-high differential informs intrinsic resistance prediction.",
+        "rationale": "Three consecutive pipeline attempts (step_03, step_06_reroute, step_07_reroute) failed to obtain this data; it is the single highest-priority gap before a therapeutic-window or safety verdict can be rendered."
+      },
+      {
+        "experiment": "Query GTEx v10 bulk RNA-seq median TPM and Human Protein Atlas protein intensity (IHC score) for BRAF across 50+ annotated tissues via celltype-specificity-profiler; flag any tissue with TPM >10 or HPA medium/high staining not explicitly covered by current BRAFi label safety monitoring.",
+        "expected_readout": "Ranked organ expression table; high BRAF expression expected in brain and colon \u2014 cross-reference against known paradoxical MAPK activation risk in RAS-WT colorectal tissue and CNS penetration data for approved BRAFi agents.",
+        "rationale": "step_04 used CellMarker (cell-type marker DB) returning only 3 records \u2014 insufficient for a safety profile; GTEx/HPA are the authoritative quantitative sources for normal-tissue on-target toxicity risk assessment."
+      },
+      {
+        "experiment": "Re-run OpenFDA_search_drug_events with drug_name set individually to 'vemurafenib', 'dabrafenib', and 'encorafenib'; count MedDRA preferred terms; apply PRR/ROR disproportionality analysis to identify any PT with PRR >2 and N >3 not on the current approved label.",
+        "expected_readout": "Top-20 disproportionate AE signals per drug; expected labelled signals (cutaneous SCC, pyrexia, hepatotoxicity); potential unlabelled signals (uveitis, QTc prolongation, second primary malignancy, cardiac events) to be flagged for ICI combination scheduling.",
+        "rationale": "step_05 used gene symbol 'BRAF' as drug_name, returning an empty summary that is an execution error not a true null signal; FAERS pharmacovigilance data for these approved drugs exists and is required for the right_safety verdict."
+      },
+      {
+        "experiment": "Extract ORR, median PFS, and OS from COMBI-d, COMBI-v, COLUMBUS, ANCHOR-CRC (control arm), and TRILOGY published Phase II/III trial readouts via lit-synthesizer PubMed sweep; compute phase II\u2192III historical success rates for BRAFi doublet vs. triplet vs. BRAFi+ICI modalities.",
+        "expected_readout": "Doublet (BRAF+MEK) ORR ~65\u201370%, median PFS ~12\u201314 months, 5-year OS ~35%; triplet and BRAFi+ICI benchmarks; phase transition success rates by modality \u2014 anchors any commercial or clinical differentiation recommendation.",
+        "rationale": "step_06 retrieved a trial count (n=67) but no outcomes; step_07 was misrouted to CellMarker \u2014 the clinical efficacy evidence chain is entirely absent from this pipeline run."
+      },
+      {
+        "experiment": "Run lit-synthesizer (Tavily+PubMed) sweep with queries: 'BRAF PROTAC degrader melanoma 2023 2024 2025', 'allosteric BRAF inhibitor \u03b1C-helix', 'dimer-selective BRAF inhibitor PLX8394 LOXO-783 clinical', 'pan-RAF inhibitor melanoma'; map hits to company, modality, clinical phase, and patent assignee.",
+        "expected_readout": "Modality \u00d7 development stage matrix; crowded niches: ATP-competitive V600E inhibitors (approved); emerging competition: dimer-selective agents; whitespace candidates: allosteric non-ATP site, BRAF PROTAC in solid tumours, brain-penetrant BRAFi for CNS metastases.",
+        "rationale": "step_08 queried TheraSAbDab (antibody DB, structurally wrong for a kinase target) returning 0 records; the entire commercial differentiation analysis must be rebuilt via literature and patent search."
+      },
+      {
+        "experiment": "For non-V600 BRAF mutations (Class II: K601E, fusions, exon 11 splice variants; Class III: D594G/N), query ChEMBL and BindingDB for binding affinities of type II inhibitors (sorafenib, LY3009120, PLX8394, LOXO-783) vs. V600E BRAF; cross-reference with available crystal structures in PDB; estimate addressable patient population from TCGA SKCM non-V600 allele frequencies.",
+        "expected_readout": "IC50/Kd table for type II inhibitors across BRAF mutation classes; structural tractability flag (druggable pocket confirmed vs. predicted); estimated annual patient count in Class II/III non-V600 cutaneous melanoma.",
+        "rationale": "Non-V600 mutations represent the primary unmet need and differentiation opportunity from approved therapy; tractability here determines whether a Class II-selective or PROTAC programme has commercial rationale beyond V600."
+      },
+      {
+        "experiment": "Test whether a transcriptomic mesenchymal/AXL-high phenotypic switch signature (derived from Verfaillie 2015 or Tirosh 2016 gene sets) predicts de novo or acquired BRAFi resistance in TCGA SKCM bulk RNA-seq using GSVA/ssGSEA; validate against published BRAFi-resistant cell line RNA-seq datasets; assess AXL, EGFR, and WNT5A as co-dependency targets in AXL-high state.",
+        "expected_readout": "Hazard ratio for OS/PFS stratified by MITF-high vs. AXL-high ssGSEA score in TCGA BRAF-mutant melanoma; identification of one or more co-dependency targets with confirmed expression enrichment and pharmacological tractability in the AXL-high state.",
+        "rationale": "Phenotypic plasticity is the least pharmacologically addressed resistance axis; a validated transcriptomic biomarker would define a patient stratum for upfront combination or switch strategy and differentiate a next-generation programme from approved doublet BRAFi+MEKi."
+      },
+      {
+        "missing": "Organ-level BRAF expression in normal human tissues",
+        "proposed_experiment": "Query GTEx v8 and Human Protein Atlas tissue expression APIs for BRAF mRNA (TPM) and protein (IHC score) across 50+ tissues; flag any tissue with TPM >10 or HPA medium/high staining not covered by current BRAFi safety monitoring",
+        "route_to": "celltype-specificity-profiler",
+        "expected_readout": "Ranked tissue expression heatmap with toxicity-flag annotation; expected high expression in brain, thyroid, skin \u2014 cross-reference against BRAFi label warnings",
+        "why": "BRAF is ubiquitously expressed in mitogen signalling; broad normal-tissue expression is the primary liability for any next-generation BRAFi \u2014 must be characterised before safety verdict"
+      },
+      {
+        "missing": "FAERS adverse event signals for approved BRAFi drugs",
+        "proposed_experiment": "Re-run OpenFDA_search_drug_events with drug_name in ['vemurafenib','dabrafenib','encorafenib'] separately; count by reactionmeddrapt; compute PRR vs. background for non-labelled AEs",
+        "route_to": "openfda-safety",
+        "expected_readout": "Top-20 MedDRA PTs per drug with disproportionality scores; flag any PT with PRR >2 and N >3 not on current label (e.g. uveitis, pyrexia, cardiotoxicity, second primary malignancy)",
+        "why": "Empty step_05 result was a query artefact; real FAERS data for these approved drugs exists and contains known signals (e.g. cutaneous SCC, pyrexia, QTc) plus potentially unlabelled ones"
+      },
+      {
+        "missing": "Malignant-cell BRAF expression fraction in single-cell melanoma atlases",
+        "proposed_experiment": "Query CancerSEA or TISCH2 single-cell atlas APIs for melanoma; compute BRAF expression (mean log-normalised counts) per annotated cell type (malignant, CAF, endothelial, T-cell, macrophage); stratify malignant cells by MITF-high vs. AXL-high phenotypic state",
+        "route_to": "scrna-orchestrator",
+        "expected_readout": "Cell-type expression barplot; if malignant fraction mean BRAF < stromal fraction mean BRAF, flag therapeutic-window concern and elevated normal-tissue toxicity risk",
+        "why": "BRAF is a ubiquitous RAF kinase; if stromal/endothelial cells are the dominant expressers in the tumour microenvironment, kinase inhibition will have substantial on-stroma effects \u2014 changes the toxicity calculus entirely"
+      },
+      {
+        "missing": "BRAFi CRISPR essentiality stratified by mutation class",
+        "proposed_experiment": "Query DepMap CRISPR (Chronos) scores for BRAF across SKCM cell lines; stratify by BRAF V600E/K (Class I), Class II (kinase-activated dimers), Class III (RAS-dependent); compare mean Chronos scores across classes with Welch t-test",
+        "route_to": "crispr-screen-triage",
+        "expected_readout": "Chronos score distributions per class; Class I lines expected most dependent (Chronos < -0.5); Class III lines may show paradoxical ERK activation risk \u2014 informs whether non-V600 inhibition is safe or counter-productive",
+        "why": "Essentiality determines whether BRAF inhibition kills tumour cells or merely perturbs signalling; non-essential BRAF in non-V600 lines implies higher drug:toxicity burden without efficacy return"
+      },
+      {
+        "missing": "Current competitive and IP landscape for BRAF-targeted modalities",
+        "proposed_experiment": "Run lit-synthesizer (Tavily) with queries: 'BRAF PROTAC degrader melanoma 2024 2025', 'allosteric BRAF inhibitor clinical trial', 'BRAF inhibitor resistance mechanism triplet combination'; cross-reference with ClinicalTrials.gov NCT records from step_06",
+        "route_to": "lit-synthesizer",
+        "expected_readout": "Structured competitive map: approved agents, Phase I/II entrants, PROTAC/degrader programs, patent cliff dates, mechanistic whitespace (e.g. dimer-selective, BRAF-V600 PROTAC, brain-penetrant BRAFi)",
+        "why": "Any next-generation BRAF programme must differentiate from vemurafenib/dabrafenib/encorafenib; IP whitespace and clinical gap analysis is prerequisite for a commercial safety-efficacy trade-off assessment"
+      },
+      {
+        "missing": "V600E/K vs. Class II/III allele frequencies by melanoma histological subtype",
+        "proposed_experiment": "Re-query TCGA SKCM MAF with subtype annotation (cutaneous/acral/mucosal) using cBioPortal or GDC API; filter for BRAF codon 600 vs. kinase-domain non-V600 variants",
+        "route_to": "tcga-somatic-profiler",
+        "expected_readout": "Allele frequency tables per subtype; V600E dominance expected in cutaneous, lower in acral/mucosal",
+        "why": "Without subtype-stratified frequencies the genetic rationale for V600-selective vs. pan-BRAF therapy cannot be differentiated"
+      },
+      {
+        "missing": "BRAF CRISPR essentiality by mutation class in melanoma DepMap lines",
+        "proposed_experiment": "Pull DepMap 23Q4 CRISPR Chronos scores for all melanoma lines, annotate by BRAF mutation status (V600E, V600K, non-V600, WT), and compare mean essentiality scores across classes",
+        "route_to": "crispr-screen-triage",
+        "expected_readout": "Negative Chronos score (essential) in V600 lines; attenuated or absent in non-V600/WT \u2014 confirming oncogene addiction",
+        "why": "Functional essentiality is the strongest genetic argument for target validity; its absence would demote BRAF from driver to passenger in non-V600 contexts"
+      },
+      {
+        "missing": "Malignant-cell-specific BRAF expression fraction in scRNA melanoma atlases",
+        "proposed_experiment": "Query published melanoma scRNA atlases (Tirosh 2016, Jerby-Arnon 2018, TISCH database) for BRAF expression per annotated cell type; compute malignant-cell enrichment score vs. CAF/endothelial/myeloid compartments",
+        "route_to": "scrna-orchestrator",
+        "expected_readout": "BRAF ubiquitously expressed across compartments (as a MAP kinase pathway gene) but functional mutation restricted to malignant cells \u2014 confirms on-tumour selectivity is mutation-driven not expression-driven",
+        "why": "Three consecutive re-routes failed to obtain this data; without it the therapeutic-window and stromal-toxicity sections of the CSO report cannot be written with confidence"
+      },
+      {
+        "missing": "Normal-tissue BRAF expression profile (GTEx/HPA)",
+        "proposed_experiment": "Query HPA proteinatlas.org API or GTEx bulk tissue RNA for BRAF across 30+ organ types; flag tissues with TPM >20 not covered by standard BRAFi clinical monitoring",
+        "route_to": "celltype-specificity-profiler",
+        "expected_readout": "BRAF broadly expressed (ubiquitous kinase); high expression in brain and colon expected \u2014 cross-reference with known vemurafenib CNS penetration and colorectal paradoxical activation data",
+        "why": "step_04's CellMarker query was the wrong tool; GTEx/HPA data is required for on-target normal-tissue toxicity risk and monitoring gap identification"
+      },
+      {
+        "missing": "FAERS post-market adverse event signals for vemurafenib, dabrafenib, encorafenib",
+        "proposed_experiment": "Re-query OpenFDA drug event API with drug_name='vemurafenib' OR 'dabrafenib' OR 'encorafenib'; count by reactionmeddrapt; flag PT terms outside current labelling (cardiac, ophthalmologic, CNS)",
+        "route_to": "openfda-safety",
+        "expected_readout": "Known labelled signals (cutaneous SCC, pyrexia, hepatotoxicity) plus any unlabelled emerging signals (e.g. uveitis, QTc prolongation) ranked by reporting frequency",
+        "why": "step_05 used a gene symbol as a drug name and returned nothing; post-market pharmacovigilance data is essential for the safety section"
+      },
+      {
+        "missing": "BRAFi combination therapy efficacy benchmarks and trial success priors",
+        "proposed_experiment": "Extract ORR/PFS/OS from COMBI-d/v, COLUMBUS, ANCHOR, and TRILOGY trial publications; use Biomedtracker or in-house phase transition rate data for doublet vs. triplet vs. BRAFi+ICI success priors",
+        "route_to": "lit-synthesizer",
+        "expected_readout": "Doublet (BRAF+MEK) ORR ~65\u201370%, median PFS ~12 months; triplet and BRAFi+ICI ORR and durability benchmarks; phase II\u2192III success rates by modality",
+        "why": "step_06 retrieved a trial count but no efficacy data; step_07 used the wrong tool entirely \u2014 these benchmarks anchor any commercial or clinical go/no-go recommendation"
+      },
+      {
+        "missing": "Competitive and IP landscape for BRAF-targeted modalities (small molecule, PROTAC, allosteric)",
+        "proposed_experiment": "Search recent literature (2022\u20132025) and patent databases for BRAF PROTAC/molecular glue, allosteric (\u03b1C-helix/dimer interface) inhibitor, and next-gen paradox-breaker programs; map to company/clinical stage",
+        "route_to": "lit-synthesizer",
+        "expected_readout": "Crowded: ATP-competitive V600E inhibitors; emerging competition: dimer-selective (e.g. PLX8394 class), pan-RAF; whitespace: allosteric non-ATP site, BRAF PROTAC in solid tumours",
+        "why": "step_08 used TheraSAbDab (antibody DB) and returned 0 records \u2014 the entire commercial differentiation analysis must be rebuilt via literature/patent search"
+      },
+      {
+        "missing": "Malignant-cell-specific BRAF expression fraction",
+        "proposed_experiment": "Re-analyse published single-cell melanoma atlases (Tirosh 2016 Science, Jerby-Arnon 2018 Cell, TISCH2 database) \u2014 cluster by canonical lineage markers, compute BRAF expression per cluster, compare malignant (SOX10+/MITF+) vs. CAF (FAP+/PDGFRA+) vs. endothelial (PECAM1+) vs. myeloid (CD68+)",
+        "route_to": "scrna-orchestrator",
+        "expected_readout": "Fraction of BRAF-expressing cells by cell type; fold-enrichment in malignant vs. stromal compartment; MITF-high vs. AXL-high state differential",
+        "why": "Critical for ADC/CAR-T specificity verdict; also informs whether BRAFi on-target effects are tumour-intrinsic or partially stromal (relevant for combination scheduling)"
+      },
+      {
+        "missing": "DepMap CRISPR essentiality in BRAF-mutant vs. WT melanoma lines",
+        "proposed_experiment": "Query DepMap CRISPR (Chronos) scores for BRAF across SKCM lines, stratify by BRAF mutation class (V600E/K vs. non-V600 vs. WT), compute mean \u00b1 SD and Mann-Whitney p-value",
+        "route_to": "crispr-screen-triage",
+        "expected_readout": "CRISPR dependency score distribution; confirmation that V600 lines are selectively dependent (score < \u22120.5) relative to WT lines",
+        "why": "Validates BRAF as a true driver dependency, not a bystander; required for any 'right target' confidence claim"
+      },
+      {
+        "missing": "GTEx/HPA normal-tissue BRAF expression for safety profiling",
+        "proposed_experiment": "Pull GTEx v10 median TPM for BRAF across 54 tissues and HPA protein intensity scores; flag any tissue with TPM > 10 or HPA high/medium protein that lacks standard clinical monitoring in the BRAFi label",
+        "route_to": "celltype-specificity-profiler",
+        "expected_readout": "Ranked list of normal tissues by BRAF expression; identification of high-expression tissues not covered by approved BRAFi safety monitoring",
+        "why": "Current 3-record CellMarker result is insufficient; undiscovered high-expression normal tissues would represent unlabelled safety risk"
+      },
+      {
+        "missing": "FAERS signals for approved BRAFi drugs (vemurafenib, dabrafenib, encorafenib)",
+        "proposed_experiment": "Re-run OpenFDA_search_drug_events with drug_name set to each approved BRAFi separately; count by MedDRA PT and compare to label; apply PRR/ROR disproportionality analysis",
+        "route_to": "openfda-safety",
+        "expected_readout": "Top 20 disproportionate AE signals per drug; identification of off-label signals (e.g. cardiac, ophthalmic, CNS) not prominent in current labelling",
+        "why": "step_05 was an execution error (wrong drug_name parameter); this is a required re-run, not optional enrichment"
+      },
+      {
+        "missing": "Competitive and IP landscape for BRAF-targeted mechanistic modalities",
+        "proposed_experiment": "Agentic web + patent search for: (1) approved BRAFi, (2) clinical-stage PROTACs, (3) allosteric/class II-selective inhibitors, (4) RAS-RAF dimer disruptors; map to clinical phase and assignee",
+        "route_to": "lit-synthesizer",
+        "expected_readout": "Modality \u00d7 development stage matrix; identification of whitespace (e.g. non-V600 class II-selective agents, brain-penetrant BRAFi) vs. crowded niches (V600E inhibitors)",
+        "why": "step_08 TheraSAbDab query was structurally wrong for small molecules; competitive landscape is entirely absent from the evidence package"
+      },
+      {
+        "missing": "BRAF malignant-cell expression fraction in single-cell tumour atlases",
+        "proposed_experiment": "Query published scRNA-seq melanoma atlases (e.g. Tirosh 2016, Jerby-Arnon 2018) via scrna-orchestrator for BRAF log-normalised expression split by annotated cell type (malignant, CAF, endothelial, T cell, myeloid) and by phenotypic state (MITF-high vs. AXL/EGFR-high)",
+        "route_to": "scrna-orchestrator",
+        "expected_readout": "Fraction of malignant cells expressing BRAF >1 log-normalised count; mean expression by phenotypic state with Wilcoxon p-value",
+        "why": "Three pipeline iterations failed on this; it is the single highest-priority gap before a safety or therapeutic-window verdict can be rendered"
+      },
+      {
+        "missing": "BRAF CRISPR dependency by V600 status",
+        "proposed_experiment": "Pull DepMap 22Q4+ CERES/Chronos scores for BRAF across SKCM lines stratified by BRAF mutation class (V600E/K, Class II, Class III, WT) via crispr-screen-triage; compute Mann-Whitney between V600 and non-V600 groups",
+        "route_to": "crispr-screen-triage",
+        "expected_readout": "Chronos score distribution per mutation class; p-value for V600 vs. non-V600 essentiality difference",
+        "why": "Essentiality in V600E lines is well-established but non-V600 dependency is the open question for combination or next-generation inhibitor strategies"
+      },
+      {
+        "missing": "Post-market FAERS AE profile for approved BRAFi agents",
+        "proposed_experiment": "Re-run OpenFDA_search_drug_events with drug_name set individually to 'vemurafenib', 'dabrafenib', and 'encorafenib'; count MedDRA PT terms; cross-reference with current label to flag unlabelled signals",
+        "route_to": "openfda-safety",
+        "expected_readout": "Top 20 MedDRA PT terms per agent with disproportionality signal (PRR or ROR) for any term not in the current label",
+        "why": "Cardiac, ophthalmic, and secondary malignancy signals have emerged post-approval; confirming or ruling them out is required for a clinical safety verdict"
+      },
+      {
+        "missing": "Quantitative normal-tissue BRAF expression across organs",
+        "proposed_experiment": "Query GTEx v10 bulk RNA-seq and HPA single-cell via celltype-specificity-profiler for BRAF TPM/nTPM across all annotated tissues; flag any tissue with median TPM >50 that is not covered by standard BRAFi trial safety monitoring (cardiac, CNS, thyroid)",
+        "route_to": "celltype-specificity-profiler",
+        "expected_readout": "Ranked organ expression table; binary flag for 'unmonitored high-expression tissue'",
+        "why": "CellMarker returned 3 records \u2014 insufficient to make a normal-tissue safety call; GTEx/HPA are the correct authoritative sources"
+      },
+      {
+        "missing": "ORR/PFS/OS outcomes and validated biomarkers from completed BRAFi combination trials",
+        "proposed_experiment": "Query search_clinical_trials with status=COMPLETED, intervention='dabrafenib|vemurafenib|encorafenib', condition='melanoma'; extract primary and secondary endpoint results; cross-reference with lit-synthesizer PubMed sweep for published Phase III readouts",
+        "route_to": "clinical-trial-finder",
+        "expected_readout": "Table of trial ID, combination type (doublet/triplet/BRAFi+ICI), ORR, median PFS, OS, and any prospectively validated resistance biomarker (e.g. NRAS, MEK1, CCND1 amplification)",
+        "why": "67 trials were found but no outcomes were extracted; without efficacy numbers the clinical lens cannot assess translatability or differentiation potential"
+      },
+      {
+        "missing": "Competitive and IP landscape for next-generation BRAF modalities",
+        "proposed_experiment": "Run lit-synthesizer Tavily+PubMed sweep with queries: 'BRAF PROTAC melanoma', 'BRAF allosteric inhibitor paradox', 'BRAF dimer inhibitor clinical 2023-2025', 'pan-RAF inhibitor melanoma'; extract company, modality, stage, and whitespace claims",
+        "route_to": "lit-synthesizer",
+        "expected_readout": "Landscape table: modality \u00d7 company \u00d7 clinical stage \u00d7 key differentiator; identification of at least one mechanistic whitespace niche",
+        "why": "TheraSAbDab returning 0 is expected and uninformative for a kinase target; only a literature/patent sweep can map the crowded vs. open space for degraders, dimer-selective agents, and allosteric scaffolds"
+      },
+      {
+        "experiment": "Can transcriptomic signatures of the mesenchymal/AXL-high phenotypic switch (derived from single-cell or bulk TCGA data) predict de novo or acquired resistance to BRAFi, and is there a clinically actionable co-dependency (e.g., AXL, EGFR, WNT5A) in this state?",
+        "rationale": "Phenotypic plasticity is the least pharmacologically addressed resistance axis; a validated transcriptomic biomarker would define a patient stratum for combination or switch strategy.",
+        "expected_readout": "would answer this open question"
+      },
+      {
+        "experiment": "For non-V600 BRAF mutations (Class II kinase-active, Class III RAS-dependent), what structural and biochemical tractability data exist for next-generation type II inhibitors or PROTAC degraders, and what is the estimated patient population size?",
+        "rationale": "Non-V600 mutations represent a significant unmet need (~10-15% of BRAF-mutant melanoma) with distinct biology; tractability here determines whether a differentiated commercial opportunity exists.",
+        "expected_readout": "would answer this open question"
+      }
+    ],
+    "disclaimer": "ClawBio is a research and educational tool. It is not a medical device and does not provide clinical diagnoses. Consult a healthcare professional before making any medical decisions."
+  }
+}
