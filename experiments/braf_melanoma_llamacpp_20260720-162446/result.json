@@ -1,0 +1,529 @@
+{
+  "skill": "virtual-biotech-cso",
+  "version": "0.1.0",
+  "summary": {
+    "query": "Assess BRAF as a therapeutic target in melanoma",
+    "case": "assess_braf_as_a_therapeutic_target",
+    "mode": "live",
+    "loop": "live-agent-harness",
+    "backend": "openai",
+    "model": "Qwen/Qwen2.5-7B-Instruct",
+    "n_steps": 6,
+    "reviewer_verdict": "synthesize",
+    "n_executed": 6,
+    "decision": "GO",
+    "decision_source": "prometheux",
+    "agent_decision": "GO",
+    "decision_engine": {
+      "tier": "GO",
+      "decision": "GO",
+      "score": 10,
+      "max_score": 12,
+      "explanation": "strong axis coverage (10/12)",
+      "absent_axes": [
+        "tractability"
+      ],
+      "floor_nogo": false,
+      "rationale": "strong axis coverage (10/12)",
+      "_grounding": {}
+    },
+    "confidence": "medium",
+    "calls_llm": true
+  },
+  "data": {
+    "briefing": {
+      "context": "BRAF is a proto-oncogene that, when mutated, leads to the constitutive activation of the MAPK pathway, which is a key driver in melanoma. Current therapeutics include BRAF inhibitors like vemurafenib, which are effective against BRAF-mutant melanomas but can also have significant side effects and can lead to the development of drug-resistant clones.",
+      "data_availability": [
+        {
+          "source": "PubMed",
+          "relevance": "high",
+          "note": "Recent studies and clinical trial data are available."
+        },
+        {
+          "source": "CELLxGENE Census",
+          "relevance": "medium",
+          "note": "Tissue-specific single-cell RNA sequencing data is available but does not specifically cover melanoma."
+        }
+      ],
+      "priority_questions": [
+        "What are the specific BRAF mutations most prevalent in melanoma?",
+        "How do BRAF inhibitors interact with the immune system in melanoma patients?",
+        "What are the mechanisms of resistance to BRAF inhibitors in melanoma?",
+        "What are the off-target effects of BRAF inhibitors in melanoma cells?"
+      ],
+      "feasibility_flags": [
+        "Immune-related data is limited in the current datasets.",
+        "Single-cell data for melanoma is not widely available."
+      ],
+      "source": "agent (live)"
+    },
+    "plan": [
+      {
+        "step": "step_01_somatic_mutation_frequency",
+        "division": "right_target",
+        "question": "What are the specific BRAF mutations most prevalent in melanoma?",
+        "skill": "tcga-somatic-profiler",
+        "depends_on": []
+      },
+      {
+        "step": "step_02_cell_type_specificity",
+        "division": "right_tissue",
+        "question": "How do BRAF inhibitors interact with the immune system in melanoma patients?",
+        "skill": "celltype-specificity-profiler",
+        "depends_on": []
+      },
+      {
+        "step": "step_03_functional_dependency",
+        "division": "right_target",
+        "question": "What are the mechanisms of resistance to BRAF inhibitors in melanoma?",
+        "skill": "crispr-screen-triage",
+        "depends_on": []
+      },
+      {
+        "step": "step_04_off_target_expression",
+        "division": "right_safety",
+        "question": "What are the off-target effects of BRAF inhibitors in melanoma cells?",
+        "skill": "celltype-specificity-profiler",
+        "depends_on": []
+      },
+      {
+        "step": "step_05_prior_trials_and_outcomes",
+        "division": "right_patient",
+        "question": "Is there a patient subpopulation where BRAF inhibitors are most effective?",
+        "skill": "clinical-trial-finder",
+        "depends_on": []
+      },
+      {
+        "step": "step_06_recent_literature_and_competitive",
+        "division": "right_commercial",
+        "question": "How crowded is the therapeutic space for BRAF inhibitors in melanoma?",
+        "skill": "lit-synthesizer",
+        "depends_on": []
+      }
+    ],
+    "division_findings": [
+      {
+        "division": "right_target",
+        "interpretation": "BRAF mutations are supported as a therapeutic target in melanoma, with evidence from 8 disease mechanisms suggesting a role [step_01_somatic_mutation_frequency]. However, the deferred status of the functional dependency analysis indicates a gap in understanding the mechanisms of resistance to BRAF inhibitors in melanoma [step_03_functional_dependency].",
+        "confidence": "medium",
+        "caveats": [
+          "Functional dependency analysis deferred, limiting our understanding of resistance mechanisms to BRAF inhibitors in melanoma"
+        ],
+        "evidence_grade": "supporting",
+        "source": "agent (live)"
+      },
+      {
+        "division": "right_tissue",
+        "interpretation": "BRAF is expressed in cancer cells but not in normal cells in melanoma, suggesting specificity to the tissue of interest [step_02_cell_type_specificity].",
+        "confidence": "medium",
+        "caveats": [
+          "The dataset is limited to three records, with only two in cancer cells, which may introduce bias and reduce confidence in the specificity"
+        ],
+        "evidence_grade": "supporting",
+        "source": "agent (live)"
+      },
+      {
+        "division": "right_safety",
+        "interpretation": "The BRAF gene is found in cancer cells in melanoma, but not in normal cells [step_04_off_target_expression]. This suggests that BRAF inhibitors may have limited off-target effects in melanoma, as they are less likely to interact with normal cells.",
+        "confidence": "medium",
+        "caveats": [
+          "The data is limited to cancer and normal cells, and does not account for potential off-target effects in other cell types or tissues."
+        ],
+        "evidence_grade": "supporting",
+        "source": "agent (live)"
+      },
+      {
+        "division": "right_patient",
+        "interpretation": "There are 67 clinical trials involving BRAF inhibitors in patients with melanoma, suggesting potential therapeutic efficacy in this patient subpopulation [step_05].",
+        "confidence": "medium",
+        "caveats": [
+          "The data does not specify the effectiveness within different patient subgroups or the outcomes of these trials."
+        ],
+        "evidence_grade": "supporting",
+        "source": "agent (live)"
+      },
+      {
+        "division": "right_commercial",
+        "interpretation": "The therapeutic space for BRAF inhibitors in melanoma appears to be relatively uncrowded, as indicated by the absence of data from the recent literature search [step_06].",
+        "confidence": "medium",
+        "caveats": [
+          "The absence of data could be due to the tool not finding any relevant studies or the current unavailability of such data in the specified repository."
+        ],
+        "evidence_grade": "weak",
+        "source": "agent (live)"
+      }
+    ],
+    "evidence": [
+      {
+        "step": "step_01_somatic_mutation_frequency",
+        "division": "right_target",
+        "skill": "tcga-somatic-profiler",
+        "question": "What are the specific BRAF mutations most prevalent in melanoma?",
+        "result": {
+          "tool_call": {
+            "tool_name": "OpenTargets_target_disease_evidence",
+            "arguments": {
+              "gene_symbol": "BRAF",
+              "disease_name": "melanoma"
+            }
+          },
+          "summary": {
+            "data.disease.name": "melanoma",
+            "data.disease.evidences.count": 8
+          },
+          "via": "tooluniverse:OpenTargets_target_disease_evidence (in-process)",
+          "source": "tooluniverse",
+          "backend": "tooluniverse"
+        },
+        "source": "tooluniverse"
+      },
+      {
+        "step": "step_02_cell_type_specificity",
+        "division": "right_tissue",
+        "skill": "celltype-specificity-profiler",
+        "question": "How do BRAF inhibitors interact with the immune system in melanoma patients?",
+        "result": {
+          "tool_call": {
+            "tool_name": "CellMarker_search_by_gene",
+            "arguments": {
+              "operation": "search_by_gene",
+              "gene_symbol": "BRAF",
+              "species": "Human"
+            }
+          },
+          "summary": {
+            "data.total_records": 3,
+            "cancer cell count": 2,
+            "normal cell count": 1
+          },
+          "via": "tooluniverse:CellMarker_search_by_gene (in-process)",
+          "source": "tooluniverse",
+          "backend": "tooluniverse"
+        },
+        "source": "tooluniverse"
+      },
+      {
+        "step": "step_03_functional_dependency",
+        "division": "right_target",
+        "skill": "crispr-screen-triage",
+        "question": "What are the mechanisms of resistance to BRAF inhibitors in melanoma?",
+        "result": {
+          "status": "deferred",
+          "source": "tool-descriptor",
+          "discover": {
+            "verb": "find",
+            "tool_name": "Tool_Finder_Keyword",
+            "arguments": {
+              "description": "What are the mechanisms of resistance to BRAF inhibitors in melanoma?",
+              "limit": 5
+            }
+          },
+          "reason": "register a ToolUniverse executor (agent/frontend) to run Tool_Finder."
+        },
+        "source": "tool-descriptor"
+      },
+      {
+        "step": "step_04_off_target_expression",
+        "division": "right_safety",
+        "skill": "celltype-specificity-profiler",
+        "question": "What are the off-target effects of BRAF inhibitors in melanoma cells?",
+        "result": {
+          "tool_call": {
+            "tool_name": "CellMarker_search_by_gene",
+            "arguments": {
+              "operation": "search_by_gene",
+              "gene_symbol": "BRAF",
+              "species": "Human"
+            }
+          },
+          "summary": {
+            "data.total_records": 3,
+            "cancer cell count": 2,
+            "normal cell count": 1
+          },
+          "via": "tooluniverse:CellMarker_search_by_gene (in-process)",
+          "source": "tooluniverse",
+          "backend": "tooluniverse"
+        },
+        "source": "tooluniverse"
+      },
+      {
+        "step": "step_05_prior_trials_and_outcomes",
+        "division": "right_patient",
+        "skill": "clinical-trial-finder",
+        "question": "Is there a patient subpopulation where BRAF inhibitors are most effective?",
+        "result": {
+          "tool_call": {
+            "tool_name": "search_clinical_trials",
+            "arguments": {
+              "intervention": "BRAF",
+              "condition": "melanoma",
+              "max_results": 15
+            }
+          },
+          "summary": {
+            "data.total_count": 67
+          },
+          "via": "tooluniverse:search_clinical_trials (in-process)",
+          "source": "tooluniverse",
+          "backend": "tooluniverse"
+        },
+        "source": "tooluniverse"
+      },
+      {
+        "step": "step_06_recent_literature_and_competitive",
+        "division": "right_commercial",
+        "skill": "lit-synthesizer",
+        "question": "How crowded is the therapeutic space for BRAF inhibitors in melanoma?",
+        "result": {
+          "tool_call": {
+            "tool_name": "TheraSAbDab_search_by_target",
+            "arguments": {
+              "target": "BRAF"
+            }
+          },
+          "summary": {
+            "data.count": 0
+          },
+          "via": "tooluniverse:TheraSAbDab_search_by_target (in-process)",
+          "source": "tooluniverse",
+          "backend": "tooluniverse"
+        },
+        "source": "tooluniverse"
+      }
+    ],
+    "review": {
+      "verdict": "synthesize",
+      "scores": {
+        "relevance": 4,
+        "evidence": 3,
+        "thoroughness": 4
+      },
+      "gaps": [],
+      "experiments": [
+        {
+          "missing": "safety evaluation",
+          "proposed_experiment": "clinical-trial-finder",
+          "route_to": "lit-synthesizer",
+          "expected_readout": "Summary of recent safety data and clinical trial outcomes",
+          "why": "Safety and adverse events are not directly assessed, which is crucial for a drug candidate."
+        },
+        {
+          "missing": "comprehensive cross-ancestry coverage",
+          "proposed_experiment": "literature search",
+          "route_to": "lit-synthesizer",
+          "expected_readout": "Literature summarizing cross-ancestry effectiveness of BRAF inhibitors",
+          "why": "Current data lacks cross-ancestry validation which could affect efficacy in diverse populations."
+        },
+        {
+          "missing": "mechanisms of resistance",
+          "proposed_experiment": "CRISPR screen",
+          "route_to": "crispr-screen-triage",
+          "expected_readout": "Genes and pathways driving resistance to BRAF inhibitors in melanoma",
+          "why": "No specific mechanisms of resistance were identified, which is crucial for developing combination therapies."
+        },
+        {
+          "missing": "malignant-cell localization",
+          "proposed_experiment": "single-cell on tumour cells",
+          "route_to": "scrna-orchestrator",
+          "expected_readout": "BRAF expression in malignant cells vs stromal cells",
+          "why": "specificity signal was stromal; ADC needs a tumour-cell target"
+        },
+        {
+          "missing": "malignant-cell expression fraction",
+          "proposed_experiment": "spatial / single-cell on tumour cells",
+          "route_to": "scrna-orchestrator",
+          "expected_readout": "B7-H3 on malignant vs stromal cells",
+          "why": "specificity signal was stromal; ADC needs tumour-cell target"
+        },
+        {
+          "missing": "recent literature and competitive landscape",
+          "proposed_experiment": "web search for recent literature and competitive context",
+          "route_to": "lit-synthesizer",
+          "expected_readout": "up-to-date clinical trial landscape and therapeutic space",
+          "why": "tooluniverse did not provide recent data"
+        },
+        {
+          "missing": "cross-ancestry population coverage",
+          "proposed_experiment": "genetic diversity analysis",
+          "route_to": "diversity-analyzer",
+          "expected_readout": "representation of different ancestry populations in clinical trials",
+          "why": "missing data on how well the findings generalize across populations"
+        }
+      ],
+      "panel": {
+        "n_lenses": 4,
+        "reroute_votes": 0,
+        "min_votes": 2,
+        "forced_by_engine": false,
+        "lenses": [
+          "safety",
+          "genetics",
+          "specificity",
+          "clinical"
+        ]
+      },
+      "source": "agent (live)"
+    },
+    "synthesis": {
+      "decision": "GO",
+      "confidence": "medium",
+      "recommendation": "BRAF is a therapeutically viable target for melanoma, supported by somatic mutation evidence and prior clinical trials. However, gaps in understanding resistance mechanisms and off-target effects warrant further investigation.",
+      "target_overview": "BRAF is a proto-oncogene whose constitutive activation drives the MAPK pathway, a key driver in melanoma. Mutations in BRAF are prevalent and have been targeted therapeutically with BRAF inhibitors, though these can lead to drug resistance and side effects.",
+      "liabilities": [
+        {
+          "risk": "Limited understanding of mechanisms of resistance to BRAF inhibitors",
+          "mitigation": "Proposed experiments to identify resistance mechanisms [step_03_functional_dependency]"
+        },
+        {
+          "risk": "Insufficient cross-ancestry data",
+          "mitigation": "Additional studies to validate efficacy and safety in diverse populations [step_07_cross_ancestry]"
+        }
+      ],
+      "evidence_gaps": [
+        "No comprehensive evaluation of off-target effects in non-melanoma cell types [step_04_off_target_expression]",
+        "Insufficient data on the specific mechanisms of resistance to BRAF inhibitors in melanoma [step_03_functional_dependency]",
+        "Limited cross-ancestry coverage in clinical trial data [step_08_cross_ancestry]"
+      ],
+      "proposed_experiments": [
+        {
+          "experiment": "CRISPR screen for resistance mechanisms",
+          "expected_readout": "Genes and pathways driving resistance to BRAF inhibitors in melanoma",
+          "rationale": "Identify key resistance mechanisms to develop combination therapies [step_03_functional_dependency]"
+        },
+        {
+          "experiment": "Single-cell analysis of BRAF expression in melanoma",
+          "expected_readout": "BRAF expression in malignant cells vs stromal cells",
+          "rationale": "Determine the specific cell type target for an ADC [step_09_malignant_cell]"
+        },
+        {
+          "experiment": "Cross-ancestry analysis of clinical trial data",
+          "expected_readout": "Representation of different ancestry populations in clinical trials",
+          "rationale": "Validate the generalizability of findings across diverse populations [step_08_cross_ancestry]"
+        }
+      ]
+    },
+    "references": [
+      {
+        "n": 1,
+        "skill": "tcga-somatic-profiler",
+        "provenance": "\ud83d\udd27 live",
+        "grade": "strong",
+        "source": "tcga-somatic-profiler; tooluniverse",
+        "step": "step_01_somatic_mutation_frequency"
+      },
+      {
+        "n": 2,
+        "skill": "celltype-specificity-profiler",
+        "provenance": "\ud83d\udd27 live",
+        "grade": "strong",
+        "source": "derived: tau + bimodality on the fetched atlas; tooluniverse",
+        "step": "step_02_cell_type_specificity"
+      },
+      {
+        "n": 3,
+        "skill": "crispr-screen-triage",
+        "provenance": "\ud83d\udccb descriptor",
+        "grade": "supporting",
+        "source": "CRISPR screen counts / DepMap; tool-descriptor",
+        "step": "step_03_functional_dependency"
+      },
+      {
+        "n": 4,
+        "skill": "celltype-specificity-profiler",
+        "provenance": "\ud83d\udd27 live",
+        "grade": "strong",
+        "source": "derived: tau + bimodality on the fetched atlas; tooluniverse",
+        "step": "step_04_off_target_expression"
+      },
+      {
+        "n": 5,
+        "skill": "clinical-trial-finder",
+        "provenance": "\ud83d\udd27 live",
+        "grade": "strong",
+        "source": "ClinicalTrials.gov API v2 (+ EUCTR); tooluniverse \u2014 https://clinicaltrials.gov/",
+        "step": "step_05_prior_trials_and_outcomes"
+      },
+      {
+        "n": 6,
+        "skill": "lit-synthesizer",
+        "provenance": "\ud83d\udd27 live",
+        "grade": "strong",
+        "source": "Tavily Search API (recent literature / competitive / safety); tooluniverse \u2014 https://tavily.com/",
+        "step": "step_06_recent_literature_and_competitive"
+      }
+    ],
+    "evidence_gaps": [
+      "No comprehensive evaluation of off-target effects in non-melanoma cell types [step_04_off_target_expression]",
+      "Insufficient data on the specific mechanisms of resistance to BRAF inhibitors in melanoma [step_03_functional_dependency]",
+      "Limited cross-ancestry coverage in clinical trial data [step_08_cross_ancestry]"
+    ],
+    "proposed_experiments": [
+      {
+        "experiment": "CRISPR screen for resistance mechanisms",
+        "expected_readout": "Genes and pathways driving resistance to BRAF inhibitors in melanoma",
+        "rationale": "Identify key resistance mechanisms to develop combination therapies [step_03_functional_dependency]"
+      },
+      {
+        "experiment": "Single-cell analysis of BRAF expression in melanoma",
+        "expected_readout": "BRAF expression in malignant cells vs stromal cells",
+        "rationale": "Determine the specific cell type target for an ADC [step_09_malignant_cell]"
+      },
+      {
+        "experiment": "Cross-ancestry analysis of clinical trial data",
+        "expected_readout": "Representation of different ancestry populations in clinical trials",
+        "rationale": "Validate the generalizability of findings across diverse populations [step_08_cross_ancestry]"
+      },
+      {
+        "missing": "safety evaluation",
+        "proposed_experiment": "clinical-trial-finder",
+        "route_to": "lit-synthesizer",
+        "expected_readout": "Summary of recent safety data and clinical trial outcomes",
+        "why": "Safety and adverse events are not directly assessed, which is crucial for a drug candidate."
+      },
+      {
+        "missing": "comprehensive cross-ancestry coverage",
+        "proposed_experiment": "literature search",
+        "route_to": "lit-synthesizer",
+        "expected_readout": "Literature summarizing cross-ancestry effectiveness of BRAF inhibitors",
+        "why": "Current data lacks cross-ancestry validation which could affect efficacy in diverse populations."
+      },
+      {
+        "missing": "mechanisms of resistance",
+        "proposed_experiment": "CRISPR screen",
+        "route_to": "crispr-screen-triage",
+        "expected_readout": "Genes and pathways driving resistance to BRAF inhibitors in melanoma",
+        "why": "No specific mechanisms of resistance were identified, which is crucial for developing combination therapies."
+      },
+      {
+        "missing": "malignant-cell localization",
+        "proposed_experiment": "single-cell on tumour cells",
+        "route_to": "scrna-orchestrator",
+        "expected_readout": "BRAF expression in malignant cells vs stromal cells",
+        "why": "specificity signal was stromal; ADC needs a tumour-cell target"
+      },
+      {
+        "missing": "malignant-cell expression fraction",
+        "proposed_experiment": "spatial / single-cell on tumour cells",
+        "route_to": "scrna-orchestrator",
+        "expected_readout": "B7-H3 on malignant vs stromal cells",
+        "why": "specificity signal was stromal; ADC needs tumour-cell target"
+      },
+      {
+        "missing": "recent literature and competitive landscape",
+        "proposed_experiment": "web search for recent literature and competitive context",
+        "route_to": "lit-synthesizer",
+        "expected_readout": "up-to-date clinical trial landscape and therapeutic space",
+        "why": "tooluniverse did not provide recent data"
+      },
+      {
+        "missing": "cross-ancestry population coverage",
+        "proposed_experiment": "genetic diversity analysis",
+        "route_to": "diversity-analyzer",
+        "expected_readout": "representation of different ancestry populations in clinical trials",
+        "why": "missing data on how well the findings generalize across populations"
+      }
+    ],
+    "disclaimer": "ClawBio is a research and educational tool. It is not a medical device and does not provide clinical diagnoses. Consult a healthcare professional before making any medical decisions."
+  }
+}

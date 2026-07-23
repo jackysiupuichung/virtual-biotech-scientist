@@ -13,8 +13,12 @@ __pycache__/
 .env.*
 !.env.example
 
-# Generated skill / workflow output (runtime artifacts, not source)
-output/
+# Generated skill / workflow output + run logs (runtime artifacts, not source).
+# On the cluster these are symlinks into /gpfs/scratch/$USER/virtual-biotech-scientist;
+# scripts/slurm/*.sh recreate the symlinks + scratch dirs on a fresh checkout.
+# No trailing slash: these are symlinks, and `output/` would match only a real dir.
+output
+logs
 
 # Large raw datasets (download/regenerate, don't commit binaries)
 *.h5ad

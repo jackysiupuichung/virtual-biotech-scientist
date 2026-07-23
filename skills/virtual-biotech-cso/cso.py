@@ -428,7 +428,11 @@ REVIEWER_LENSES = [
               "competitive-landscape context, or stale evidence needing a literature check."},
 ]
 
-PANEL_REROUTE_MIN_VOTES = 2  # re-route when >= this many lenses flag a gap
+PANEL_REROUTE_MIN_VOTES = 1  # re-route when >= this many lenses flag a gap
+# NOTE: lowered 2 -> 1 for the `testing` branch experiment. A single dissenting
+# lens now forces a re-route (hair-trigger), so the review loop exercises its
+# re-route path even under a weak local reviewer that rarely reaches a 2-vote
+# majority. Revert to 2 for the skeptical-but-not-hair-trigger production posture.
 
 
 def _axis_min(reviews: list[dict[str, Any]], axis: str) -> int | None:
